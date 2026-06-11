@@ -1,10 +1,11 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% block title %}تنظیمات نوتیفیکیشن - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {% include "includes/settings_center.html" %}
 
 <div class="page-header">
@@ -93,4 +94,5 @@
         </div>
     </div>
 </form>
+</div>
 {% endblock %}

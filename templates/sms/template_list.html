@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 
 {% block title %}قالب‌های پیامک - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -6,6 +6,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {% include "includes/settings_center.html" %}
 
 <div class="page-header">
@@ -58,4 +59,5 @@
 {% else %}
 <div class="card"><p class="stat-card-hint">قالبی تعریف نشده. از دکمه «قالب جدید» استفاده کنید.</p></div>
 {% endif %}
+</div>
 {% endblock %}

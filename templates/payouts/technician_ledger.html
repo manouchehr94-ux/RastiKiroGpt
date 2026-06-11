@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers jalali_tags %}
 {% block title %}دفتر حساب — {{ technician.user.get_full_name|default:technician.user.username }} — {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -6,6 +6,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header" dir="rtl">
   <div>
     <h1>دفتر حساب: {{ technician.user.get_full_name|default:technician.user.username }}</h1>
@@ -142,4 +143,5 @@
 </div>
 {% endif %}
 
+</div>
 {% endblock %}

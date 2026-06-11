@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers %}
 {% block title %}اعتبار پیامک - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -6,6 +6,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header">
     <h1>اعتبار پیامک</h1>
 </div>
@@ -32,5 +33,6 @@
         <a href="/{{ company.code }}/admin/sms-credit/transactions/" class="btn btn-outline">تراکنش‌ها</a>
         <a href="/{{ company.code }}/admin/sms-credit/invoices/" class="btn btn-outline">فاکتورها</a>
     </div>
+</div>
 </div>
 {% endblock %}

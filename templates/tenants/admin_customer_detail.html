@@ -1,10 +1,11 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers jalali_tags fa_labels %}
 {% block title %}پرونده مشتری - {{ customer_display_name }} - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 <style>
 .customer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin-bottom:1rem}.customer-stat,.customer-box{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:1rem}.customer-stat .num{font-size:1.35rem;font-weight:900}.customer-stat .lbl{font-size:.78rem;color:#64748b}.section-title{font-weight:900;margin:0 0 .75rem}.actions-row{display:flex;gap:.5rem;flex-wrap:wrap}.customer-phone{direction:ltr;unicode-bidi:plaintext}@media(max-width:900px){.customer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.customer-grid{grid-template-columns:1fr}}
 </style>
@@ -16,4 +17,5 @@
 <div class="card"><h3 class="section-title">فاکتورها</h3>{% if invoices %}<div class="table-wrapper"><table><thead><tr><th>شماره</th><th>وضعیت</th><th>مبلغ</th><th>تاریخ</th><th>عملیات</th></tr></thead><tbody>{% for inv in invoices %}<tr><td>{{ inv.invoice_number }}</td><td>{% include "includes/components/status_badge.html" with status=inv.status %}</td><td>{{ inv.total_amount|smart_number }} ریال</td><td>{{ inv.created_at|jalali_datetime }}</td><td><a href="/{{ company.code }}/admin/invoices/{{ inv.id }}/" class="btn btn-sm btn-outline">مشاهده</a></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="stat-card-hint">فاکتوری ثبت نشده.</p>{% endif %}</div>
 <div class="card"><h3 class="section-title">درخواست‌های فرم عمومی</h3>{% if service_requests %}<div class="table-wrapper"><table><thead><tr><th>#</th><th>خدمت</th><th>توضیح</th><th>تاریخ</th><th>سفارش</th></tr></thead><tbody>{% for r in service_requests %}<tr><td>{{ r.id }}</td><td>{% if r.service %}{{ r.service.title }}{% else %}-{% endif %}</td><td>{{ r.description|default:"-"|truncatechars:80 }}</td><td>{{ r.created_at|jalali_datetime }}</td><td>{% if r.order_id %}<a href="/{{ company.code }}/admin/orders/{{ r.order_id }}/">#{{ r.order_id }}</a>{% else %}-{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="stat-card-hint">درخواستی ثبت نشده.</p>{% endif %}</div>
 <div class="card"><h3 class="section-title">پیامک‌های مرتبط با این شماره</h3>{% if sms_messages %}<div class="table-wrapper"><table><thead><tr><th>شناسه</th><th>نوع پیام</th><th>وضعیت</th><th>هزینه</th><th>تاریخ</th><th>عملیات</th></tr></thead><tbody>{% for sms in sms_messages %}<tr><td>{{ sms.id }}</td><td>{{ sms.template_key|default:"-" }}</td><td>{% include "includes/components/status_badge.html" with status=sms.status %}</td><td>{{ sms.sms_cost_rial_snapshot|default:0|smart_number }} ریال</td><td>{{ sms.created_at|jalali_datetime }}</td><td><a href="/{{ company.code }}/admin/sms/outbox/{{ sms.id }}/" class="btn btn-sm btn-outline">مشاهده</a></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="stat-card-hint">پیامکی پیدا نشد.</p>{% endif %}</div>
+</div>
 {% endblock %}

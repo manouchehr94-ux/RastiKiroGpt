@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load jalali_tags  fa_labels %}
 
 {% block title %}تشخیص پیامک - {{ company.name }}{% endblock %}
@@ -7,6 +7,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {% include "includes/settings_center.html" %}
 
 <div class="page-header"><h1>تشخیص و تست ارسال پیامک</h1></div>
@@ -112,4 +113,5 @@
 })();
 </script>
 
+</div>
 {% endblock %}

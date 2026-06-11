@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 
 {% load fa_labels %}
 {% block title %}{% if editing %}ویرایش قالب{% else %}قالب جدید{% endif %} - {{ company.name }}{% endblock %}
@@ -7,6 +7,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {% include "includes/settings_center.html" %}
 
 <div class="page-header">
@@ -66,5 +67,6 @@
         <button type="submit" class="btn btn-primary">{% if editing %}ذخیره{% else %}ایجاد{% endif %}</button>
         <a href="/{{ company.code }}/admin/sms/templates/" class="btn">انصراف</a>
     </form>
+</div>
 </div>
 {% endblock %}

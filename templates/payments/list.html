@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers fa_labels jalali_tags %}
 
 {% block title %}پرداخت‌ها - {{ company.name }}{% endblock %}
@@ -11,6 +11,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header"><h1>پرداخت‌ها</h1></div>
 
 {% if payments %}
@@ -30,4 +31,5 @@
 {% else %}
 <div class="card"><p class="stat-card-hint">پرداختی یافت نشد.</p></div>
 {% endif %}
+</div>
 {% endblock %}

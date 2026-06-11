@@ -1,9 +1,10 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% block title %}آیتم‌های سفارش - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 <div class="page-header"><h1>آیتم‌های سفارش</h1><a href="/{{ company.code }}/admin/base-data/items/create/{% if selected_category_id %}?category_id={{ selected_category_id }}{% endif %}" class="btn btn-primary">+ آیتم جدید</a></div>
 <div class="card">
 <form method="get" class="compact-form" class="mb-item">
@@ -25,5 +26,6 @@
 {% endfor %}
 </tbody></table></div>
 {% else %}<p class="stat-card-hint">برای این رسته هنوز آیتم سفارش تعریف نشده است.</p>{% endif %}
+</div>
 </div>
 {% endblock %}

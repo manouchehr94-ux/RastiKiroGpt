@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load fa_labels %}
 {% block title %}اضافه کردن سفارش - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -6,6 +6,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <style>
 .oc-lookup-notice {
     margin-top: .4rem; padding: .45rem .75rem; border-radius: .5rem;
@@ -245,4 +246,5 @@ function updateDynamicItems(existingValues) {
     items.forEach(function(item) { fields.appendChild(buildItemInput(item, existingValues || {})); });
 }
 </script>
+</div>
 {% endblock %}

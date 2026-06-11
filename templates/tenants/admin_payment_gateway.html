@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load fa_labels %}
 {% block title %}درگاه پرداخت - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -6,6 +6,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header">
     <h1>تنظیمات درگاه پرداخت</h1>
     <p>درگاه پرداخت آنلاین برای دریافت وجه از مشتریان (فاکتور/سفارش) را از اینجا تنظیم کنید.</p>
@@ -89,4 +90,5 @@
         <a href="/{{ company.code }}/admin/" class="btn btn-outline">بازگشت</a>
     </div>
 </form>
+</div>
 {% endblock %}

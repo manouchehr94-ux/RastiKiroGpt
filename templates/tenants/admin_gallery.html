@@ -1,10 +1,11 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% block title %}گالری - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header"><h1>تصاویر گالری</h1><a href="/{{ company.code }}/admin/gallery/create/" class="btn btn-primary">+ آپلود تصویر</a></div>
 
 {% if images %}
@@ -20,4 +21,5 @@
 </td></tr>{% endfor %}</tbody>
 </table></div></div>
 {% else %}<div class="card"><p class="stat-card-hint">تصویری در گالری وجود ندارد.</p></div>{% endif %}
+</div>
 {% endblock %}

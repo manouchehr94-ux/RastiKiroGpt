@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers fa_labels jalali_tags %}
 
 {% block title %}فاکتور {{ invoice.invoice_number }} - {{ company.name }}{% endblock %}
@@ -10,6 +10,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header"><h1>فاکتور {{ invoice.invoice_number }}</h1></div>
 
 <div class="card">
@@ -64,4 +65,5 @@
 {% endif %}
 
 <p style="margin-top:1.5rem;"><a href="/{{ company.code }}/invoices/">بازگشت به لیست</a></p>
+</div>
 {% endblock %}

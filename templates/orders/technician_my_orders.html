@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load jalali_tags  fa_labels %}
 
 {% block title %}سفارش‌های من - {{ company.name }}{% endblock %}
@@ -12,6 +12,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header technician-page-header">
     <div>
         <h1>سفارش‌های من</h1>
@@ -135,4 +136,5 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 </script>
+</div>
 {% endblock %}

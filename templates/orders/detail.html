@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 
 {% load fa_labels %}
 {% load jalali_tags %}
@@ -11,6 +11,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header technician-page-header">
     <div>
         <h1>سفارش #{{ order.id }}</h1>
@@ -131,4 +132,5 @@
 </div>
 
 <p style="margin-top:1.5rem;"><a href="{% if request.user.role == 'TECHNICIAN' %}/{{ company.code }}/tech/orders/my/{% else %}/{{ company.code }}/admin/orders/{% endif %}">بازگشت</a></p>
+</div>
 {% endblock %}

@@ -1,9 +1,10 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers jalali_tags %}
 
 {% block title %}درخواست ویرایش پروفایل{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="max-w-3xl mx-auto px-4 py-8" dir="rtl">
   <div class="flex items-center gap-3 mb-6">
     <a href="/{{ company.code }}/admin/payment/merchant-profile/"
@@ -100,5 +101,6 @@
       </button>
     </div>
   </form>
+</div>
 </div>
 {% endblock %}

@@ -1,10 +1,11 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% block title %}تخصیص تکنسین - سفارش #{{ order.id }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header"><h1>تخصیص تکنسین به سفارش #{{ order.id }}</h1></div>
 {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
 
@@ -21,4 +22,5 @@
 <button type="submit" class="btn btn-primary">تخصیص</button>
 <a href="/{{ company.code }}/admin/orders/{{ order.id }}/" class="btn btn-outline" style="margin-right:0.5rem;">انصراف</a>
 </form></div>
+</div>
 {% endblock %}

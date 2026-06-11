@@ -1,10 +1,11 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers jalali_tags fa_labels %}
 {% block title %}مشتریان - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 <style>
 .customer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin-bottom:1rem}.customer-stat{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:1rem}.customer-stat .num{font-size:1.35rem;font-weight:900}.customer-stat .lbl{font-size:.78rem;color:#64748b}.customer-search{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}.customer-search input{min-width:260px;flex:1}.customer-phone{direction:ltr;unicode-bidi:plaintext;font-weight:700}.customer-actions{display:flex;gap:.35rem;flex-wrap:wrap}@media(max-width:900px){.customer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.customer-grid{grid-template-columns:1fr}.customer-search input{min-width:100%}}
 </style>
@@ -30,5 +31,6 @@
 </tr>{% endfor %}
 </tbody></table></div>
 {% else %}<p class="stat-card-hint">مشتری‌ای ثبت نشده یا با جستجوی شما پیدا نشد.</p>{% endif %}
+</div>
 </div>
 {% endblock %}

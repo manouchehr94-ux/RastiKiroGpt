@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers %}
 
 {% block title %}سفارش جدید - {{ company.name }}{% endblock %}
@@ -10,6 +10,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header"><h1>سفارش جدید</h1></div>
 
 {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
@@ -34,5 +35,6 @@
         <div class="form-group"><label>مهارت مورد نیاز</label>{{ form.required_skill }}</div>
         <button type="submit" class="btn btn-primary">ایجاد سفارش</button>
     </form>
+</div>
 </div>
 {% endblock %}

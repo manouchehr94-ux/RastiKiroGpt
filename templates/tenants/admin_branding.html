@@ -1,10 +1,11 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% block title %}برندینگ - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header"><h1>برندینگ و صفحه عمومی</h1></div>
 
 {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
@@ -37,5 +38,6 @@
 
 <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
 </form>
+</div>
 </div>
 {% endblock %}

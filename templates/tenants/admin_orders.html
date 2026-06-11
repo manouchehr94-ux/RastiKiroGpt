@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load fa_labels %}
 {% block title %}مدیریت سفارش‌ها - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -6,6 +6,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <style>
 /* ===== Page Header ===== */
 .orders-page-header {
@@ -443,5 +444,6 @@
         <p>سفارشی با این فیلترها پیدا نشد.</p>
     </div>
     {% endif %}
+</div>
 </div>
 {% endblock %}

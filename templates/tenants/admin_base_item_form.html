@@ -1,9 +1,10 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% block title %}{% if is_edit %}ویرایش{% else %}ایجاد{% endif %} آیتم سفارش - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 <div class="page-header"><h1>{% if is_edit %}ویرایش آیتم سفارش{% else %}آیتم سفارش جدید{% endif %}</h1></div>
 {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
 <div class="card" style="max-width:760px;"><form method="post">{% csrf_token %}
@@ -15,4 +16,5 @@
     <button class="btn btn-primary" type="submit">ذخیره</button>
     <a class="btn btn-outline" href="/{{ company.code }}/admin/base-data/items/">بازگشت</a>
 </form></div>
+</div>
 {% endblock %}

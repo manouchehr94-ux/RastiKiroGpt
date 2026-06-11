@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load jalali_tags  fa_labels %}
 {% block title %}تراکنش‌های پیامک - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -6,6 +6,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header">
     <h1>تراکنش‌های پیامک</h1>
     <a href="/{{ company.code }}/admin/sms-credit/" class="btn btn-outline btn-sm">&larr; بازگشت</a>
@@ -33,4 +34,5 @@
 {% else %}
 <div class="card"><p class="stat-card-hint">تراکنشی یافت نشد.</p></div>
 {% endif %}
+</div>
 {% endblock %}

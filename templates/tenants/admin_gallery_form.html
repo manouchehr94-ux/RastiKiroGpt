@@ -1,10 +1,11 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% block title %}{% if is_edit %}ویرایش{% else %}آپلود{% endif %} تصویر - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header"><h1>{% if is_edit %}ویرایش تصویر{% else %}آپلود تصویر جدید{% endif %}</h1></div>
 {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
 
@@ -23,5 +24,6 @@
 <button type="submit" class="btn btn-primary">{% if is_edit %}ذخیره{% else %}آپلود{% endif %}</button>
 <a href="/{{ company.code }}/admin/gallery/" class="btn btn-outline" style="margin-right:0.5rem;">انصراف</a>
 </form>
+</div>
 </div>
 {% endblock %}

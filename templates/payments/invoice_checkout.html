@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers jalali_tags fa_labels %}
 {% block title %}پرداخت اینترنتی فاکتور - {{ invoice.invoice_number }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -6,6 +6,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <style>
 .pay-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:1rem;align-items:start}
 .pay-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:1rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}
@@ -90,5 +91,6 @@
             <div class="status-badge status-success" class="">این فاکتور پرداخت شده است.</div>
         {% endif %}
     </div>
+</div>
 </div>
 {% endblock %}

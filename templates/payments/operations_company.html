@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers jalali_tags %}
 
 {% block title %}عملیات پرداخت — {{ company.name }}{% endblock %}
@@ -7,6 +7,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header" dir="rtl">
   <div>
     <h1>عملیات پرداخت درگاهی</h1>
@@ -157,5 +158,6 @@
     این صفحه فقط پرداخت‌های درگاهی (آنلاین) را نشان می‌دهد.
     پرداخت‌های نقدی و دستی در <a href="/{{ company.code }}/admin/financial-reports/cash-control/">کنترل وجه نقد</a> قابل مشاهده هستند.
   </div>
+</div>
 </div>
 {% endblock %}

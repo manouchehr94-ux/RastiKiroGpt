@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load jalali_tags  fa_labels %}
 
 {% block title %}سفارش‌های جدید - {{ company.name }}{% endblock %}
@@ -12,6 +12,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header technician-page-header">
     <div><h1>سفارش‌های جدید</h1><p class="muted-text">فقط سفارش‌های مربوط به رسته‌های فعال شما نمایش داده می‌شود.</p></div>
 </div>
@@ -67,4 +68,5 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 </script>
+</div>
 {% endblock %}
