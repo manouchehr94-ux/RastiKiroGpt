@@ -23,6 +23,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {% if subscriptions %}
 <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -83,4 +84,5 @@
     {% include "includes/components/empty_state.html" with title="اشتراکی ثبت نشده" description="اولین اشتراک را ایجاد کنید." action_url="/owner-platform/subscriptions/create/" action_label="اشتراک جدید" %}
 </div>
 {% endif %}
+</div>
 {% endblock %}

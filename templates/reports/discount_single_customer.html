@@ -9,6 +9,7 @@
 {% block user_role_label %}{% if request.user.role == "COMPANY_ADMIN" %}مدیر{% else %}کاربر{% endif %}{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 <style>
   .discount-form-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; }
   .discount-field label { display:block; font-size:.82rem; font-weight:800; color:#475569; margin-bottom:.35rem; }
@@ -371,4 +372,5 @@
 </script>
 <!-- /discount_campaign_candidate_rows_7c8 -->
 
+</div>
 {% endblock %}

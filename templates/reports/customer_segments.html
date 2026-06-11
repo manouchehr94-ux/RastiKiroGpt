@@ -10,6 +10,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <style>
 .segment-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:1rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .segment-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
@@ -137,5 +138,6 @@
     {% else %}
         <p class="text-slate-500">با این فیلترها مشتری‌ای پیدا نشد. فیلترها را کمی بازتر کن.</p>
     {% endif %}
+</div>
 </div>
 {% endblock %}

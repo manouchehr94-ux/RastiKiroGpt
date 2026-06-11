@@ -23,6 +23,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {# Stats #}
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
     {% include "includes/components/stat_card.html" with value=stats.order_count label="سفارش" icon="orders" color="blue" %}
@@ -100,4 +101,5 @@
 </div>
 
 {# Deprecated: legacy CommunicationTemplate section hidden. Active system uses NotificationSetting + SMSTemplate. #}
+</div>
 {% endblock %}

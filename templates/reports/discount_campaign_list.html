@@ -9,6 +9,7 @@
 {% block user_role_label %}{% if request.user.role == "COMPANY_ADMIN" %}مدیر{% else %}کاربر{% endif %}{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 <div class="bg-white border rounded-2xl p-5 shadow-sm mb-4">
   <div class="flex justify-between items-center gap-3 flex-wrap">
     <div>
@@ -55,5 +56,6 @@
   {% else %}
   <p class="text-slate-500">هنوز کمپین تخفیفی ساخته نشده است.</p>
   {% endif %}
+</div>
 </div>
 {% endblock %}

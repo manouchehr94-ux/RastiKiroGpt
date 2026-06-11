@@ -22,6 +22,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
     <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div class="text-2xl font-black">{{ order_summary.total }}</div><div class="text-sm text-gray-500 mt-1">کل سفارش‌ها</div></div>
     <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div class="text-2xl font-black">{{ order_summary.new }}</div><div class="text-sm text-gray-500 mt-1">جدید</div></div>
@@ -66,5 +67,6 @@
 <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm mt-4">
     <div class="font-bold mb-2">درخواست‌های خدمات</div>
     <p class="text-sm text-gray-600">مجموع درخواست‌ها: <b>{{ request_summary.total_requests }}</b></p>
+</div>
 </div>
 {% endblock %}

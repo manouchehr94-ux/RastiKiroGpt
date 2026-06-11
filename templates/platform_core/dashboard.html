@@ -15,6 +15,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {# Stats Grid #}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     {% include "includes/components/stat_card.html" with value=stats.total_companies label="کل شرکت‌ها" icon="company" color="blue" %}
@@ -103,5 +104,6 @@
     {% else %}
     {% include "includes/components/empty_state.html" with title="هنوز شرکتی ثبت نشده" description="اولین شرکت خود را ایجاد کنید." icon="company" action_url="/owner-platform/companies/create/" action_label="ایجاد شرکت" %}
     {% endif %}
+</div>
 </div>
 {% endblock %}

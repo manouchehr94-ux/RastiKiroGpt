@@ -21,6 +21,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {% if plans %}
 <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -67,4 +68,5 @@
     {% include "includes/components/empty_state.html" with title="پلنی تعریف نشده" description="اولین پلن اشتراکی را ایجاد کنید." action_url="/owner-platform/plans/create/" action_label="پلن جدید" %}
 </div>
 {% endif %}
+</div>
 {% endblock %}

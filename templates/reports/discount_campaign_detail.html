@@ -9,6 +9,7 @@
 {% block user_role_label %}{% if request.user.role == "COMPANY_ADMIN" %}مدیر{% else %}کاربر{% endif %}{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
   <div class="bg-white border rounded-2xl p-4"><div class="text-xl font-black">{{ campaign.recipient_total|smart_number }}</div><div class="text-sm text-slate-500">کل افراد گزارش</div></div>
   <div class="bg-white border rounded-2xl p-4"><div class="text-xl font-black">{{ campaign.excluded_total|smart_number }}</div><div class="text-sm text-slate-500">حذف‌شده قبل ارسال</div></div>
@@ -57,5 +58,6 @@
       </tbody>
     </table>
   </div>
+</div>
 </div>
 {% endblock %}

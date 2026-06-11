@@ -23,6 +23,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {% if companies %}
 <div class="card card-flush">
     <div class="table-wrapper">
@@ -65,4 +66,5 @@
     {% include "includes/components/empty_state.html" with title="شرکتی ثبت نشده" description="اولین شرکت را ایجاد کنید." icon="company" action_url="/owner-platform/companies/create/" action_label="شرکت جدید" %}
 </div>
 {% endif %}
+</div>
 {% endblock %}
