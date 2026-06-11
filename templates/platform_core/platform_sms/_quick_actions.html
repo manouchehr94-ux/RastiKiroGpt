@@ -1,15 +1,51 @@
-<div class="card mb-6 sms-platform-quick-actions">
-  <div class="card-header flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-    <div>
-      <h2 class="card-header-title">دسترسی سریع به بخش‌های پیامک</h2>
-      <p class="text-sm text-gray-500 mt-1">مدیریت قالب‌ها، Provider، نوع پیامک‌ها و صندوق ارسال مالک پلتفرم</p>
-    </div>
-    <div class="page-header-actions flex flex-wrap gap-2">
-      <a class="btn btn-primary" href="/owner-platform/platform-sms/templates/create/">قالب جدید</a>
-      <a class="btn btn-secondary" href="/owner-platform/platform-sms/templates/">مدیریت قالب‌ها</a>
-      <a class="btn btn-outline" href="/owner-platform/platform-sms/message-types/">نوع پیامک‌ها و ساعات ارسال</a>
-      <a class="btn btn-outline" href="/owner-platform/platform-sms/provider/">تنظیم Provider</a>
-      <a class="btn btn-outline" href="/owner-platform/platform-sms/outbox/">صندوق ارسال</a>
-    </div>
-  </div>
-</div>
+{% comment %}Platform SMS sub-navigation — matches fin-subnav pattern from financial reports{% endcomment %}
+{% with current_path=request.path %}
+<nav class="fin-subnav" dir="rtl" aria-label="بخش‌های پیامک پلتفرم">
+
+  <a href="/owner-platform/platform-sms/"
+     class="fin-subnav-item {% if current_path == '/owner-platform/platform-sms/' %}active{% endif %}">
+    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+    </svg>
+    داشبورد پیامک
+  </a>
+
+  <a href="/owner-platform/platform-sms/templates/"
+     class="fin-subnav-item {% if '/platform-sms/templates/' in current_path %}active{% endif %}">
+    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+    قالب‌ها
+  </a>
+
+  <a href="/owner-platform/platform-sms/message-types/"
+     class="fin-subnav-item {% if '/platform-sms/message-types/' in current_path %}active{% endif %}">
+    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+    </svg>
+    نوع پیامک‌ها
+  </a>
+
+  <a href="/owner-platform/platform-sms/provider/"
+     class="fin-subnav-item {% if '/platform-sms/provider/' in current_path %}active{% endif %}">
+    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+    </svg>
+    Provider
+  </a>
+
+  <a href="/owner-platform/platform-sms/outbox/"
+     class="fin-subnav-item {% if '/platform-sms/outbox/' in current_path %}active{% endif %}">
+    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+    </svg>
+    صندوق ارسال
+  </a>
+
+</nav>
+{% endwith %}

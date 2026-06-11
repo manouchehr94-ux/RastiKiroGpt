@@ -1606,3 +1606,147 @@
 
 /* Inline min-height spacer */
 .spacer-line { display: block; min-height: 1.2em; }
+
+
+
+/* =============================================================================
+   PLATFORM SMS TEMPLATES TABLE — Fixed column layout
+   Scoped to .sms-template-table for the owner-platform SMS templates list.
+   ============================================================================= */
+
+.sms-template-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.sms-template-table th,
+.sms-template-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  vertical-align: top;
+}
+
+.sms-template-table .col-template  { width: 31%; }
+.sms-template-table .col-recipient { width: 14%; }
+.sms-template-table .col-vars      { width: 18%; }
+.sms-template-table .col-pattern   { width: 18%; }
+.sms-template-table .col-status    { width: 8%; }
+.sms-template-table .col-actions   { width: 11%; }
+
+@media (max-width: 900px) {
+  .sms-template-table { table-layout: auto; }
+  .sms-template-table .col-template,
+  .sms-template-table .col-recipient,
+  .sms-template-table .col-vars,
+  .sms-template-table .col-pattern,
+  .sms-template-table .col-status,
+  .sms-template-table .col-actions { width: auto; }
+}
+
+
+/* =============================================================================
+   ADMIN PAGE DENSITY — Scoped compact layout
+   Applied via .admin-compact wrapper on Owner Platform and Company Admin pages.
+   Matches the visual density of financial reports reference pages.
+   Does NOT change global tokens or affect public/auth/technician pages.
+   ============================================================================= */
+
+/* ── Reduce gap below fin-subnav ── */
+.admin-compact .fin-subnav {
+  margin-bottom: var(--space-4);
+}
+
+/* ── Tighter stat cards ── */
+.admin-compact .stat-grid {
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.admin-compact .stat-card {
+  padding: var(--space-3) var(--space-4);
+}
+
+.admin-compact .stat-card-icon {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: var(--space-2);
+}
+
+.admin-compact .stat-card-value {
+  font-size: var(--font-size-xl);
+  margin-bottom: 0;
+}
+
+/* ── Tighter card spacing ── */
+.admin-compact .card {
+  margin-bottom: var(--space-3);
+}
+
+.admin-compact .card-compact {
+  padding: var(--space-3);
+}
+
+.admin-compact .card-header {
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+/* ── Denser table rows ── */
+.admin-compact .data-table thead th {
+  padding: var(--space-2) var(--space-3);
+}
+
+.admin-compact .data-table tbody td {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+/* ── Action buttons in tables: tighter ── */
+.admin-compact .page-header-actions {
+  gap: var(--space-1);
+}
+
+/* ── Form density ── */
+.admin-compact .form-grid {
+  gap: var(--space-3);
+}
+
+.admin-compact .form-grid-2 {
+  gap: var(--space-3);
+}
+
+.admin-compact .form-group {
+  margin-bottom: var(--space-2);
+}
+
+.admin-compact .form-actions {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+}
+
+/* ── Alerts: tighter bottom margin ── */
+.admin-compact .alert {
+  margin-bottom: var(--space-3);
+}
+
+/* ── Table toolbar: compact ── */
+.admin-compact .table-toolbar {
+  padding: var(--space-3);
+}
+
+/* ── Card body: reduce internal padding ── */
+.admin-compact .card-body {
+  padding: var(--space-2) 0;
+}
+
+/* ── Balance insight: tighter ── */
+.admin-compact .balance-insight {
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+/* ── Template table line-height ── */
+.admin-compact .sms-template-table td {
+  line-height: var(--line-height-snug);
+}
