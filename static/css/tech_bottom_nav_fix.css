@@ -1,0 +1,66 @@
+/* Local Hotfix - Technician bottom navigation */
+body.rasti-tech-page {
+  padding-bottom: 96px !important;
+}
+
+.rasti-tech-bottom-nav {
+  position: fixed !important;
+  right: 50% !important;
+  bottom: 14px !important;
+  transform: translateX(50%) !important;
+  width: min(520px, calc(100vw - 24px)) !important;
+  height: 64px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 0 !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.14) !important;
+  overflow: hidden !important;
+  z-index: 2147483647 !important;
+  direction: rtl !important;
+}
+
+.rasti-tech-bottom-nav a {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  text-decoration: none !important;
+  color: #475569 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  border-left: 1px solid #e2e8f0 !important;
+  background: #ffffff !important;
+}
+
+.rasti-tech-bottom-nav a:last-child {
+  border-left: none !important;
+}
+
+.rasti-tech-bottom-nav a:hover,
+.rasti-tech-bottom-nav a.is-active {
+  color: #2563eb !important;
+  background: #eff6ff !important;
+}
+
+.rasti-tech-bottom-nav .rasti-tech-nav-icon {
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 480px) {
+  .rasti-tech-bottom-nav {
+    width: calc(100vw - 16px) !important;
+    bottom: 8px !important;
+    height: 62px !important;
+    border-radius: 16px !important;
+  }
+
+  .rasti-tech-bottom-nav a {
+    font-size: 11px !important;
+  }
+}

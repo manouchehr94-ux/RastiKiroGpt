@@ -1,0 +1,171 @@
+{% extends "base_dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}جزئیات تسهیم پرداخت #{{ snapshot.id }} - {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>جزئیات تسهیم پرداخت #{{ snapshot.id }}</h1>
+    <p class="page-header-subtitle">اطلاعات کامل تصمیم تسهیم در لحظه پرداخت</p>
+  </div>
+  <a href="/{{ company.code }}/admin/payments/split-snapshots/" class="btn btn-outline">بازگشت به لیست</a>
+</div>
+
+{% with tech=snapshot.invoice.order.technician %}
+
+{# Explanation banner #}
+<div class="card {% if snapshot.should_split_with_technician %}card-success-border{% else %}balance-insight warning{% endif %}">
+  <div class="detail-value-strong {% if snapshot.should_split_with_technician %}stat-value-success{% else %}stat-value-warning{% endif %}">    {% if snapshot.should_split_with_technician %}
+      ✓ در این پرداخت، سهم تکنسین برای تسهیم مستقیم آماده شده است.
+    {% else %}
+      {{ reason_label }}
+    {% endif %}
+  </div>
+</div>
+
+{# Info rows #}
+<div class="stat-grid stat-grid-2">
+
+  {# Payment + Invoice #}
+  <div class="report-card">
+    <div class="report-card-header"><span class="report-card-header-title">اطلاعات پرداخت و فاکتور</span></div>
+    <div>
+      {% if snapshot.payment %}
+      <div class="snapshot-row">
+        <span class="snapshot-label">شناسه پرداخت</span>
+        <span class="detail-value-strong">#{{ snapshot.payment.id }}</span>
+      </div>
+      <div class="snapshot-row">
+        <span class="snapshot-label">وضعیت پرداخت</span>
+        <span>{{ snapshot.payment.status }}</span>
+      </div>
+      {% if snapshot.payment.tracking_code %}
+      <div class="snapshot-row">
+        <span class="snapshot-label">کد پیگیری</span>
+        <span class="detail-value-mono">{{ snapshot.payment.tracking_code }}</span>
+      </div>
+      {% endif %}
+      {% if snapshot.payment.reference_id %}
+      <div class="snapshot-row">
+        <span class="snapshot-label">شناسه مرجع</span>
+        <span class="detail-value-mono">{{ snapshot.payment.reference_id }}</span>
+      </div>
+      {% endif %}
+      {% if snapshot.payment.paid_at %}
+      <div class="snapshot-row">
+        <span class="snapshot-label">تاریخ پرداخت</span>
+        <span>{{ snapshot.payment.paid_at|jalali_datetime }}</span>
+      </div>
+      {% endif %}
+      {% endif %}
+      {% if snapshot.invoice %}
+      <div class="snapshot-row">
+        <span class="snapshot-label">شماره فاکتور</span>
+        <a href="/{{ company.code }}/admin/invoices/{{ snapshot.invoice.id }}/" class="fin-number-positive">{{ snapshot.invoice.invoice_number }}</a>
+      </div>
+      {% endif %}
+      <div class="snapshot-row">
+        <span class="snapshot-label">تاریخ ثبت اسنپ</span>
+        <span>{{ snapshot.created_at|jalali_datetime }}</span>
+      </div>
+    </div>
+  </div>
+
+  {# Technician #}
+  <div class="report-card">
+    <div class="report-card-header"><span class="report-card-header-title">تکنسین</span></div>
+    <div>
+      {% if tech %}
+      <div class="snapshot-row">
+        <span class="snapshot-label">نام</span>
+        <span>{{ tech.user.get_full_name|default:tech.user.username }}</span>
+      </div>
+      <div class="snapshot-row">
+        <span class="snapshot-label">نام‌کاربری</span>
+        <span class="detail-value-mono">{{ tech.user.username }}</span>
+      </div>
+      <div class="snapshot-row">
+        <span class="snapshot-label">وضعیت تأیید در لحظه</span>
+        <span class="detail-value-strong {% if snapshot.technician_verified_snapshot %}fin-number-positive{% else %}fin-number-negative{% endif %}">
+          {% if snapshot.technician_verified_snapshot %}تأییدشده{% else %}تأیید نشده{% endif %}
+        </span>
+      </div>
+      <div class="snapshot-row">
+        <span class="snapshot-label">شناسه فرعی در لحظه</span>
+        <span class="detail-value-mono">{{ snapshot.technician_sub_merchant_id_snapshot|default:"—" }}</span>
+      </div>
+      {% else %}
+      <div class="stat-card-hint">این فاکتور تکنسین ندارد.</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{# Amount Breakdown #}
+<div class="report-card">
+  <div class="report-card-header"><span class="report-card-header-title">تفکیک مبالغ (ریال)</span></div>
+  <div class="stat-grid">
+    <div class="snapshot-row">
+      <div class="stat-card-hint">مبلغ کل</div>
+      <div class="card-header-value">{{ snapshot.total_amount|smart_number }}</div>
+    </div>
+    <div class="snapshot-row">
+      <div class="stat-card-hint">کارمزد پلتفرم ({{ snapshot.platform_fee_percent_snapshot }}٪)</div>
+      <div class="detail-value-strong text-accent-purple">{{ snapshot.platform_fee_amount|smart_number }}</div>
+    </div>
+    <div class="snapshot-row">
+      <div class="stat-card-hint">سهم شرکت</div>
+      <div class="detail-value-strong">{{ snapshot.company_deposit_amount|smart_number }}</div>
+    </div>
+    <div class="snapshot-row">
+      <div class="stat-card-hint">سهم مستقیم تکنسین</div>
+      <div class="detail-value-strong {% if snapshot.technician_direct_amount > 0 %}fin-number-positive{% else %}fin-number-neutral{% endif %}">{{ snapshot.technician_direct_amount|smart_number }}</div>
+    </div>
+    <div class="snapshot-row">
+      <div class="stat-card-hint">ثبت در دفتر تکنسین</div>
+      <div class="detail-value-strong {% if snapshot.technician_ledger_amount > 0 %}fin-number-positive{% else %}fin-number-neutral{% endif %}">{{ snapshot.technician_ledger_amount|smart_number }}</div>
+    </div>
+  </div>
+</div>
+
+{# Policy Snapshot #}
+<div class="report-card">
+  <div class="report-card-header"><span class="report-card-header-title">تنظیمات در لحظه پرداخت</span></div>
+  <div>
+    <div class="snapshot-row">
+      <span class="snapshot-label">استراتژی پرداخت</span>
+      <span class="detail-value-mono">{{ snapshot.payout_strategy_snapshot }}</span>
+    </div>
+    <div class="snapshot-row">
+      <span class="snapshot-label">تکنسین تأییدشده؟</span>
+      <span>{% if snapshot.technician_verified_snapshot %}بله{% else %}خیر{% endif %}</span>
+    </div>
+    <div class="snapshot-row">
+      <span class="snapshot-label">شناسه فرعی درگاه</span>
+      <span class="detail-value-mono">{{ snapshot.technician_sub_merchant_id_snapshot|default:"—" }}</span>
+    </div>
+    <div class="snapshot-row">
+      <span class="snapshot-label">تسهیم انجام شد؟</span>
+      <span class="detail-value-strong {% if snapshot.should_split_with_technician %}fin-number-positive{% else %}fin-number-negative{% endif %}">
+        {% if snapshot.should_split_with_technician %}بله{% else %}خیر{% endif %}
+      </span>
+    </div>
+    <div class="snapshot-row">
+      <span class="snapshot-label">کد دلیل</span>
+      <span class="detail-value-mono">{{ snapshot.reason }}</span>
+    </div>
+  </div>
+</div>
+
+{# Raw JSON #}
+<div class="report-card">
+  <div class="report-card-header"><span class="report-card-header-title">اطلاعات خام تصمیم</span></div>
+  <pre class="detail-value-mono ltr-cell">{{ raw_json }}</pre>
+</div>
+
+{% endwith %}
+{% endblock %}

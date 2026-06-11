@@ -1,0 +1,112 @@
+/* =============================================================================
+   Rasti UI Core Consistency Patch
+   Purpose: keep Owner Platform and Company Admin pages dependent on the existing
+   Central UI Core. No backend/business logic is changed here.
+   ============================================================================= */
+
+/* One content width system — use the same full dashboard width as the Platform SMS list. */
+.dashboard-content {
+  max-width: none !important;
+  width: 100% !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* base_dashboard legacy admin layout should visually align with the same shell. */
+#app > .flex-1 > main,
+.flex-1.flex.flex-col.min-w-0 > main {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Shared page shell utility for templates that need explicit wrapping. */
+.rasti-page-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+  direction: rtl;
+}
+
+.rasti-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.rasti-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, .75rem);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.rasti-action-bar .page-header,
+.rasti-action-bar .page-header-content {
+  margin-bottom: 0;
+}
+
+/* Normalize legacy Tailwind-like wrappers that created different page widths. */
+.dashboard-content > .max-w-6xl,
+.dashboard-content > .max-w-7xl,
+.dashboard-content > .max-w-5xl,
+.dashboard-content > .max-w-4xl {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* Make owner/admin tables stay inside the page shell without changing table component behavior. */
+.dashboard-content .table-wrapper,
+.dashboard-content .overflow-x-auto {
+  max-width: 100%;
+}
+
+/* Sidebar consistency: nav_platform uses legacy nav-group/nav-item; keep it aligned with UI Core. */
+.sidebar .nav-group,
+.admin-sidebar .nav-group {
+  margin-bottom: var(--space-3, .75rem);
+}
+
+.sidebar .nav-group-title,
+.admin-sidebar .nav-group-title {
+  padding: var(--space-2, .5rem) var(--space-3, .75rem) var(--space-1, .25rem);
+  font-size: var(--font-size-2xs, .65rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-slate-500, #64748b);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider, .04em);
+  border-top: 1px solid rgba(51, 65, 85, .3);
+}
+
+.sidebar .nav-group:first-child .nav-group-title,
+.admin-sidebar .nav-group:first-child .nav-group-title {
+  border-top: 0;
+}
+
+.sidebar .nav-item,
+.admin-sidebar .nav-item {
+  min-height: 38px;
+}
+
+/* Shared responsive stat grid used by operations pages. */
+.rasti-stat-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4, 1rem);
+}
+
+@media (max-width: 1100px) {
+  .rasti-stat-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .dashboard-content { padding: var(--space-4, 1rem) !important; }
+  .rasti-stat-grid-4 { grid-template-columns: 1fr; }
+  .rasti-action-bar { align-items: stretch; }
+}

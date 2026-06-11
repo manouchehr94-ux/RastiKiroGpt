@@ -1,0 +1,346 @@
+{% extends "base_dashboard.html" %}
+{% load smart_numbers fa_labels jalali_tags %}
+{% block title %}فاکتور {{ invoice.invoice_number }} — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>فاکتور {{ invoice.invoice_number }}</h1>
+    <p class="page-header-subtitle">{{ company.name }}</p>
+  </div>
+  <div class="actions-row">
+    {% if invoice.public_code %}
+      <a href="/{{ company.code }}/admin/invoices/{{ invoice.public_code }}/print/" class="btn btn-outline btn-sm">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+        </svg>
+        چاپ
+      </a>
+    {% endif %}
+    <a href="/{{ company.code }}/admin/invoices/" class="btn btn-ghost btn-sm">← بازگشت به فاکتورها</a>
+  </div>
+</div>
+
+{% if error %}<div class="alert alert-error" dir="rtl">{{ error }}</div>{% endif %}
+
+<div class="stat-grid stat-grid-2" dir="rtl">
+
+  {# ── اطلاعات اصلی ── #}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-title">اطلاعات فاکتور</span>
+      <span class="badge badge-{{ invoice.status|status_css }}">{{ invoice.status|status_fa }}</span>
+    </div>
+    <dl class="detail-list">
+      <div class="detail-row">
+        <dt class="detail-label">مشتری</dt>
+        <dd class="detail-value detail-value-strong">{{ invoice.display_customer_name|default:"—" }}{% if invoice.display_customer_phone %} — {{ invoice.display_customer_phone }}{% endif %}</dd>
+      </div>
+      <div class="detail-row">
+        <dt class="detail-label">نیروی خدماتی</dt>
+        <dd class="detail-value">{{ invoice.technician_name_snapshot|default:"—" }}{% if invoice.technician_phone_snapshot %} — {{ invoice.technician_phone_snapshot }}{% endif %}</dd>
+      </div>
+      <div class="detail-row">
+        <dt class="detail-label">خدمت</dt>
+        <dd class="detail-value">{{ invoice.service_title_snapshot|default:"—" }}</dd>
+      </div>
+      <div class="detail-row">
+        <dt class="detail-label">تاریخ خدمت</dt>
+        <dd class="detail-value">{{ invoice.display_service_date_jalali|default:"—" }}</dd>
+      </div>
+      <div class="detail-row">
+        <dt class="detail-label">آدرس</dt>
+        <dd class="detail-value">{{ invoice.address_snapshot|default:"—" }}</dd>
+      </div>
+      {% if invoice.order_id %}
+      <div class="detail-row">
+        <dt class="detail-label">سفارش</dt>
+        <dd class="detail-value"><a href="/{{ company.code }}/admin/orders/{{ invoice.order_id }}/" class="text-accent-purple">#{{ invoice.order_id }}</a></dd>
+      </div>
+      {% endif %}
+      {% if invoice.issued_at %}
+      <div class="detail-row">
+        <dt class="detail-label">صدور</dt>
+        <dd class="detail-value">{{ invoice.issued_at|jalali_datetime }}</dd>
+      </div>
+      {% endif %}
+    </dl>
+  </div>
+
+  {# ── وضعیت پرداخت / پیش‌نمایش ── #}
+  {% if invoice.status == "paid" %}
+  <div class="card card-success-border">
+    <div class="card-header">
+      <span class="card-header-title stat-value-success">✓ پرداخت‌شده</span>
+      <span class="badge badge-success">تسویه‌شده</span>
+    </div>
+    <dl class="detail-list">
+      <div class="detail-row">
+        <dt class="detail-label detail-label-wide">روش دریافت</dt>
+        <dd class="detail-value detail-value-strong">{{ payment_info.method_label|default:"—" }}</dd>
+      </div>
+      {% if payment_info.reference %}
+      <div class="detail-row">
+        <dt class="detail-label detail-label-wide">کد پیگیری</dt>
+        <dd class="detail-value detail-value-mono">{{ payment_info.reference }}</dd>
+      </div>
+      {% endif %}
+      {% if payment_info.paid_at %}
+      <div class="detail-row">
+        <dt class="detail-label detail-label-wide">تاریخ پرداخت</dt>
+        <dd class="detail-value">{{ payment_info.paid_at|jalali_datetime }}</dd>
+      </div>
+      {% elif invoice.paid_at %}
+      <div class="detail-row">
+        <dt class="detail-label detail-label-wide">تاریخ پرداخت</dt>
+        <dd class="detail-value">{{ invoice.paid_at|jalali_datetime }}</dd>
+      </div>
+      {% endif %}
+      <div class="stat-card-hint stat-value-success">
+        مبلغ: <strong>{{ invoice.total_amount|smart_number }} ریال</strong>
+      </div>
+    </dl>
+  </div>
+
+  {% elif invoice.status == "issued" and financial_preview %}
+  {# پیش‌نمایش مالی قبل از پرداخت #}
+  <div class="card card-info-border">
+    <div class="card-header">
+      <span class="card-header-title">پیش‌نمایش تسویه مالی</span>
+      <span class="badge badge-info">در انتظار پرداخت</span>
+    </div>
+    <table class="fin-breakdown">
+      <tr>
+        <td class="lbl">مبلغ کل فاکتور</td>
+        <td class="detail-value-strong">{{ financial_preview.total_amount|smart_number }} ریال</td>
+      </tr>
+      {% if financial_preview.technician_wage_percent %}
+      <tr class="tech-wage">
+        <td class="lbl">سهم نیروی خدماتی ({{ financial_preview.technician_wage_percent }}٪)</td>
+        <td>{{ financial_preview.technician_wage_amount|smart_number }} ریال</td>
+      </tr>
+      {% endif %}
+      {% if financial_preview.platform_fee_percent %}
+      <tr class="platform-fee">
+        <td class="lbl">کارمزد پلتفرم ({{ financial_preview.platform_fee_percent }}٪)</td>
+        <td>{{ financial_preview.platform_fee_amount|smart_number }} ریال</td>
+      </tr>
+      {% endif %}
+      <tr class="company-net">
+        <td class="lbl" class="detail-value-strong">سهم خالص شرکت</td>
+        <td>{{ financial_preview.company_net_amount|smart_number }} ریال</td>
+      </tr>
+    </table>
+  </div>
+  {% else %}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-title">وضعیت مالی</span>
+      <span class="badge badge-{{ invoice.status|status_css }}">{{ invoice.status|status_fa }}</span>
+    </div>
+    <p class="page-header-subtitle">اطلاعات مالی پس از پرداخت فاکتور نمایش داده می‌شود.</p>
+  </div>
+  {% endif %}
+
+</div>
+
+{# ── آیتم‌های فاکتور ── #}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">آیتم‌های فاکتور</span>
+    <span class="card-header-value">{{ invoice.total_amount|smart_number }} ریال</span>
+  </div>
+  {% if invoice.items.all %}
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>شرح خدمت / کالا</th>
+          <th class="ltr-cell">تعداد</th>
+          <th class="ltr-cell">قیمت واحد (ریال)</th>
+          <th class="ltr-cell">تخفیف ردیف (ریال)</th>
+          <th class="ltr-cell">جمع (ریال)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in invoice.items.all %}
+        <tr>
+          <td class="detail-value-strong">{{ item.description }}</td>
+          <td class="ltr-cell">{{ item.quantity|smart_number }}</td>
+          <td class="ltr-cell">{{ item.unit_price|smart_number }}</td>
+          <td class="ltr-cell fin-number-negative">{{ item.discount_amount|smart_number }}</td>
+          <td class="ltr-cell fin-number">{{ item.total_price|smart_number }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="tfoot-row">
+          <td colspan="4" class="tfoot-label">جمع ردیف‌ها</td>
+          <td class="tfoot-value">{{ invoice.subtotal|smart_number }}</td>
+        </tr>
+        {% if invoice.tax_amount %}
+        <tr class="tfoot-row">
+          <td colspan="4" class="tfoot-label">مالیات / ارزش‌افزوده</td>
+          <td class="tfoot-value">{{ invoice.tax_amount|smart_number }}</td>
+        </tr>
+        {% endif %}
+        {% if invoice.discount_amount %}
+        <tr class="tfoot-row">
+          <td colspan="4" class="tfoot-label fin-number-negative">تخفیف کل</td>
+          <td class="tfoot-value fin-number-negative">{{ invoice.discount_amount|smart_number }}</td>
+        </tr>
+        {% endif %}
+        <tr class="tfoot-row-highlight">
+          <td colspan="4" class="tfoot-total-label">مبلغ نهایی</td>
+          <td class="tfoot-total-value">{{ invoice.total_amount|smart_number }} ریال</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p class="empty-state-description">هنوز آیتمی برای این فاکتور ثبت نشده است.</p>
+  </div>
+  {% endif %}
+</div>
+
+{# ── محاسبه دستمزد نیروی خدماتی ── #}
+{% if wage.total_wage %}
+<div class="card" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title text-accent-purple">محاسبه سهم نیروی خدماتی</span>
+    <span class="card-header-value text-accent-purple">{{ wage.total_wage|smart_number }} ریال</span>
+  </div>
+  <table class="fin-breakdown">
+    <tr class="section-divider"><td colspan="2">پایه محاسبه</td></tr>
+    <tr><td class="lbl">جمع اجرت خدمات</td><td>{{ wage.service_total|smart_number }} ریال</td></tr>
+    <tr><td class="lbl">جمع کالا / قطعه</td><td>{{ wage.goods_total|smart_number }} ریال</td></tr>
+    <tr><td class="lbl">جمع ایاب‌وذهاب</td><td>{{ wage.travel_total|smart_number }} ریال</td></tr>
+    {% if wage.extra_discount %}
+    <tr class="deduction"><td class="lbl">تخفیف مازاد جذب‌شده</td><td>{{ wage.extra_discount|smart_number }} ریال</td></tr>
+    {% endif %}
+    <tr class="sub-total-row"><td class="lbl">پایه اجرت پس از تخفیف</td><td>{{ wage.service_base|smart_number }} ریال</td></tr>
+    <tr class="section-divider"><td colspan="2">درصدهای سهم</td></tr>
+    <tr><td class="lbl">درصد سهم از اجرت خدمات</td><td>{{ wage.service_percent }}٪</td></tr>
+    <tr><td class="lbl">درصد سهم از کالا / قطعه</td><td>{{ wage.goods_percent }}٪</td></tr>
+    <tr><td class="lbl">درصد سهم از ایاب‌وذهاب</td><td>{{ wage.travel_percent }}٪</td></tr>
+    <tr class="section-divider"><td colspan="2">محاسبه نهایی</td></tr>
+    <tr class="tech-wage"><td class="lbl">سهم از اجرت خدمات</td><td>{{ wage.service_wage|smart_number }} ریال</td></tr>
+    <tr class="tech-wage"><td class="lbl">سهم از کالا / قطعه</td><td>{{ wage.goods_wage|smart_number }} ریال</td></tr>
+    <tr class="tech-wage"><td class="lbl">سهم از ایاب‌وذهاب</td><td>{{ wage.travel_wage|smart_number }} ریال</td></tr>
+    <tr class="total-row tech-wage"><td>سهم نهایی نیروی خدماتی</td><td>{{ wage.total_wage|smart_number }} ریال</td></tr>
+  </table>
+</div>
+{% endif %}
+
+{# ── اقدامات پرداخت (فقط برای فاکتور صادرشده) ── #}
+{% if invoice.status == "issued" %}
+<div dir="rtl">
+  <h3 class="section-title">ثبت پرداخت</h3>
+
+  <div class="payment-actions-grid">
+
+    {# دریافت نقدی نزد شرکت #}
+    <div class="payment-action-card company">
+      <div class="payment-action-card-title">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="text-accent-purple">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+        ثبت پرداخت نقدی نزد شرکت
+      </div>
+      <div class="payment-action-card-desc">
+        مشتری مبلغ فاکتور را به <strong>شرکت یا مدیر</strong> پرداخت کرده است.
+      </div>
+      <div class="payment-action-card-effect">
+        اثر مالی: شرکت وجه را دارد ← اجرت نیروی خدماتی به حسابش بستانکار می‌شود ← کارمزد پلتفرم به بدهی شرکت افزوده می‌شود.
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="mark_paid_company_cash" value="1">
+        <button type="submit" class="btn btn-primary"
+                onclick="return confirm('آیا مطمئنید که مشتری مبلغ {{ invoice.total_amount|smart_number }} ریال را به شرکت پرداخت کرده است؟')">
+          تأیید و ثبت پرداخت نزد شرکت
+        </button>
+      </form>
+    </div>
+
+    {# دریافت نقدی توسط نیروی خدماتی #}
+    <div class="payment-action-card technician">
+      <div class="payment-action-card-title">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="stat-value-warning">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        ثبت دریافت نقدی توسط نیروی خدماتی
+      </div>
+      <div class="payment-action-card-desc">
+        نیروی خدماتی مبلغ فاکتور را <strong>مستقیماً از مشتری</strong> دریافت کرده است.
+      </div>
+      <div class="payment-action-card-effect">
+        اثر مالی: نیرو وجه را دارد ← اجرت وی بستانکار می‌شود ← کل مبلغ فاکتور از حسابش بدهکار می‌شود ← باید سهم شرکت را تسویه کند.
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="mark_paid_technician_cash" value="1">
+        <button type="submit" class="btn btn-warning"
+                onclick="return confirm('آیا مطمئنید که نیروی خدماتی مبلغ {{ invoice.total_amount|smart_number }} ریال را از مشتری دریافت کرده است؟ این عملیات بدهی وی به شرکت را ثبت می‌کند.')">
+          تأیید دریافت نقدی توسط نیروی خدماتی
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  {# پرداخت آنلاین #}
+  <div class="payment-action-card gateway" dir="rtl">
+    <div class="payment-action-card-title" class="detail-value">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+      </svg>
+      پرداخت آنلاین / ارسال لینک پرداخت
+    </div>
+    <div class="payment-action-card-desc" class="detail-value">
+      درگاه پرداخت آنلاین در حال حاضر فعال نیست.
+      ابتدا باید اطلاعات ثبتی و بانکی شرکت توسط پلتفرم تأیید شود.
+    </div>
+    <a href="/{{ company.code }}/admin/payment/merchant-profile/" class="btn btn-outline btn-sm">مشاهده وضعیت تأیید پروفایل</a>
+  </div>
+
+</div>
+{% endif %}
+
+{# ── اقدامات ویرایش / لغو ── #}
+<div class="actions-row" dir="rtl">
+  {% if invoice.status == "draft" %}
+    <a href="/{{ company.code }}/admin/invoices/{{ invoice.id }}/edit/" class="btn btn-primary">ویرایش فاکتور</a>
+    <form method="post" class="actions-row">
+      {% csrf_token %}
+      <input type="hidden" name="issue_invoice" value="1">
+      <button type="submit" class="btn btn-success">صدور فاکتور</button>
+    </form>
+  {% endif %}
+
+  {% if invoice.status == "draft" or invoice.status == "issued" %}
+  <form method="post" class="actions-row">
+    {% csrf_token %}
+    <input type="hidden" name="cancel_invoice" value="1">
+    <input type="text" name="cancel_reason" class="form-control" placeholder="دلیل لغو (اختیاری)" class="filter-input">
+    <button type="submit" class="btn btn-danger" onclick="return confirm('آیا از لغو این فاکتور مطمئنید؟')">لغو فاکتور</button>
+  </form>
+  {% endif %}
+</div>
+
+{# ── لینک عمومی ── #}
+{% if public_url %}
+<div class="card" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">لینک عمومی فاکتور</span>
+    <span class="stat-card-hint">فقط برای مشاهده — قابل پرداخت توسط مشتری</span>
+  </div>
+  <input class="form-control ltr-cell" value="{{ public_url }}" readonly onclick="this.select();">
+</div>
+{% endif %}
+
+{% endblock %}

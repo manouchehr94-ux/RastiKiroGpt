@@ -1,0 +1,118 @@
+{% extends "base_dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}گزارش تسهیم پرداخت‌ها - {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>گزارش تسهیم پرداخت‌ها</h1>
+    <p class="page-header-subtitle">وضعیت تسهیم مبلغ هر پرداخت آنلاین بین شرکت و تکنسین</p>
+  </div>
+</div>
+
+{# Filters #}
+<div class="filter-bar">
+  <form method="get" class="actions-row">
+    <div>
+      <label class="filter-group">تسهیم انجام شد؟</label>
+      <select name="split" class="filter-input">
+        <option value="">همه</option>
+        <option value="yes" {% if split_filter == 'yes' %}selected{% endif %}>بله</option>
+        <option value="no" {% if split_filter == 'no' %}selected{% endif %}>خیر</option>
+      </select>
+    </div>
+    <div>
+      <label class="filter-group">دلیل</label>
+      <select name="reason" class="filter-input">
+        <option value="">همه</option>
+        {% for code, lbl in reason_choices %}
+        <option value="{{ code }}" {% if reason_filter == code %}selected{% endif %}>{{ lbl|truncatechars:40 }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="filter-group">تکنسین</label>
+      <select name="technician" class="filter-input">
+        <option value="">همه</option>
+        {% for tech in technicians %}
+        <option value="{{ tech.id }}" {% if technician_filter == tech.id|stringformat:"s" %}selected{% endif %}>{{ tech.user.get_full_name|default:tech.user.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="filter-group">جستجو</label>
+      <input type="text" name="q" value="{{ q }}" placeholder="شماره فاکتور، کد پیگیری..."
+             class="filter-input">
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">اعمال فیلتر</button>
+    {% if split_filter or reason_filter or technician_filter or q %}
+    <a href="/{{ company.code }}/admin/payments/split-snapshots/" class="btn btn-outline btn-sm">حذف فیلتر</a>
+    {% endif %}
+  </form>
+</div>
+
+{% if snapshots %}
+<div class="card card-flush">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th class="">تاریخ</th>
+        <th class="">فاکتور</th>
+        <th class="">تکنسین</th>
+        <th class="ltr-cell">مبلغ کل</th>
+        <th class="ltr-cell">کارمزد پلتفرم</th>
+        <th class="ltr-cell">سهم شرکت</th>
+        <th class="ltr-cell">سهم مستقیم تکنسین</th>
+        <th class="ltr-cell">دفتر تکنسین</th>
+        <th class="">تسهیم؟</th>
+        <th class="">دلیل</th>
+        <th class="">جزئیات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in snapshots %}
+      {% with tech=s.invoice.order.technician %}
+      <tr>
+        <td class="stat-card-hint">{{ s.created_at|jalali_datetime }}</td>
+        <td class="">
+          {% if s.invoice %}
+            <a href="/{{ company.code }}/admin/invoices/{{ s.invoice.id }}/" class="fin-number-positive">{{ s.invoice.invoice_number }}</a>
+          {% else %}—{% endif %}
+        </td>
+        <td class="">
+          {% if tech %}{{ tech.user.get_full_name|default:tech.user.username }}{% else %}<span class="fin-number-neutral">—</span>{% endif %}
+        </td>
+        <td class="ltr-cell fin-number">{{ s.total_amount|smart_number }}</td>
+        <td class="ltr-cell text-accent-purple">{{ s.platform_fee_amount|smart_number }}</td>
+        <td class="ltr-cell">{{ s.company_deposit_amount|smart_number }}</td>
+        <td class="ltr-cell {% if s.technician_direct_amount > 0 %}fin-number-positive{% else %}fin-number-neutral{% endif %}">{{ s.technician_direct_amount|smart_number }}</td>
+        <td class="ltr-cell {% if s.technician_ledger_amount > 0 %}fin-number-positive{% else %}fin-number-neutral{% endif %}">{{ s.technician_ledger_amount|smart_number }}</td>
+        <td class="">
+          {% if s.should_split_with_technician %}
+            <span class="fin-number-positive">بله</span>
+          {% else %}
+            <span class="fin-number-negative">خیر</span>
+          {% endif %}
+        </td>
+        <td class="audit-meta">{{ s.reason }}</td>
+        <td class="">
+          <a href="/{{ company.code }}/admin/payments/split-snapshots/{{ s.id }}/" class="text-accent-purple">بررسی</a>
+        </td>
+      </tr>
+      {% endwith %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card empty-state">
+  <div class="empty-state-icon">📊</div>
+  <div class="empty-state-title">هیچ رکوردی یافت نشد.</div>
+  <div class="empty-state-description">پس از انجام اولین پرداخت آنلاین، اطلاعات اینجا نمایش داده می‌شود.</div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "layouts/dashboard.html" %}
+{% block title %}پیامک پلتفرم{% endblock %}
+{% block sidebar_brand %}رستی سرویس{% endblock %}
+{% block sidebar_subtitle %}پنل مدیریت پلتفرم{% endblock %}
+{% block user_role_label %}مدیر پلتفرم{% endblock %}
+{% block page_title %}پیامک پلتفرم{% endblock %}
+{% block page_description %}مدیریت Provider، قالب‌ها، نوع پیامک‌ها و صندوق ارسال مالک پلتفرم{% endblock %}
+{% block logout_url %}/owner-platform/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
+{% block navbar_actions %}
+<a href="/owner-platform/platform-sms/templates/create/" class="inline-flex items-center gap-2 px-3 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-smooth">قالب جدید</a>
+<a href="/owner-platform/platform-sms/templates/" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-smooth">مدیریت قالب‌ها</a>
+{% endblock %}
+{% block content %}
+{% include "platform_core/platform_sms/_quick_actions.html" %}
+
+<div class="stat-grid mb-6">
+  <div class="stat-card">
+    <div class="stat-card-icon amber">⌛</div>
+    <div class="stat-card-value">{{ queued }}</div>
+    <div class="stat-card-label">در صف</div>
+    <div class="stat-card-hint">پیامک‌های آماده ارسال</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon green">✓</div>
+    <div class="stat-card-value">{{ sent }}</div>
+    <div class="stat-card-label">ارسال شده</div>
+    <div class="stat-card-hint">پیامک‌های موفق مالک پلتفرم</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon red">×</div>
+    <div class="stat-card-value">{{ failed }}</div>
+    <div class="stat-card-label">ناموفق</div>
+    <div class="stat-card-hint">نیازمند بررسی یا ارسال مجدد</div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="card-header">
+    <h2 class="card-header-title">راهنمای بخش‌ها</h2>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>بخش</th>
+          <th>کاربرد</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>قالب‌های پیامکی</strong></td>
+          <td>ساخت، ویرایش، فعال‌سازی و تنظیم BodyId ملی پیامک</td>
+          <td><a class="btn btn-outline btn-sm" href="/owner-platform/platform-sms/templates/">مدیریت قالب‌ها ←</a></td>
+        </tr>
+        <tr>
+          <td><strong>نوع پیامک‌ها و ساعات ارسال</strong></td>
+          <td>فعال/غیرفعال کردن نوع پیامک و تنظیم پرداخت‌کننده</td>
+          <td><a class="btn btn-outline btn-sm" href="/owner-platform/platform-sms/message-types/">مدیریت نوع‌ها ←</a></td>
+        </tr>
+        <tr>
+          <td><strong>ارائه‌دهنده پیامک</strong></td>
+          <td>تنظیم ملی پیامک، خط ارسال‌کننده و کلید/API</td>
+          <td><a class="btn btn-outline btn-sm" href="/owner-platform/platform-sms/provider/">تنظیم Provider ←</a></td>
+        </tr>
+        <tr>
+          <td><strong>صندوق ارسال</strong></td>
+          <td>مشاهده وضعیت پیامک‌ها و ارسال مجدد موارد ناموفق</td>
+          <td><a class="btn btn-outline btn-sm" href="/owner-platform/platform-sms/outbox/">مشاهده صندوق ←</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="alert alert-warning">
+  پیامک‌های این بخش از اعتبار شرکت‌ها کم نمی‌کنند و باید توسط مالک پلتفرم پرداخت شوند.
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+/* =============================================================================
+   Rasti Service — Central Theme Entrypoint (P24)
+   
+   This is the SINGLE source of truth for the site's visual design.
+   All pages load this file through base.html.
+   
+   Load order matters:
+   1. tokens.css    — Design tokens (colors, spacing, radius, shadows, fonts)
+   2. base.css      — Reset, font-face, body defaults
+   3. components.css — Reusable UI components (btn, card, badge, table, alert)
+   4. layouts.css   — Grid, sidebar, shell layouts
+   5. pages.css     — Page-specific classes + financial report utilities
+   6. dashboard.css — Legacy dashboard styles (to be gradually removed)
+   7. responsive.css — Media queries for mobile/tablet
+
+   RULES:
+   - New CSS must use tokens from tokens.css.
+   - New components go in components.css.
+   - Page-specific utilities go in pages.css.
+   - Do NOT add inline styles to templates.
+   - Do NOT add hardcoded hex colors.
+   - Do NOT add one-off CSS files per page.
+   
+   See: docs/UI_TOKENS_GUIDE.md, docs/UI_CORE_COMPONENT_USAGE.md
+   ============================================================================= */
+
+@import url('tokens.css');
+@import url('base.css');
+@import url('components.css');
+@import url('layouts.css');
+@import url('pages.css');
+@import url('dashboard.css');
+@import url('responsive.css');
+
+@import url('rasti_ui_hotfix.css');

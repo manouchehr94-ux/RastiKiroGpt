@@ -1,0 +1,144 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+
+{% block title %}عملیات پرداخت — پلتفرم{% endblock %}
+
+
+{% block sidebar_brand %}رستی سرویس{% endblock %}
+{% block sidebar_subtitle %}پنل مدیریت پلتفرم{% endblock %}
+{% block user_role_label %}مدیر پلتفرم{% endblock %}
+{% block logout_url %}/owner-platform/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
+{% block page_title %}عملیات پرداخت درگاهی — پلتفرم{% endblock %}
+{% block page_description %}پایش سلامت پرداخت‌ها، وضعیت‌های معلق و خطاهای درگاه در سطح پلتفرم{% endblock %}
+{% block navbar_actions %}
+<a href="/owner-platform/payments/operations/" class="btn btn-secondary btn-sm">تازه‌سازی</a>
+<a href="/owner-platform/reports/" class="btn btn-outline btn-sm">گزارش‌های مالی</a>
+{% endblock %}
+
+{% block content %}
+<div class="px-6 py-8" dir="rtl">
+  <h1 class="text-xl font-bold text-gray-800 mb-6">عملیات پرداخت درگاهی — نمای پلتفرم</h1>
+
+  {# Alert banner #}
+  {% if alert.severity == "danger" %}
+  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:.75rem;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+    <div class="section-title fin-number-negative">⚠️ نیازمند بررسی فوری</div>
+    {% if alert.failed_recent_count > 0 %}<div class="audit-meta fin-number-negative">{{ alert.failed_recent_count }} پرداخت ناموفق اخیر در سطح پلتفرم</div>{% endif %}
+    {% if alert.old_pending_count > 0 %}<div class="audit-meta fin-number-negative">{{ alert.old_pending_count }} پرداخت در انتظار قدیمی</div>{% endif %}
+    <div class="stat-card-hint">
+      <code>expire_pending_payments</code> | <code>reconcile_payments --file report.csv</code>
+    </div>
+  </div>
+  {% elif alert.severity == "warning" %}
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:.75rem;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+    <div class="section-title stat-value-warning">⏳ پرداخت‌های در انتظار قدیمی</div>
+    <div class="audit-meta stat-value-warning">{{ alert.old_pending_count }} پرداخت بیش از {{ health.expiration_minutes }} دقیقه در انتظار</div>
+  </div>
+  {% else %}
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:.75rem;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+    <div class="section-title stat-value-success">✓ وضعیت سالم — هیچ مشکل درگاهی شناسایی نشده</div>
+  </div>
+  {% endif %}
+
+  {# Status cards #}
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-yellow-600">{{ health.old_pending_count }}</div>
+      <div class="text-xs text-gray-500 mt-1">در انتظار منقضی ({{ health.expiration_minutes }}+ دقیقه)</div>
+      <div class="text-xs text-gray-400 mt-1">{{ health.old_pending_amount|smart_number }} ریال</div>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-red-600">{{ health.failed_recent_count }}</div>
+      <div class="text-xs text-gray-500 mt-1">ناموفق اخیر (۷ روز)</div>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-blue-600">{{ health.expired_by_cleanup_count }}</div>
+      <div class="text-xs text-gray-500 mt-1">منقضی توسط سیستم</div>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-green-600">{{ health.status_counts.paid }}</div>
+      <div class="text-xs text-gray-500 mt-1">موفق (کل)</div>
+    </div>
+  </div>
+
+  {# Company breakdown #}
+  {% if health.company_breakdown %}
+  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
+    <div class="px-5 py-3 border-b border-gray-100 font-semibold text-sm text-gray-700">شرکت‌ها با پرداخت‌های معلق</div>
+    <table class="data-table">
+      <thead>
+        <tr class="">
+          <th class="">شرکت</th>
+          <th class="ltr-cell">تعداد معلق</th>
+          <th class="ltr-cell">مبلغ معلق (ریال)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in health.company_breakdown %}
+        <tr class="">
+          <td class="detail-value-strong">{{ row.company__name }} ({{ row.company__code }})</td>
+          <td class="ltr-cell">{{ row.pending_count }}</td>
+          <td class="ltr-cell fin-number-negative">{{ row.pending_amount|smart_number }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {# Recent problematic #}
+  {% if health.problematic_payments %}
+  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-gray-100 font-semibold text-sm text-gray-700">پرداخت‌های نیازمند بررسی ({{ health.problematic_payments|length }})</div>
+    <table class="data-table">
+      <thead>
+        <tr class="">
+          <th class="">شناسه</th>
+          <th class="">شرکت</th>
+          <th class="">فاکتور</th>
+          <th class="">وضعیت</th>
+          <th class="ltr-cell">مبلغ</th>
+          <th class="">تاریخ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in health.problematic_payments %}
+        <tr class="">
+          <td class="">#{{ p.id }}</td>
+          <td class="">{{ p.company.name|default:"—" }}</td>
+          <td class="">{% if p.invoice %}{{ p.invoice.invoice_number }}{% else %}—{% endif %}</td>
+          <td class="">
+            {% if p.status == "pending" or p.status == "initiated" %}
+              <span style="background:#fef3c7;color:#92400e;padding:.15rem .5rem;border-radius:1rem;font-size:.75rem;">{{ p.status }}</span>
+            {% elif p.status == "failed" %}
+              <span style="background:#fee2e2;color:#991b1b;padding:.15rem .5rem;border-radius:1rem;font-size:.75rem;">ناموفق</span>
+            {% else %}
+              <span style="background:#f1f5f9;color:#64748b;padding:.15rem .5rem;border-radius:1rem;font-size:.75rem;">{{ p.status }}</span>
+            {% endif %}
+          </td>
+          <td class="ltr-cell detail-value-strong">{{ p.amount|smart_number }}</td>
+          <td class="stat-card-hint">{{ p.created_at|jalali_datetime }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card empty-state empty-state-healthy" dir="rtl">
+    <div class="empty-state-icon" style="font-size:2rem;width:auto;height:auto;background:none;">✓</div>
+    <p class="empty-state-title">همه شرکت‌ها از نظر پرداخت درگاهی سالم هستند</p>
+    <p class="empty-state-description">
+      در حال حاضر هیچ پرداخت قدیمی یا ناموفق در سطح پلتفرم شناسایی نشده است.
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6 text-sm text-blue-700">
+    <strong>نکته:</strong>
+    این صفحه فقط خواندنی است. برای مدیریت پرداخت‌های منقضی از دستور
+    <code>expire_pending_payments</code> و برای تطبیق با PSP از دستور
+    <code>reconcile_payments</code> استفاده کنید.
+  </div>
+</div>
+{% endblock %}

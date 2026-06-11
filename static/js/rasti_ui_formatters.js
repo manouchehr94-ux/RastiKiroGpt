@@ -1,0 +1,3 @@
+
+window.RastiFormatNumbers = window.RastiFormatNumbers || { apply: function () { var selector = '.stat-value,.fin-number,[data-format-number],.dashboard-content td,.dashboard-content th'; document.querySelectorAll(selector).forEach(function (el) { if (!el || el.children.length) return; var txt = (el.textContent || '').trim(); if (!/^[-+]?\d{4,}$/.test(txt)) return; if (/^09\d+/.test(txt)) return; el.textContent = txt.replace(/\B(?=(\d{3})+(?!\d))/g, ','); el.classList.add('rasti-number'); }); } };
+document.addEventListener('DOMContentLoaded', function () { window.RastiFormatNumbers.apply(); });

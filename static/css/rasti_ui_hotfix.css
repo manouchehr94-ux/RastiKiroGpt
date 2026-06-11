@@ -1,0 +1,36 @@
+
+/* Rasti final mobile/sidebar hotfix. Safe UI-only overrides. */
+#sidebarOverlay,
+.sidebar-overlay {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: opacity .18s ease, visibility .18s ease;
+}
+body.rasti-sidebar-open #sidebarOverlay,
+body.rasti-sidebar-open .sidebar-overlay,
+#sidebarOverlay.active,
+.sidebar-overlay.active {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 40 !important;
+  background: rgba(15, 23, 42, .45) !important;
+  backdrop-filter: blur(2px);
+}
+@media (min-width: 1024px) {
+  #sidebarOverlay,.sidebar-overlay,#sidebarOverlay.active,.sidebar-overlay.active,body.rasti-sidebar-open #sidebarOverlay,body.rasti-sidebar-open .sidebar-overlay {
+    display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; background: transparent !important; backdrop-filter: none !important;
+  }
+  #sidebar,.sidebar,.admin-sidebar { transform: translateX(0) !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; }
+}
+@media (max-width: 1023px) {
+  #sidebar,.sidebar,.admin-sidebar { position: fixed !important; top: 0 !important; bottom: 0 !important; right: 0 !important; z-index: 50 !important; max-width: min(86vw, 320px) !important; width: min(86vw, 320px) !important; transition: transform .22s ease, opacity .22s ease, visibility .22s ease !important; }
+  #sidebar:not(.open):not(.sidebar-opened):not(.is-open),.sidebar:not(.open):not(.sidebar-opened):not(.is-open),.admin-sidebar:not(.open):not(.sidebar-opened):not(.is-open) { transform: translateX(110%) !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; }
+  body.rasti-sidebar-open #sidebar,body.rasti-sidebar-open .sidebar,body.rasti-sidebar-open .admin-sidebar,#sidebar.open,#sidebar.sidebar-opened,#sidebar.is-open,.sidebar.open,.sidebar.sidebar-opened,.sidebar.is-open,.admin-sidebar.open,.admin-sidebar.sidebar-opened,.admin-sidebar.is-open { transform: translateX(0) !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; }
+}
+.rasti-number,[data-format-number] { direction: ltr; unicode-bidi: plaintext; }

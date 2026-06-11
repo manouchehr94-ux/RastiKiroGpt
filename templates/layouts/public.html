@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="public-shell">
+
+  {# ===== NAVBAR ===== #}
+  <nav class="public-nav">
+    <div class="public-nav-inner">
+
+      {# Brand #}
+      <a href="/" class="public-nav-brand">
+        <div class="sidebar-brand-icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <span class="public-nav-brand-name">رستی سرویس</span>
+      </a>
+
+      {# Desktop nav links — hidden on mobile via responsive.css #}
+      <div class="public-nav-links">
+        <a href="/" class="public-nav-link">خانه</a>
+        <a href="/features/" class="public-nav-link">امکانات</a>
+        <a href="/pricing/" class="public-nav-link">تعرفه‌ها</a>
+        <a href="/about/" class="public-nav-link">درباره ما</a>
+        <a href="/contact/" class="public-nav-link">تماس با ما</a>
+      </div>
+
+      {# CTA buttons + mobile hamburger #}
+      <div class="public-nav-actions">
+        <a href="/register/" class="btn btn-outline btn-sm public-nav-register-btn">ثبت نام شرکت</a>
+        <a href="/login/" class="btn btn-primary btn-sm">ورود</a>
+        <button onclick="toggleMobileMenu()"
+                class="btn btn-ghost btn-icon public-nav-mobile-toggle"
+                aria-label="باز کردن منو">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    {# Mobile dropdown — toggled by JS #}
+    <div id="mobileMenu" class="public-mobile-menu" style="display:none;">
+      <a href="/" class="public-nav-link public-nav-link-block">خانه</a>
+      <a href="/features/" class="public-nav-link public-nav-link-block">امکانات</a>
+      <a href="/pricing/" class="public-nav-link public-nav-link-block">تعرفه‌ها</a>
+      <a href="/about/" class="public-nav-link public-nav-link-block">درباره ما</a>
+      <a href="/contact/" class="public-nav-link public-nav-link-block">تماس با ما</a>
+      <a href="/register/" class="public-nav-link public-nav-link-block" style="color:var(--color-brand-600);">ثبت نام شرکت</a>
+    </div>
+  </nav>
+
+  {# ===== PAGE CONTENT ===== #}
+  <main class="public-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  {# ===== FOOTER ===== #}
+  <footer class="public-footer">
+    <div class="public-footer-inner">
+      <div class="public-footer-grid">
+        <div>
+          <h3 class="public-footer-heading">رستی سرویس</h3>
+          <p class="public-footer-body">سامانه هوشمند مدیریت خدمات و سفارشات برای شرکت‌های خدماتی ایرانی</p>
+        </div>
+        <div>
+          <h3 class="public-footer-heading">لینک‌های سریع</h3>
+          <ul class="public-footer-list">
+            <li><a href="/features/">امکانات</a></li>
+            <li><a href="/pricing/">تعرفه‌ها</a></li>
+            <li><a href="/register/">ثبت نام شرکت</a></li>
+            <li><a href="/login/">ورود</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="public-footer-heading">تماس</h3>
+          <ul class="public-footer-list">
+            <li><a href="/about/">درباره ما</a></li>
+            <li><a href="/contact/">تماس با ما</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="public-footer-bottom">
+        <p>&copy; رستی سرویس &mdash; تمامی حقوق محفوظ است</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+function toggleMobileMenu() {
+  var m = document.getElementById('mobileMenu');
+  if (!m) return;
+  m.style.display = (m.style.display === 'none' || m.style.display === '') ? 'block' : 'none';
+}
+</script>
+{% endblock %}

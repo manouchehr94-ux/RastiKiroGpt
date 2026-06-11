@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}رستی سرویس{% endblock %}</title>
+    {% load static %}
+    {# Central UI theme — single entrypoint for all visual styling (P24) #}
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="stylesheet" href="{% static 'css/rasti_ui_hotfix.css' %}">
+    <link rel="stylesheet" href="{% static 'css/rasti_sidebar_fix.css' %}">
+    {# UI Core consistency patch: keeps admin/owner layouts on the central UI Core #}
+    <link rel="stylesheet" href="{% static 'css/rasti_ui_core_consistency.css' %}">
+    {# RASTI_UI_HOTFIX_20260607: global Jalali datepicker styles #}
+    <link rel="stylesheet" href="{% static 'css/jalali_datepicker.css' %}">
+        <link rel="stylesheet" href="{% static 'css/tech_bottom_nav_fix.css' %}">
+{% block extra_head %}{% endblock %}
+    {# RASTI_UI_HOTFIX_20260607: global datepicker + number formatter #}
+    <script src="{% static 'js/jalali_datepicker.js' %}" defer></script>
+    <script src="{% static 'js/phase_c2_datetime_local_v2.js' %}?v=phase-c2-v2" defer></script>
+    <script src="{% static 'js/rasti_ui_formatters.js' %}" defer></script>
+</head>
+<body>
+    {% block body %}
+    {% block content %}{% endblock %}
+    {% endblock %}
+    {% block extra_js %}{% endblock %}
+    <script src="{% static 'js/rasti_ui_hotfix.js' %}" defer></script>
+    <script src="{% static 'js/phase_c2_datetime_local.js' %}" defer></script>
+    <script src="{% static 'js/rasti_sidebar.js' %}?v=phase-b-v2" defer></script>
+    <script src="{% static 'js/tech_bottom_nav_fix.js' %}?v=local-hotfix-1" defer></script>
+</body>
+</html>

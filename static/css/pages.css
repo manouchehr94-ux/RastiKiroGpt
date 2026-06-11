@@ -1,0 +1,1608 @@
+/* =============================================================================
+   Rasti Service — Page-Specific Styles
+   Optional overrides scoped to individual page types.
+   Classes here are additive — they do not conflict with components.css or
+   layouts.css. Pages are NOT yet migrated to use these in Phase 1.
+   ============================================================================= */
+
+
+/* =============================================================================
+   PUBLIC LANDING PAGE
+   ============================================================================= */
+
+/* Hero section — full-width gradient banner */
+.hero-section {
+  padding: var(--space-20) 0;
+  background: linear-gradient(
+    135deg,
+    var(--color-slate-900) 0%,
+    var(--color-slate-800) 40%,
+    var(--color-brand-900) 100%
+  );
+  color: #fff;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 25% 50%, rgba(59,130,246,0.15) 0%, transparent 60%),
+                    radial-gradient(circle at 75% 20%, rgba(99,102,241,0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-extrabold);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--space-4);
+  color: #fff;
+}
+
+.hero-subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-slate-300);
+  max-width: 36rem;
+  margin: 0 auto var(--space-8);
+  line-height: var(--line-height-loose);
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Stats bar below hero */
+.hero-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+  flex-wrap: wrap;
+  margin-top: var(--space-12);
+  padding-top: var(--space-8);
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.hero-stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: #fff;
+  line-height: 1;
+}
+
+.hero-stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-slate-400);
+  margin-top: var(--space-1);
+}
+
+/* Features section */
+.features-section {
+  padding: var(--space-20) 0;
+  background-color: var(--color-surface-0);
+}
+
+.section-eyebrow {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-brand-600);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider);
+  margin-bottom: var(--space-3);
+}
+
+.section-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-slate-800);
+  margin-bottom: var(--space-4);
+  line-height: var(--line-height-tight);
+}
+
+.section-description {
+  font-size: var(--font-size-md);
+  color: var(--color-slate-500);
+  max-width: 36rem;
+  line-height: var(--line-height-loose);
+}
+
+/* Features grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-6);
+  margin-top: var(--space-12);
+}
+
+/* Pricing section */
+.pricing-section {
+  padding: var(--space-20) 0;
+  background-color: var(--color-surface-1);
+}
+
+.pricing-card {
+  background-color: var(--color-surface-0);
+  border-radius: var(--radius-xl);
+  border: var(--border-width) solid var(--color-slate-200);
+  padding: var(--space-8);
+  transition: var(--transition-base);
+}
+
+.pricing-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-brand-300);
+}
+
+.pricing-card.featured {
+  background: linear-gradient(135deg, var(--color-brand-600) 0%, var(--color-brand-800) 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-brand);
+}
+
+.pricing-price {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1;
+  margin-bottom: var(--space-2);
+  direction: ltr;
+  display: block;
+}
+
+.pricing-period {
+  font-size: var(--font-size-sm);
+  color: var(--color-slate-400);
+}
+
+
+/* =============================================================================
+   REGISTRATION PAGE
+   ============================================================================= */
+
+.register-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.register-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-slate-400);
+}
+
+.register-step-number {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  background-color: var(--color-slate-200);
+  color: var(--color-slate-500);
+  flex-shrink: 0;
+}
+
+.register-step.active .register-step-number {
+  background-color: var(--color-brand-600);
+  color: #fff;
+}
+
+.register-step.done .register-step-number {
+  background-color: var(--color-success);
+  color: #fff;
+}
+
+.register-step-connector {
+  width: 2rem;
+  height: 2px;
+  background-color: var(--color-slate-200);
+}
+
+.register-step.done + .register-step-connector {
+  background-color: var(--color-success);
+}
+
+
+/* =============================================================================
+   DASHBOARD HOME WIDGETS
+   ============================================================================= */
+
+/* Stats row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+/* Quick actions grid */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+
+.quick-action-card {
+  background-color: var(--color-surface-0);
+  border-radius: var(--radius-lg);
+  border: var(--border-width) solid var(--color-slate-100);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition-base);
+}
+
+.quick-action-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-brand-200);
+  color: inherit;
+}
+
+.quick-action-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-brand-50);
+  color: var(--color-brand-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-action-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-slate-700);
+}
+
+.quick-action-sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-slate-400);
+}
+
+
+/* =============================================================================
+   INVOICE PAGE
+   ============================================================================= */
+
+.invoice-total-card {
+  background: linear-gradient(135deg, var(--color-slate-800) 0%, var(--color-slate-900) 100%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  color: #fff;
+}
+
+.invoice-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) 0;
+  font-size: var(--font-size-base);
+}
+
+.invoice-total-row.final {
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(255,255,255,0.15);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.invoice-total-row .amount {
+  direction: ltr;
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* =============================================================================
+   TECHNICIAN ORDER CARDS
+   ============================================================================= */
+
+.tech-order-card {
+  background-color: var(--color-surface-0);
+  border-radius: var(--radius-lg);
+  border: var(--border-width) solid var(--color-slate-200);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  transition: var(--transition-base);
+}
+
+.tech-order-card:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-slate-300);
+}
+
+.tech-order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.tech-order-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.tech-order-field {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.tech-order-field-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-slate-400);
+  flex-shrink: 0;
+}
+
+.tech-order-field-value {
+  color: var(--color-slate-700);
+  font-weight: var(--font-weight-medium);
+}
+
+
+/* =============================================================================
+   HOW IT WORKS
+   ============================================================================= */
+
+.how-it-works-section {
+  padding: var(--space-20) 0;
+  background-color: var(--color-surface-1);
+}
+
+.how-it-works-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+  margin-top: var(--space-12);
+  position: relative;
+}
+
+.how-it-works-step {
+  text-align: center;
+}
+
+.how-it-works-step-number {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-brand-600);
+  color: #fff;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-extrabold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+}
+
+.how-it-works-step-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-slate-700);
+  margin-bottom: var(--space-2);
+}
+
+.how-it-works-step-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-slate-500);
+  line-height: var(--line-height-loose);
+}
+
+
+/* =============================================================================
+   SUITABLE BUSINESS TYPES
+   ============================================================================= */
+
+.business-types-section {
+  padding: var(--space-20) 0;
+  background-color: var(--color-surface-0);
+}
+
+.business-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-10);
+}
+
+.business-type-card {
+  background-color: var(--color-surface-0);
+  border: var(--border-width) solid var(--color-slate-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-3);
+  text-align: center;
+  transition: var(--transition-base);
+}
+
+.business-type-card:hover {
+  border-color: var(--color-brand-200);
+  box-shadow: var(--shadow-sm);
+}
+
+.business-type-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-brand-50);
+  color: var(--color-brand-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-2);
+}
+
+.business-type-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-slate-700);
+}
+
+
+/* =============================================================================
+   TRUST / SECURITY SECTION
+   ============================================================================= */
+
+.trust-section {
+  padding: var(--space-16) 0;
+  background-color: var(--color-slate-900);
+}
+
+.trust-section-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-extrabold);
+  color: #fff;
+  text-align: center;
+  margin-bottom: var(--space-2);
+}
+
+.trust-section-sub {
+  font-size: var(--font-size-base);
+  color: var(--color-slate-400);
+  text-align: center;
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}
+
+.trust-item {
+  text-align: center;
+}
+
+.trust-item-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-full);
+  background-color: rgba(59, 130, 246, 0.12);
+  color: var(--color-brand-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-3);
+}
+
+.trust-item-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: #fff;
+  margin-bottom: var(--space-1);
+}
+
+.trust-item-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-slate-400);
+  line-height: var(--line-height-loose);
+}
+
+
+/* =============================================================================
+   FAQ SECTION
+   ============================================================================= */
+
+.faq-section {
+  padding: var(--space-20) 0;
+  background-color: var(--color-surface-1);
+}
+
+.faq-list {
+  max-width: 48rem;
+  margin: var(--space-10) auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.faq-item {
+  background-color: var(--color-surface-0);
+  border: var(--border-width) solid var(--color-slate-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-slate-800);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: right;
+  transition: var(--transition-colors);
+  gap: var(--space-4);
+  font-family: var(--font-family-base);
+}
+
+.faq-question:hover {
+  background-color: var(--color-surface-1);
+  color: var(--color-brand-600);
+}
+
+.faq-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  color: var(--color-slate-400);
+}
+
+.faq-item.open .faq-chevron {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  padding: 0 var(--space-5) var(--space-4);
+  font-size: var(--font-size-base);
+  color: var(--color-slate-600);
+  line-height: var(--line-height-loose);
+  display: none;
+}
+
+.faq-item.open .faq-answer {
+  display: block;
+}
+
+
+/* =============================================================================
+   CTA BANNER (final call to action)
+   ============================================================================= */
+
+.cta-section {
+  padding: var(--space-20) 0;
+  background: linear-gradient(135deg, var(--color-brand-700) 0%, var(--color-brand-900) 100%);
+  text-align: center;
+}
+
+.cta-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: #fff;
+  margin-bottom: var(--space-4);
+  line-height: var(--line-height-tight);
+}
+
+.cta-description {
+  font-size: var(--font-size-md);
+  color: rgba(255, 255, 255, 0.75);
+  max-width: 32rem;
+  margin: 0 auto var(--space-8);
+  line-height: var(--line-height-loose);
+}
+
+
+/* =============================================================================
+   FEATURE GROUP (features page sections)
+   ============================================================================= */
+
+.feature-group-section {
+  padding: var(--space-12) 0;
+  border-bottom: var(--border-width) solid var(--color-slate-100);
+}
+
+.feature-group-section:last-of-type {
+  border-bottom: none;
+}
+
+.feature-group-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-brand-600);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider);
+  margin-bottom: var(--space-2);
+  background-color: var(--color-brand-50);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+}
+
+.feature-group-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.feature-group-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-1);
+}
+
+.feature-group-item-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-brand-50);
+  color: var(--color-brand-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.feature-group-item-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-slate-700);
+  font-weight: var(--font-weight-medium);
+  padding-top: 2px;
+}
+
+
+/* =============================================================================
+   REGISTER PAGE
+   ============================================================================= */
+
+.register-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-4);
+}
+
+.register-page-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.register-page-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-slate-900);
+  margin-bottom: var(--space-2);
+}
+
+.register-page-sub {
+  font-size: var(--font-size-base);
+  color: var(--color-slate-500);
+}
+
+
+/* =============================================================================
+   VERIFY / OTP PAGE
+   ============================================================================= */
+
+.verify-shell {
+  max-width: 26rem;
+  margin: var(--space-12) auto;
+  padding: 0 var(--space-4);
+}
+
+.verify-phone-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background-color: var(--color-brand-50);
+  color: var(--color-brand-700);
+  border-radius: var(--radius-full);
+  padding: var(--space-1-5) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-6);
+  direction: ltr;
+}
+
+
+/* =============================================================================
+   ABOUT PAGE
+   ============================================================================= */
+
+.about-hero {
+  padding: var(--space-16) 0;
+  background: linear-gradient(135deg, var(--color-slate-900) 0%, var(--color-slate-800) 60%, var(--color-brand-900) 100%);
+  text-align: center;
+  color: #fff;
+}
+
+.about-hero-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: #fff;
+  margin-bottom: var(--space-4);
+}
+
+.about-hero-desc {
+  font-size: var(--font-size-md);
+  color: var(--color-slate-300);
+  max-width: 36rem;
+  margin: 0 auto;
+  line-height: var(--line-height-loose);
+}
+
+.about-section {
+  padding: var(--space-16) 0;
+}
+
+.about-section-alt {
+  background-color: var(--color-surface-1);
+}
+
+.about-value-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+  margin-top: var(--space-10);
+}
+
+.about-value-card {
+  text-align: center;
+  padding: var(--space-6);
+}
+
+.about-value-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-brand-50);
+  color: var(--color-brand-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+}
+
+.about-value-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-slate-800);
+  margin-bottom: var(--space-2);
+}
+
+.about-value-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-slate-500);
+  line-height: var(--line-height-loose);
+}
+
+
+/* =============================================================================
+   CONTACT PAGE
+   ============================================================================= */
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.contact-info-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-brand-50);
+  color: var(--color-brand-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contact-info-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-slate-400);
+  margin-bottom: var(--space-0-5);
+}
+
+.contact-info-value {
+  font-size: var(--font-size-base);
+  color: var(--color-slate-700);
+  font-weight: var(--font-weight-medium);
+}
+
+
+/* =============================================================================
+   FINANCIAL DASHBOARD — Payment P6 UI Redesign
+   Classes for financial reports, invoice detail, technician ledger.
+   All values reference design tokens from tokens.css.
+   ============================================================================= */
+
+/* --- Financial sub-navigation --- */
+.fin-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-6);
+  padding: var(--space-1);
+  background: var(--color-slate-100);
+  border-radius: var(--radius-lg);
+}
+
+.fin-subnav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-2) var(--space-3-5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-slate-600);
+  text-decoration: none;
+  transition: var(--transition-base);
+  white-space: nowrap;
+}
+
+.fin-subnav-item:hover {
+  background: var(--color-surface-0);
+  color: var(--color-slate-800);
+  text-decoration: none;
+}
+
+.fin-subnav-item.active {
+  background: var(--color-surface-0);
+  color: var(--color-brand-700);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: var(--shadow-xs);
+}
+
+.fin-subnav-item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.fin-subnav-item.active svg {
+  opacity: 1;
+}
+
+/* --- Stats grid --- */
+.stat-grid {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.stat-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.stat-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.stat-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 900px) {
+  .stat-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .stat-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 540px) {
+  .stat-grid-4, .stat-grid-3, .stat-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* --- Balance insight box --- */
+.balance-insight {
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  border: var(--border-width) solid;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.balance-insight.positive {
+  background: var(--color-success-light);
+  border-color: var(--color-success-border);
+  color: var(--color-success-dark);
+}
+
+.balance-insight.negative {
+  background: var(--color-danger-light);
+  border-color: var(--color-danger-border);
+  color: var(--color-danger-dark);
+}
+
+.balance-insight.zero {
+  background: var(--color-slate-50);
+  border-color: var(--color-slate-200);
+  color: var(--color-slate-600);
+}
+
+.balance-insight.warning {
+  background: var(--color-warning-light);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-dark);
+}
+
+.balance-insight-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.balance-insight.positive .balance-insight-icon { background: var(--color-success-bg); }
+.balance-insight.negative .balance-insight-icon { background: var(--color-danger-bg); }
+.balance-insight.zero .balance-insight-icon     { background: var(--color-slate-200); }
+.balance-insight.warning .balance-insight-icon  { background: var(--color-warning-bg); }
+
+.balance-insight-body { flex: 1; }
+
+.balance-insight-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-1);
+}
+
+.balance-insight-amount {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-extrabold);
+  direction: ltr;
+  display: inline-block;
+}
+
+.balance-insight-detail {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+  margin-top: var(--space-1);
+}
+
+/* --- Financial breakdown (invoice detail) --- */
+.fin-breakdown {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-base);
+}
+
+.fin-breakdown td {
+  padding: var(--space-2-5) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-slate-100);
+  vertical-align: middle;
+}
+
+.fin-breakdown td:last-child {
+  text-align: left;
+  direction: ltr;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.fin-breakdown .lbl {
+  color: var(--color-slate-500);
+  font-size: var(--font-size-sm);
+}
+
+.fin-breakdown .section-divider td {
+  background: var(--color-slate-50);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--color-slate-200);
+}
+
+.fin-breakdown .total-row td {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-md);
+  border-top: 2px solid var(--color-slate-800);
+  border-bottom: none;
+  padding-top: var(--space-3-5);
+}
+
+.fin-breakdown .sub-total-row td {
+  font-weight: var(--font-weight-semibold);
+  border-top: var(--border-width) solid var(--color-slate-300);
+}
+
+.fin-breakdown .deduction td:last-child {
+  color: var(--color-danger);
+}
+
+.fin-breakdown .tech-wage td:last-child {
+  color: #7c3aed;
+}
+
+.fin-breakdown .platform-fee td:last-child {
+  color: var(--color-warning-dark);
+}
+
+.fin-breakdown .company-net td:last-child {
+  color: var(--color-success-dark);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-extrabold);
+}
+
+/* --- Payment action cards --- */
+.payment-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .payment-actions-grid { grid-template-columns: 1fr; }
+}
+
+.payment-action-card {
+  border: 2px solid;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  background: var(--color-surface-0);
+  transition: var(--transition-base);
+}
+
+.payment-action-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.payment-action-card.company {
+  border-color: var(--color-brand-200);
+  background: var(--color-brand-50);
+}
+
+.payment-action-card.technician {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-light);
+}
+
+.payment-action-card.gateway {
+  border-color: var(--color-slate-200);
+  background: var(--color-slate-50);
+}
+
+.payment-action-card-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-slate-800);
+  margin-bottom: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.payment-action-card-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-slate-600);
+  line-height: var(--line-height-base);
+  margin-bottom: var(--space-4);
+}
+
+.payment-action-card-effect {
+  font-size: var(--font-size-xs);
+  color: var(--color-slate-500);
+  background: rgba(255,255,255,0.6);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+  line-height: 1.7;
+}
+
+/* --- Audit severity badges --- */
+.severity-critical {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-dark);
+}
+
+.severity-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-dark);
+}
+
+.severity-info {
+  background: var(--color-info-bg);
+  color: var(--color-info-dark);
+}
+
+.severity-ok {
+  background: var(--color-success-bg);
+  color: var(--color-success-dark);
+}
+
+/* --- Audit warning item --- */
+.audit-item {
+  border: var(--border-width) solid var(--color-slate-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: var(--space-3);
+}
+
+.audit-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-1);
+  border-bottom: var(--border-width) solid var(--color-slate-200);
+}
+
+.audit-item.critical .audit-item-header { background: var(--color-danger-bg); border-color: var(--color-danger-border); }
+.audit-item.warning .audit-item-header  { background: var(--color-warning-bg); border-color: var(--color-warning-border); }
+
+.audit-item-body {
+  padding: var(--space-4) var(--space-5);
+}
+
+.audit-item-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 640px) {
+  .audit-item-meta { grid-template-columns: 1fr; }
+}
+
+.audit-item-meta-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-slate-500);
+  margin-bottom: var(--space-1);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* --- Ledger table rows --- */
+.ledger-credit-row td { background: #f0fdf4; }
+.ledger-debit-row td  { background: #fff7f7; }
+
+/* Source label pill */
+.source-pill {
+  display: inline-block;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+  white-space: nowrap;
+}
+
+/* Amount display — always LTR, monospaced-ish */
+.amount-positive { color: var(--color-success); font-weight: var(--font-weight-bold); direction: ltr; display: inline-block; }
+.amount-negative { color: var(--color-danger);  font-weight: var(--font-weight-bold); direction: ltr; display: inline-block; }
+.amount-neutral  { color: var(--color-slate-500); font-weight: var(--font-weight-semibold); direction: ltr; display: inline-block; }
+
+/* Purple accent (technician wage) */
+.text-purple { color: var(--color-purple); }
+.bg-purple-light { background: var(--color-purple-bg); }
+
+/* Stat card purple/indigo use tokens */
+.stat-card-icon.purple { background: var(--color-purple-bg); color: var(--color-purple); }
+.stat-card-icon.indigo { background: var(--color-indigo-bg); color: var(--color-indigo); }
+
+/* =============================================================================
+   FINANCIAL REPORT UTILITIES (P20)
+   Reusable helper classes to reduce inline styles in financial report templates.
+   ============================================================================= */
+
+/* Report section card — slightly more spacious for financial data */
+.report-card {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-slate-100);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+}
+
+.report-card-header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: var(--border-width) solid var(--color-slate-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.report-card-header-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+/* Financial helper text / guidance block */
+.report-help {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-loose);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-info-light);
+  border: var(--border-width) solid var(--color-info-border);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-3);
+}
+
+.report-help strong {
+  color: var(--color-info-dark);
+}
+
+/* Financial table number alignment */
+.fin-number {
+  text-align: left;
+  direction: ltr;
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-number-positive { color: var(--color-success); }
+.fin-number-negative { color: var(--color-danger); }
+.fin-number-neutral  { color: var(--color-text-muted); }
+
+
+/* =============================================================================
+   FINANCIAL REPORT TEMPLATE HELPERS (P21)
+   Replaces common inline styles in financial report templates.
+   ============================================================================= */
+
+/* Stat card helper/hint text below value */
+.stat-card-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+  margin-top: var(--space-1-5);
+}
+
+/* Page header subtitle */
+.page-header-subtitle {
+  color: var(--color-text-muted);
+  margin: var(--space-1-5) 0 0;
+  font-size: var(--font-size-sm);
+}
+
+/* Button/link group — flex wrap */
+.btn-group-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Conditional value colors for stat cards */
+.stat-value-success { color: var(--color-success); }
+.stat-value-warning { color: var(--color-warning); }
+.stat-value-danger  { color: var(--color-danger); }
+.stat-value-muted   { color: var(--color-text-muted); }
+
+/* Audit item styles */
+.audit-section {
+  margin-bottom: var(--space-4);
+}
+
+.audit-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.audit-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-loose);
+}
+
+
+/* =============================================================================
+   HIGH-RISK TEMPLATE UTILITIES (P22)
+   Replaces common inline styles in invoice detail, ledger, settlement, snapshots.
+   ============================================================================= */
+
+/* Detail list — key/value pairs in cards (invoice info, payment info) */
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2-5);
+}
+
+.detail-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.detail-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  min-width: 5.5rem;
+  flex-shrink: 0;
+}
+
+.detail-label-wide {
+  min-width: 7rem;
+}
+
+.detail-value {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+}
+
+.detail-value-strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+}
+
+.detail-value-mono {
+  font-family: monospace;
+  direction: ltr;
+}
+
+/* LTR number alignment in RTL tables */
+.ltr-cell {
+  text-align: left;
+  direction: ltr;
+}
+
+/* Card flush — no padding, for embedding tables */
+.card-flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Card with status color border */
+.card-success-border {
+  border-color: var(--color-success-border);
+  background: var(--color-success-light);
+}
+
+.card-info-border {
+  border-color: var(--color-info-border);
+  background: var(--color-info-light);
+}
+
+/* Table footer rows */
+.tfoot-row {
+  background: var(--color-surface-soft);
+}
+
+.tfoot-row-highlight {
+  background: var(--color-primary-light);
+}
+
+.tfoot-label {
+  padding: var(--space-2-5) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.tfoot-value {
+  padding: var(--space-2-5) var(--space-4);
+  text-align: left;
+  direction: ltr;
+  font-weight: var(--font-weight-semibold);
+}
+
+.tfoot-total-label {
+  padding: var(--space-3) var(--space-4);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-text-strong);
+}
+
+.tfoot-total-value {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  direction: ltr;
+  font-weight: var(--font-weight-extrabold);
+  font-size: var(--font-size-md);
+  color: var(--color-primary);
+}
+
+/* Section title — inline heading within page */
+.section-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+
+/* Actions row — flex wrap for buttons/forms */
+.actions-row {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Snapshot/detail data row (split_snapshot_detail) */
+.snapshot-row {
+  display: flex;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-slate-100);
+}
+
+.snapshot-label {
+  width: 9rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.snapshot-value {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+}
+
+/* Filter form container */
+.filter-bar {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-slate-200);
+  border-radius: var(--radius-card);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+}
+
+.filter-group label {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.filter-input {
+  padding: var(--space-1-5) var(--space-2-5);
+  border: var(--border-width) solid var(--color-slate-300);
+  border-radius: var(--radius-btn);
+  font-size: var(--font-size-sm);
+  background: var(--color-surface);
+}
+
+/* Purple accent for technician wage display */
+.text-accent-purple {
+  color: var(--color-purple);
+}
+
+/* Card header with inline value */
+.card-header-value {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-text-strong);
+}
+
+
+/* =============================================================================
+   PUBLIC/MARKETING PAGE UTILITIES (P26)
+   Replaces common inline styles in public landing/marketing pages.
+   ============================================================================= */
+
+/* Text alignment */
+.text-center { text-align: center; }
+
+/* Section spacing */
+.mb-section { margin-bottom: var(--space-12); }
+.mb-block { margin-bottom: var(--space-6); }
+.mb-item { margin-bottom: var(--space-4); }
+.mx-auto { margin: 0 auto; }
+
+/* Section header (public pages) */
+.public-section-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-strong);
+  margin-bottom: var(--space-2);
+}
+
+.public-section-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  max-width: 36rem;
+}
+
+/* Card title (pricing/feature cards) */
+.public-card-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+  margin-bottom: var(--space-2);
+}
+
+.public-card-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-loose);
+}
+
+/* Feature list item */
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.feature-item-light {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Pricing feature list */
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Public page emoji/icon block */
+.public-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-2);
+}
+
+/* Label/hint on public forms */
+.public-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+/* Required field indicator */
+.text-danger { color: var(--color-danger); }
+
+/* Form stack */
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Inline min-height spacer */
+.spacer-line { display: block; min-height: 1.2em; }

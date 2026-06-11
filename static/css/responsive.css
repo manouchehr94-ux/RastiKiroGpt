@@ -1,0 +1,703 @@
+/* =============================================================================
+   Rasti Service — Responsive Overrides
+   Media queries ONLY. No new visual definitions; only overrides for existing
+   classes from components.css, layouts.css, and pages.css.
+   Breakpoints:
+     sm  — 640px   (small devices, large phones)
+     md  — 768px   (tablets)
+     lg  — 1024px  (desktop / large tablets)
+   ============================================================================= */
+
+
+/* =============================================================================
+   SMALL — max-width: 639px  (phones)
+   ============================================================================= */
+
+@media (max-width: 639px) {
+
+  /* --- Page Header --- */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-header-actions {
+    width: 100%;
+  }
+
+  /* --- Form Grids --- */
+  .form-grid-2,
+  .form-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  /* --- Table toolbar --- */
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-toolbar-filters,
+  .table-toolbar-actions {
+    width: 100%;
+  }
+
+  .table-toolbar-actions {
+    justify-content: flex-end;
+  }
+
+  /* --- Stat cards — 2 columns on phone --- */
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* --- Quick actions — 2 columns on phone --- */
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* --- Cards — full width padding reduction --- */
+  .card {
+    padding: var(--space-4);
+  }
+
+  /* --- Hero --- */
+  .hero-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .hero-subtitle {
+    font-size: var(--font-size-base);
+  }
+
+  .hero-stats {
+    gap: var(--space-6);
+  }
+
+  /* --- Features grid — 1 column on phone --- */
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* --- Pagination --- */
+  .pagination-info {
+    display: none;
+  }
+
+  /* --- Breadcrumb — shorten on mobile --- */
+  .breadcrumb-item:not(:last-child):not(:nth-last-child(2)) {
+    display: none;
+  }
+
+  /* --- Public nav: hide register btn (it lives in mobile menu too) --- */
+  .public-nav-register-btn { display: none; }
+
+  /* --- Topbar: hide subtitle and logout label text to save space --- */
+  .topbar-subtitle      { display: none; }
+  .topbar-logout-label  { display: none; }
+
+}
+
+
+/* =============================================================================
+   TABLET — max-width: 1023px  (phones + tablets, below desktop)
+   ============================================================================= */
+
+@media (max-width: 1023px) {
+
+  /* --- Dashboard: sidebar becomes a mobile overlay --- */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    z-index: var(--z-overlay);
+    transform: translateX(100%);
+    transition: var(--transition-sidebar);
+    box-shadow: var(--shadow-2xl);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: flex;
+  }
+
+  /* --- Topbar: show hamburger toggle --- */
+  .topbar-toggle {
+    display: flex;
+  }
+
+  /* --- Dashboard main: full width (no sidebar taking space) --- */
+  .dashboard-main {
+    width: 100%;
+  }
+
+  /* --- Auth panel: hide left decorative panel on tablet/mobile --- */
+  .auth-panel-left {
+    display: none;
+  }
+
+  .auth-panel-right {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  /* --- Public nav: hide desktop links, show mobile toggle --- */
+  .public-nav-links {
+    display: none;
+  }
+
+  .public-nav-mobile-toggle { display: flex; }
+  .auth-mobile-brand        { display: block; }
+
+  /* --- Table: horizontal scroll on tablet --- */
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  /* --- Form grids: 2-col on tablet (from 3-col) --- */
+  .form-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+
+/* =============================================================================
+   DESKTOP — min-width: 1024px
+   ============================================================================= */
+
+@media (min-width: 1024px) {
+
+  /* --- Dashboard: sidebar is always visible, not a fixed overlay --- */
+  .sidebar {
+    position: relative;
+    transform: none;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  .sidebar-close-btn {
+    display: none !important;
+  }
+
+  /* --- Topbar: hide hamburger on desktop --- */
+  .topbar-toggle {
+    display: none;
+  }
+
+  /* --- Auth: show left decorative panel on desktop --- */
+  .auth-panel-left {
+    display: flex;
+  }
+
+  /* --- Public nav: show desktop links, hide mobile items --- */
+  .public-nav-links {
+    display: flex;
+  }
+
+  .public-nav-mobile-toggle { display: none; }
+  .auth-mobile-brand        { display: none; }
+  .public-nav-register-btn  { display: inline-flex; }
+
+  /* --- Technician shell: more padding on desktop --- */
+  .tech-shell {
+    padding-bottom: var(--space-6);
+  }
+
+  .tech-bottom-nav {
+    display: none;
+  }
+
+  /* --- Hero --- */
+  .hero-title {
+    font-size: var(--font-size-4xl);
+  }
+
+  /* --- Features grid: 3 columns on desktop --- */
+  .features-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* --- Stats row: up to 4 columns on desktop --- */
+  .stats-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+}
+
+
+/* =============================================================================
+   EXTRA LARGE — min-width: 1280px
+   ============================================================================= */
+
+@media (min-width: 1280px) {
+
+  /* Wider content area */
+  .dashboard-content {
+    padding: var(--space-8);
+  }
+
+}
+
+
+/* =============================================================================
+   PUBLIC PAGE SECTIONS — PHASE 4
+   ============================================================================= */
+
+@media (max-width: 639px) {
+
+  .how-it-works-grid  { grid-template-columns: 1fr; }
+  .trust-grid         { grid-template-columns: 1fr 1fr; }
+  .about-value-grid   { grid-template-columns: 1fr; }
+  .contact-grid       { grid-template-columns: 1fr; }
+
+  .cta-title          { font-size: var(--font-size-xl); }
+  .hero-actions       { flex-direction: column; align-items: center; }
+  .hero-actions .btn  { width: 100%; max-width: 18rem; }
+
+  .register-page      { padding: var(--space-6) var(--space-3); }
+  .verify-shell       { margin: var(--space-8) auto; }
+
+}
+
+@media (max-width: 1023px) {
+
+  .how-it-works-grid  { grid-template-columns: repeat(2, 1fr); }
+  .trust-grid         { grid-template-columns: repeat(2, 1fr); }
+  .about-value-grid   { grid-template-columns: repeat(2, 1fr); }
+  .contact-grid       { grid-template-columns: 1fr; }
+
+  .feature-group-list { grid-template-columns: repeat(2, 1fr); }
+
+}
+
+
+/* =============================================================================
+   PRINT
+   ============================================================================= */
+
+@media print {
+
+  /* Dashboard elements that should not print */
+  .sidebar,
+  .topbar,
+  .topbar-toggle,
+  .tech-header,
+  .tech-bottom-nav,
+  .public-nav,
+  .public-footer,
+  .page-header-actions,
+  .table-toolbar-actions,
+  .btn,
+  .breadcrumb,
+  .pagination {
+    display: none !important;
+  }
+
+  /* Invoice print shell resets */
+  .invoice-print-shell {
+    padding: 0;
+    max-width: 100%;
+    box-shadow: none;
+  }
+
+  /* Force white background */
+  .card,
+  .stat-card,
+  .data-table {
+    box-shadow: none !important;
+    border-color: #ddd !important;
+  }
+
+  /* Ensure text is black on white */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+}
+
+
+
+/* =============================================================================
+   RESPONSIVE UTILITIES (P33)
+   Reusable mobile-safe helpers for tables, forms, actions, and layout.
+   ============================================================================= */
+
+/* Table horizontal scroll wrapper — prevents table from breaking layout */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Actions/buttons that stack on mobile */
+.responsive-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Grid that stacks on mobile */
+.responsive-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Hide on mobile only */
+.mobile-hidden {
+  display: block;
+}
+
+/* Hide on desktop only */
+.desktop-hidden {
+  display: none;
+}
+
+/* Text overflow safety */
+.text-wrap { word-wrap: break-word; overflow-wrap: break-word; }
+.break-word { word-break: break-word; }
+.min-w-0 { min-width: 0; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Form fields full width on mobile */
+@media (max-width: 639px) {
+  .responsive-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .responsive-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .responsive-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .desktop-hidden {
+    display: block !important;
+  }
+
+  /* Financial tables: allow horizontal scroll */
+  .data-table {
+    min-width: 600px;
+  }
+
+  /* Filter bars stack on mobile */
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-bar .btn {
+    width: 100%;
+  }
+
+  /* Detail rows stack on mobile */
+  .detail-row {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .detail-label {
+    min-width: 0;
+  }
+
+  /* Stat grid: 2 columns minimum */
+  .stat-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Balance insight: stack */
+  .balance-insight {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 1023px) {
+  .desktop-hidden {
+    display: block !important;
+  }
+
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-hidden {
+    display: none !important;
+  }
+}
+
+/* =============================================================================
+   P34/P35 — SIDEBAR OVERLAY FIX (DEFINITIVE)
+   Ensures overlay is always hidden on desktop and only shown explicitly on mobile.
+   ============================================================================= */
+
+@media (min-width: 1024px) {
+  /* Desktop: overlay NEVER visible, sidebar always visible */
+  #sidebarOverlay,
+  .sidebar-overlay {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  /* Mobile/tablet: overlay hidden by default */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 39;
+  }
+
+  /* Only show when explicitly activated */
+  .sidebar-overlay.active {
+    display: block;
+  }
+}
+
+/* =============================================================================
+   RASTI_UI_HOTFIX_20260607 — definitive mobile sidebar overlay fix
+   Fixes dim/tar page on mobile by hiding overlay unless .active is explicit.
+   ============================================================================= */
+#sidebarOverlay.sidebar-overlay:not(.active),
+.sidebar-overlay:not(.active) {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+#sidebarOverlay.sidebar-overlay.active,
+.sidebar-overlay.active {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  background: rgba(15, 23, 42, .42) !important;
+  backdrop-filter: blur(2px) !important;
+  -webkit-backdrop-filter: blur(2px) !important;
+}
+
+@media (min-width: 1024px) {
+  #sidebarOverlay,
+  #sidebarOverlay.sidebar-overlay,
+  .sidebar-overlay,
+  .sidebar-overlay.active {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* Rasti UI Hotfix Final */
+/* ==========================================================================
+   Rasti UI Hotfix Final — overlay/mobile/date/number helpers
+   Safe UI-only rules. No business logic.
+========================================================================== */
+
+/* Overlay must be hidden by default. It is shown only via .active on mobile. */
+#sidebarOverlay,
+.sidebar-overlay {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(15, 23, 42, 0.50);
+  transition: opacity 160ms ease;
+}
+
+@media (max-width: 1023px) {
+  #sidebarOverlay.active,
+  .sidebar-overlay.active {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  #sidebar {
+    z-index: 40;
+  }
+
+  #sidebar:not(.open):not(.sidebar-opened) {
+    transform: translateX(100%);
+  }
+
+  html[dir="ltr"] #sidebar:not(.open):not(.sidebar-opened) {
+    transform: translateX(-100%);
+  }
+
+  #sidebar.open,
+  #sidebar.sidebar-opened {
+    transform: translateX(0) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  #sidebarOverlay,
+  .sidebar-overlay,
+  #sidebarOverlay.active,
+  .sidebar-overlay.active {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body.admin-sidebar-is-open {
+    overflow: auto !important;
+  }
+
+  #sidebar {
+    transform: translateX(0) !important;
+  }
+}
+
+.jalali-date-input,
+[data-jalali-datepicker="1"] {
+  direction: ltr;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.rasti-jalali-popover {
+  position: fixed;
+  z-index: 99999;
+  width: 280px;
+  max-width: calc(100vw - 24px);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #111827);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-card, 14px);
+  box-shadow: var(--shadow-dropdown, 0 18px 42px rgba(15, 23, 42, 0.18));
+  padding: 10px;
+  direction: rtl;
+  font-family: var(--font-family-base, Vazirmatn, sans-serif);
+}
+
+.rasti-jalali-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.rasti-jalali-head button,
+.rasti-jalali-day {
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--color-surface, #fff);
+  color: inherit;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.rasti-jalali-head button {
+  width: 34px;
+  height: 30px;
+}
+
+.rasti-jalali-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.rasti-jalali-grid,
+.rasti-jalali-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.rasti-jalali-week {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.72rem;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.rasti-jalali-day {
+  min-height: 32px;
+  font-size: 0.82rem;
+}
+
+.rasti-jalali-day:hover,
+.rasti-jalali-day.today {
+  border-color: var(--color-primary, #2563eb);
+  color: var(--color-primary, #2563eb);
+}
+
+.rasti-jalali-day.selected {
+  background: var(--color-primary, #2563eb);
+  color: #fff;
+  border-color: var(--color-primary, #2563eb);
+}
+
+.rasti-jalali-day.empty {
+  visibility: hidden;
+}
+
+
+/* FINAL HOTFIX: sidebar overlay must never dim the page unless sidebar is explicitly open. */
+#sidebarOverlay.sidebar-overlay {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+@media (max-width: 1023px) {
+  #sidebarOverlay.sidebar-overlay.active {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(15, 23, 42, 0.48) !important;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 39 !important;
+  }
+}
+@media (min-width: 1024px) {
+  #sidebarOverlay,
+  .sidebar-overlay,
+  #sidebarOverlay.sidebar-overlay.active {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+}
