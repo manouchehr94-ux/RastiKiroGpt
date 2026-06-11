@@ -10,6 +10,7 @@
 {% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;">
     <a href="/owner-platform/sms-template-requests/" class="btn {% if not status_filter %}btn-primary{% else %}btn-outline{% endif %}" class="">همه</a>
     <a href="/owner-platform/sms-template-requests/?status=pending" class="btn {% if status_filter == 'pending' %}btn-primary{% else %}btn-outline{% endif %}" class="">در انتظار ({{ pending_count }})</a>
@@ -51,4 +52,5 @@
 <p class="stat-card-hint">درخواستی یافت نشد.</p>
 </div>
 {% endif %}
+</div>
 {% endblock %}

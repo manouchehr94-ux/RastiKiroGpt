@@ -12,6 +12,7 @@
 <a href="/owner-platform/platform-sms/templates/" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-smooth">مدیریت قالب‌ها</a>
 {% endblock %}
 {% block content %}
+<div class="admin-compact">
 {% include "platform_core/platform_sms/_quick_actions.html" %}
 
 <div class="stat-grid mb-6">
@@ -76,5 +77,6 @@
 
 <div class="alert alert-warning">
   پیامک‌های این بخش از اعتبار شرکت‌ها کم نمی‌کنند و باید توسط مالک پلتفرم پرداخت شوند.
+</div>
 </div>
 {% endblock %}

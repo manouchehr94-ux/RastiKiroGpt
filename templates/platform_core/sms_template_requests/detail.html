@@ -9,6 +9,7 @@
 {% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <style>
 .req-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:1.25rem;margin-bottom:1rem}
 .req-label{font-size:.78rem;font-weight:600;color:#64748b;margin-bottom:.25rem}
@@ -87,4 +88,5 @@
 {% endif %}
 
 <p class=""><a href="/owner-platform/sms-template-requests/">بازگشت به لیست درخواست‌ها</a></p>
+</div>
 {% endblock %}

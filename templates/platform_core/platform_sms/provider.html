@@ -9,16 +9,171 @@
 {% block logout_url %}/owner-platform/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 {% include "platform_core/platform_sms/_quick_actions.html" %}
 
-<style>
-.sms-page,.sms-page *{box-sizing:border-box}.sms-page{width:100%;max-width:100%;overflow-x:hidden}.sms-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}.sms-muted{color:#64748b}.sms-input,.sms-select,.sms-textarea{width:100%;max-width:100%;border:1px solid #d1d5db;border-radius:.75rem;padding:.65rem .8rem;background:#fff;outline:none}.sms-label{display:block;font-size:.85rem;font-weight:800;color:#334155;margin-bottom:.35rem}.sms-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border-radius:.75rem;padding:.65rem 1rem;font-size:.875rem;font-weight:800;white-space:nowrap}.sms-btn-primary{background:#2563eb;color:#fff}.sms-btn-soft{background:#f8fafc;border:1px solid #e2e8f0;color:#334155}.sms-btn-danger{background:#fff;border:1px solid #fecaca;color:#dc2626}.sms-badge{display:inline-flex;border-radius:999px;padding:.25rem .6rem;font-size:.75rem;font-weight:800;white-space:nowrap}.sms-badge-green{background:#dcfce7;color:#166534}.sms-badge-gray{background:#f1f5f9;color:#475569}.sms-badge-amber{background:#fef3c7;color:#92400e}.sms-badge-blue{background:#dbeafe;color:#1d4ed8}.sms-table-wrap{width:100%;max-width:100%;overflow-x:auto;border-radius:1rem}.sms-table{width:100%;min-width:820px;border-collapse:collapse}.sms-table th,.sms-table td{padding:.85rem;border-bottom:1px solid #e5e7eb;vertical-align:middle}.sms-table th{background:#f8fafc;color:#475569;font-size:.78rem;font-weight:900}.sms-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);gap:1rem;align-items:start}@media(max-width:1100px){.sms-grid{grid-template-columns:1fr}.sms-table{min-width:720px}}
-</style>
-<div class="sms-page space-y-6">
-{% if success %}<div class="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-700">{{ success }}</div>{% endif %}
-{% if error %}<div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ error }}</div>{% endif %}
-<div class="sms-card p-5"><div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"><div><h2 class="text-lg font-black text-slate-800">مدیریت سامانه‌های پیامکی</h2><p class="sms-muted text-sm mt-1">Providerها را اینجا تعریف کن. برای تعیین اینکه هر پیامک با کدام سامانه ارسال شود، وارد صفحه ویرایش همان قالب شو.</p></div><div class="flex flex-wrap gap-2"><a class="sms-btn sms-btn-soft" href="/owner-platform/platform-sms/templates/">انتخاب Provider برای هر قالب</a><a class="sms-btn sms-btn-soft" href="/owner-platform/platform-sms/">بازگشت</a><a class="sms-btn sms-btn-primary" href="/owner-platform/platform-sms/provider/">Provider جدید</a></div></div></div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="sms-card p-5"><div class="sms-muted text-sm">قدم ۱</div><div class="mt-2 font-black text-slate-800">Provider را بساز</div></div><div class="sms-card p-5"><div class="sms-muted text-sm">قدم ۲</div><div class="mt-2 font-black text-slate-800">در هر قالب Provider اصلی/رزرو را انتخاب کن</div></div><div class="sms-card p-5"><div class="sms-muted text-sm">قدم ۳</div><div class="mt-2 font-black text-slate-800">کد پترن هر Provider را جدا وارد کن</div></div></div>
-<div class="sms-grid"><div class="sms-card overflow-hidden"><div class="border-b px-5 py-4"><h2 class="text-base font-black text-slate-800">لیست Providerها</h2><p class="sms-muted text-xs mt-1">ستون «محدوده» حذف شده؛ مسیر ارسال از داخل خود قالب تعیین می‌شود.</p></div><div class="sms-table-wrap"><table class="sms-table text-sm"><thead><tr><th class="text-right">نام</th><th class="text-right">نوع</th><th class="text-center">اولویت پیش‌فرض</th><th class="text-center">رزرو عمومی</th><th class="text-center">وضعیت</th><th class="text-center">عملیات</th></tr></thead><tbody>{% for p in providers %}<tr><td><div class="font-extrabold text-slate-800">{{ p.name }}</div><div class="text-xs text-slate-500 ltr mt-1">{{ p.sender_number|default:"بدون شماره ارسال‌کننده" }}</div></td><td><span class="sms-badge sms-badge-blue">{{ p.provider_type|status_fa }}</span></td><td class="text-center font-bold">{{ p.priority|default:100 }}</td><td class="text-center">{% if p.is_fallback %}<span class="sms-badge sms-badge-amber">رزرو</span>{% else %}<span class="sms-muted text-xs">خیر</span>{% endif %}</td><td class="text-center">{% if p.is_active %}<span class="sms-badge sms-badge-green">فعال</span>{% else %}<span class="sms-badge sms-badge-gray">غیرفعال</span>{% endif %}</td><td class="text-center"><div class="flex justify-center gap-2"><a class="sms-btn sms-btn-soft py-1 px-3" href="?edit={{ p.id }}">ویرایش</a><form method="post" class="inline">{% csrf_token %}<input type="hidden" name="action" value="delete_provider"><input type="hidden" name="provider_id" value="{{ p.id }}"><button class="sms-btn sms-btn-danger py-1 px-3" onclick="return confirm('این Provider حذف شود؟')">حذف</button></form></div></td></tr>{% empty %}<tr><td class="p-8 text-center text-slate-500" colspan="6">هنوز Provider ثبت نشده است.</td></tr>{% endfor %}</tbody></table></div></div>
-<div class="sms-card p-5"><h2 class="text-base font-black text-slate-800 mb-1">{% if editing_provider %}ویرایش Provider{% else %}Provider جدید{% endif %}</h2><p class="sms-muted text-xs mb-5">این اطلاعات فقط مشخصات اتصال است. انتخاب پیامک‌ها در صفحه قالب انجام می‌شود.</p><form method="post" class="space-y-4">{% csrf_token %}<input type="hidden" name="provider_id" value="{{ editing_provider.id|default:'' }}"><div><label class="sms-label">نام نمایشی</label><input name="name" value="{{ editing_provider.name|default:'' }}" class="sms-input" placeholder="مثلاً کاوه‌نگار اصلی"></div><div><label class="sms-label">نوع Provider</label><select name="provider_type" class="sms-select">{% for val,label in provider_choices %}<option value="{{ val }}" {% if editing_provider.provider_type == val %}selected{% endif %}>{{ val|status_fa }}</option>{% endfor %}</select></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div><label class="sms-label">API Key</label><input name="api_key" value="{{ editing_provider.api_key|default:'' }}" class="sms-input ltr"></div><div><label class="sms-label">شماره ارسال‌کننده</label><input name="sender_number" value="{{ editing_provider.sender_number|default:'' }}" class="sms-input ltr"></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div><label class="sms-label">نام کاربری</label><input name="username" value="{{ editing_provider.username|default:'' }}" class="sms-input ltr"></div><div><label class="sms-label">رمز / Secret</label><input name="password" value="{{ editing_provider.password|default:'' }}" class="sms-input ltr" autocomplete="off"></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div><label class="sms-label">اولویت پیش‌فرض</label><input type="number" name="priority" value="{{ editing_provider.priority|default:100 }}" class="sms-input ltr"></div><div><label class="sms-label">Method</label><input name="request_method" value="{{ editing_provider.request_method|default:'POST' }}" class="sms-input ltr"></div></div><div><label class="sms-label">Endpoint اختیاری</label><input name="endpoint_url" value="{{ editing_provider.endpoint_url|default:'' }}" class="sms-input ltr" placeholder="https://..."></div><div><label class="sms-label">Header Template</label><textarea name="headers_template" rows="2" class="sms-textarea ltr font-mono text-xs">{{ editing_provider.headers_template|default:'' }}</textarea></div><div><label class="sms-label">Body Template</label><textarea name="body_template" rows="3" class="sms-textarea ltr font-mono text-xs">{{ editing_provider.body_template|default:'' }}</textarea></div><div><label class="sms-label">Success Keywords</label><input name="success_keywords" value="{{ editing_provider.success_keywords|default:'' }}" class="sms-input ltr" placeholder="OK,200,success"></div><div class="flex flex-wrap gap-4 border-t pt-4"><label class="inline-flex items-center gap-2 text-sm font-bold text-slate-700"><input type="checkbox" name="is_active" {% if editing_provider.is_active or not editing_provider %}checked{% endif %}> فعال باشد</label><label class="inline-flex items-center gap-2 text-sm font-bold text-slate-700"><input type="checkbox" name="is_fallback" {% if editing_provider.is_fallback %}checked{% endif %}> رزرو عمومی باشد</label></div><div class="flex flex-wrap gap-2 pt-2"><button class="sms-btn sms-btn-primary" type="submit">ذخیره Provider</button><a class="sms-btn sms-btn-soft" href="/owner-platform/platform-sms/provider/">فرم جدید</a></div></form></div></div></div>
+{% if success %}<div class="alert alert-success"><div class="alert-body">{{ success }}</div></div>{% endif %}
+{% if error %}<div class="alert alert-danger"><div class="alert-body">{{ error }}</div></div>{% endif %}
+
+<div class="card">
+  <div class="card-body">
+    <div class="card-header">
+      <h2 class="card-header-title">مدیریت سامانه‌های پیامکی</h2>
+    </div>
+    <p class="form-hint">Providerها را اینجا تعریف کن. برای تعیین اینکه هر پیامک با کدام سامانه ارسال شود، وارد صفحه ویرایش همان قالب شو.</p>
+    <div class="page-header-actions">
+      <a class="btn btn-outline btn-sm" href="/owner-platform/platform-sms/templates/">انتخاب Provider برای هر قالب</a>
+      <a class="btn btn-outline btn-sm" href="/owner-platform/platform-sms/">بازگشت</a>
+      <a class="btn btn-primary btn-sm" href="/owner-platform/platform-sms/provider/">Provider جدید</a>
+    </div>
+  </div>
+</div>
+
+<div class="stat-grid stat-grid-3">
+  <div class="stat-card">
+    <div class="stat-card-label">قدم ۱</div>
+    <div class="stat-card-value">Provider را بساز</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-label">قدم ۲</div>
+    <div class="stat-card-value">در هر قالب Provider اصلی/رزرو را انتخاب کن</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-label">قدم ۳</div>
+    <div class="stat-card-value">کد پترن هر Provider را جدا وارد کن</div>
+  </div>
+</div>
+
+<div class="card card-compact">
+  <div class="card-header">
+    <h2 class="card-header-title">لیست Providerها</h2>
+  </div>
+  <div class="card-body">
+    <p class="form-hint">ستون «محدوده» حذف شده؛ مسیر ارسال از داخل خود قالب تعیین می‌شود.</p>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>نام</th>
+          <th>نوع</th>
+          <th>اولویت پیش‌فرض</th>
+          <th>رزرو عمومی</th>
+          <th>وضعیت</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in providers %}
+        <tr>
+          <td>
+            <div>{{ p.name }}</div>
+            <div class="font-mono form-hint">{{ p.sender_number|default:"بدون شماره ارسال‌کننده" }}</div>
+          </td>
+          <td><span class="badge badge-info">{{ p.provider_type|status_fa }}</span></td>
+          <td>{{ p.priority|default:100 }}</td>
+          <td>{% if p.is_fallback %}<span class="badge badge-warning">رزرو</span>{% else %}<span class="form-hint">خیر</span>{% endif %}</td>
+          <td>{% if p.is_active %}<span class="badge badge-success">فعال</span>{% else %}<span class="badge badge-neutral">غیرفعال</span>{% endif %}</td>
+          <td>
+            <div class="page-header-actions">
+              <a class="btn btn-secondary btn-sm" href="?edit={{ p.id }}">ویرایش</a>
+              <form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_provider"><input type="hidden" name="provider_id" value="{{ p.id }}"><button class="btn btn-danger btn-sm" onclick="return confirm('این Provider حذف شود؟')">حذف</button></form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <p class="empty-state-title">هنوز Provider ثبت نشده است.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-header-title">{% if editing_provider %}ویرایش Provider{% else %}Provider جدید{% endif %}</h2>
+  </div>
+  <div class="card-body">
+    <p class="form-hint">این اطلاعات فقط مشخصات اتصال است. انتخاب پیامک‌ها در صفحه قالب انجام می‌شود.</p>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="provider_id" value="{{ editing_provider.id|default:'' }}">
+      <div class="form-group">
+        <label class="form-label">نام نمایشی</label>
+        <input name="name" value="{{ editing_provider.name|default:'' }}" class="form-control" placeholder="مثلاً کاوه‌نگار اصلی">
+      </div>
+      <div class="form-group">
+        <label class="form-label">نوع Provider</label>
+        <select name="provider_type" class="form-control">{% for val,label in provider_choices %}<option value="{{ val }}" {% if editing_provider.provider_type == val %}selected{% endif %}>{{ val|status_fa }}</option>{% endfor %}</select>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">API Key</label>
+          <input name="api_key" value="{{ editing_provider.api_key|default:'' }}" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">شماره ارسال‌کننده</label>
+          <input name="sender_number" value="{{ editing_provider.sender_number|default:'' }}" class="form-control">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">نام کاربری</label>
+          <input name="username" value="{{ editing_provider.username|default:'' }}" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">رمز / Secret</label>
+          <input name="password" value="{{ editing_provider.password|default:'' }}" class="form-control" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">اولویت پیش‌فرض</label>
+          <input type="number" name="priority" value="{{ editing_provider.priority|default:100 }}" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Method</label>
+          <input name="request_method" value="{{ editing_provider.request_method|default:'POST' }}" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Endpoint اختیاری</label>
+        <input name="endpoint_url" value="{{ editing_provider.endpoint_url|default:'' }}" class="form-control" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Header Template</label>
+        <textarea name="headers_template" rows="2" class="form-control font-mono">{{ editing_provider.headers_template|default:'' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Body Template</label>
+        <textarea name="body_template" rows="3" class="form-control font-mono">{{ editing_provider.body_template|default:'' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Success Keywords</label>
+        <input name="success_keywords" value="{{ editing_provider.success_keywords|default:'' }}" class="form-control" placeholder="OK,200,success">
+      </div>
+      <div class="form-group">
+        <div class="form-check">
+          <input type="checkbox" name="is_active" class="form-check-input" {% if editing_provider.is_active or not editing_provider %}checked{% endif %}>
+          <label class="form-check-label">فعال باشد</label>
+        </div>
+        <div class="form-check">
+          <input type="checkbox" name="is_fallback" class="form-check-input" {% if editing_provider.is_fallback %}checked{% endif %}>
+          <label class="form-check-label">رزرو عمومی باشد</label>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">ذخیره Provider</button>
+        <a class="btn btn-outline" href="/owner-platform/platform-sms/provider/">فرم جدید</a>
+      </div>
+    </form>
+  </div>
+</div>
+</div>
 {% endblock %}

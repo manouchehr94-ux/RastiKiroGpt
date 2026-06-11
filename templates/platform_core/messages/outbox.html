@@ -22,6 +22,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="flex items-center gap-3 mb-4">
     <a href="/owner-platform/messages/inbox/" class="text-sm font-medium text-gray-500 hover:text-gray-700 pb-1">ورودی</a>
     <a href="/owner-platform/messages/outbox/" class="text-sm font-semibold text-brand-600 border-b-2 border-brand-600 pb-1">ارسالی</a>
@@ -59,4 +60,5 @@
 {% else %}
 {% include "includes/components/empty_state.html" with title="پیامی ارسال نشده" description="هنوز پیامی ارسال نکرده‌اید." icon="bell" action_url="/owner-platform/messages/create/" action_label="ارسال پیام" %}
 {% endif %}
+</div>
 {% endblock %}

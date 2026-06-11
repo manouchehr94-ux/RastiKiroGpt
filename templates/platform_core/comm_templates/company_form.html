@@ -9,6 +9,7 @@
 {% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="max-w-lg">
     {% if errors %}
     <div class="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
@@ -60,5 +61,6 @@
             </div>
         </form>
     </div>
+</div>
 </div>
 {% endblock %}

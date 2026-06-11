@@ -23,6 +23,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {# Stats Grid #}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     {% include "includes/components/stat_card.html" with value=stats.today_orders label="سفارش امروز" icon="orders" color="blue" %}
@@ -108,5 +109,6 @@
     {% else %}
     {% include "includes/components/empty_state.html" with title="سفارشی ثبت نشده" description="اولین سفارش خود را ایجاد کنید." icon="orders" action_label="ایجاد سفارش" %}
     {% endif %}
+</div>
 </div>
 {% endblock %}

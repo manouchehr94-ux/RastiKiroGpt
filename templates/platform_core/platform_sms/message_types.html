@@ -8,6 +8,7 @@
 {% block logout_url %}/owner-platform/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 {% include "platform_core/platform_sms/_quick_actions.html" %}
 
 {% if success %}<div class="mb-4 p-3 rounded bg-green-50 border border-green-200 text-green-700">{{ success }}</div>{% endif %}
@@ -43,4 +44,5 @@
 <a class="px-4 py-2 bg-white border rounded-lg" href="/owner-platform/platform-sms/">بازگشت</a>
 </div>
 </form>
+</div>
 {% endblock %}

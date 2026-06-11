@@ -3,5 +3,98 @@
 {% load jalali_tags %}
 {% block title %}جزئیات پیامک پلتفرم P-{{ sms.id }}{% endblock %}{% block sidebar_brand %}رستی سرویس{% endblock %}{% block sidebar_subtitle %}پنل مدیریت پلتفرم{% endblock %}{% block user_role_label %}مدیر پلتفرم{% endblock %}{% block page_title %}جزئیات پیامک پلتفرم P-{{ sms.id }}{% endblock %}{% block page_description %}این پیامک از صندوق مالک پلتفرم ارسال می‌شود و از اعتبار شرکت کم نمی‌کند.{% endblock %}{% block logout_url %}/owner-platform/logout/{% endblock %}{% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
 {% block content %}
+<div class="admin-compact">
 {% include "platform_core/platform_sms/_quick_actions.html" %}
-<style>.sms-status{display:inline-flex;align-items:center;border-radius:999px;padding:.3rem .75rem;font-size:.82rem;font-weight:700}.sms-status.queued{background:#fef3c7;color:#92400e}.sms-status.sending{background:#dbeafe;color:#1d4ed8}.sms-status.sent{background:#dcfce7;color:#166534}.sms-status.delivered{background:#d1fae5;color:#065f46}.sms-status.failed{background:#fee2e2;color:#991b1b}.sms-status.cancelled{background:#e5e7eb;color:#374151}.sms-box{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px}.sms-message{white-space:pre-wrap;line-height:2}.sms-id{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;direction:ltr;display:inline-block}</style><div class="mb-4 flex gap-2 flex-wrap"><a class="px-4 py-2 bg-white border rounded-lg" href="/owner-platform/platform-sms/outbox/">بازگشت به صندوق پلتفرم</a>{% if sms.status == "failed" %}<form method="post" action="/owner-platform/platform-sms/outbox/{{ sms.id }}/send-now/">{% csrf_token %}<button class="px-4 py-2 bg-green-600 text-white rounded-lg">ارسال مجدد</button></form>{% endif %}</div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="sms-box lg:col-span-2"><div class="flex justify-between gap-3 mb-4"><div><div class="text-gray-500 text-sm">شناسه نمایشی</div><div class="sms-id font-bold text-lg">P-{{ sms.id }}</div></div><span class="sms-status status-{{ sms.status|status_css }}">{{ sms.status|status_fa }}</span></div><h3 class="font-bold mb-2">متن پیامک</h3><div class="sms-message bg-gray-50 rounded-xl p-4 border">{{ sms.message }}</div>{% if sms.error_message %}<h3 class="font-bold mt-5 mb-2 text-red-700">خطای ارسال</h3><div class="sms-message bg-red-50 rounded-xl p-4 border border-red-200 text-red-800">{{ sms.error_message }}</div>{% endif %}</div><div class="sms-box"><h3 class="font-bold mb-4">اطلاعات ارسال</h3><div class="space-y-3 text-sm"><div><span class="text-gray-500">شرکت گیرنده:</span> {% if sms.recipient_company %}{{ sms.recipient_company.name }} / {{ sms.recipient_company.code }}{% else %}-{% endif %}</div><div><span class="text-gray-500">گیرنده:</span> <span class="ltr">{{ sms.phone_number }}</span></div><div><span class="text-gray-500">نوع پیام:</span> {{ sms.get_template_key_display }}</div><div><span class="text-gray-500">تعداد تلاش:</span> {{ sms.attempt_count }}</div><div><span class="text-gray-500">Provider ID:</span> {{ sms.provider_message_id|default:"-" }}</div><hr><div><span class="text-gray-500">در صف:</span> {{ sms.queued_at|jalali_datetime|default:"-" }}</div><div><span class="text-gray-500">شروع ارسال:</span> {{ sms.sending_at|jalali_datetime|default:"-" }}</div><div><span class="text-gray-500">ارسال شده:</span> {{ sms.sent_at|jalali_datetime|default:"-" }}</div><div><span class="text-gray-500">تحویل شده:</span> {{ sms.delivered_at|jalali_datetime|default:"-" }}</div><div><span class="text-gray-500">ناموفق:</span> {{ sms.failed_at|jalali_datetime|default:"-" }}</div><div><span class="text-gray-500">زمان ارسال برنامه‌ریزی‌شده:</span> {{ sms.send_at|jalali_datetime|default:"-" }}</div></div></div></div>{% endblock %}
+
+<div class="page-header-actions">
+  <a class="btn btn-outline btn-sm" href="/owner-platform/platform-sms/outbox/">بازگشت به صندوق پلتفرم</a>
+  {% if sms.status == "failed" %}
+  <form method="post" action="/owner-platform/platform-sms/outbox/{{ sms.id }}/send-now/">{% csrf_token %}<button class="btn btn-success btn-sm">ارسال مجدد</button></form>
+  {% endif %}
+</div>
+
+<div class="form-grid-2">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <span class="form-hint">شناسه نمایشی</span>
+        <div class="font-mono">P-{{ sms.id }}</div>
+      </div>
+      {% with css=sms.status|status_css %}
+      {% if css == "queued" %}<span class="badge badge-warning">{{ sms.status|status_fa }}</span>
+      {% elif css == "sending" %}<span class="badge badge-info">{{ sms.status|status_fa }}</span>
+      {% elif css == "sent" or css == "delivered" %}<span class="badge badge-success">{{ sms.status|status_fa }}</span>
+      {% elif css == "failed" %}<span class="badge badge-danger">{{ sms.status|status_fa }}</span>
+      {% else %}<span class="badge badge-neutral">{{ sms.status|status_fa }}</span>
+      {% endif %}
+      {% endwith %}
+    </div>
+    <div class="card-body">
+      <h3 class="card-header-title">متن پیامک</h3>
+      <div class="card">
+        <div class="card-body">{{ sms.message }}</div>
+      </div>
+      {% if sms.error_message %}
+      <h3 class="card-header-title">خطای ارسال</h3>
+      <div class="alert alert-danger">
+        <div class="alert-body">{{ sms.error_message }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-header-title">اطلاعات ارسال</h3>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <span class="form-hint">شرکت گیرنده:</span>
+        <span>{% if sms.recipient_company %}{{ sms.recipient_company.name }} / {{ sms.recipient_company.code }}{% else %}-{% endif %}</span>
+      </div>
+      <div class="form-group">
+        <span class="form-hint">گیرنده:</span>
+        <span class="font-mono">{{ sms.phone_number }}</span>
+      </div>
+      <div class="form-group">
+        <span class="form-hint">نوع پیام:</span>
+        <span>{{ sms.get_template_key_display }}</span>
+      </div>
+      <div class="form-group">
+        <span class="form-hint">تعداد تلاش:</span>
+        <span>{{ sms.attempt_count }}</span>
+      </div>
+      <div class="form-group">
+        <span class="form-hint">Provider ID:</span>
+        <span class="font-mono">{{ sms.provider_message_id|default:"-" }}</span>
+      </div>
+      <hr>
+      <div class="form-group">
+        <span class="form-hint">در صف:</span>
+        <span>{{ sms.queued_at|jalali_datetime|default:"-" }}</span>
+      </div>
+      <div class="form-group">
+        <span class="form-hint">شروع ارسال:</span>
+        <span>{{ sms.sending_at|jalali_datetime|default:"-" }}</span>
+      </div>
+      <div class="form-group">
+        <span class="form-hint">ارسال شده:</span>
+        <span>{{ sms.sent_at|jalali_datetime|default:"-" }}</span>
+      </div>
+      <div class="form-group">
+        <span class="form-hint">تحویل شده:</span>
+        <span>{{ sms.delivered_at|jalali_datetime|default:"-" }}</span>
+      </div>
+      <div class="form-group">
+        <span class="form-hint">ناموفق:</span>
+        <span>{{ sms.failed_at|jalali_datetime|default:"-" }}</span>
+      </div>
+      <div class="form-group">
+        <span class="form-hint">زمان ارسال برنامه‌ریزی‌شده:</span>
+        <span>{{ sms.send_at|jalali_datetime|default:"-" }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

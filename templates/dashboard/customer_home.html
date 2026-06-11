@@ -23,6 +23,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {# Stats Grid #}
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
     {% include "includes/components/stat_card.html" with value=stats.total_orders|default:"0" label="کل سفارش‌ها" icon="orders" color="blue" %}
@@ -85,5 +86,6 @@
     {% else %}
     {% include "includes/components/empty_state.html" with title="سفارشی ثبت نشده" description="هنوز سفارشی ثبت نشده است." icon="orders" %}
     {% endif %}
+</div>
 </div>
 {% endblock %}
