@@ -1,4 +1,4 @@
-{% extends "base_dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load smart_numbers jalali_tags %}
 
 {% block title %}کارمزد پلتفرم — {{ company.name }}{% endblock %}
@@ -7,6 +7,7 @@
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 <div class="page-header" dir="rtl">
   <div>
     <h1>گزارش کارمزد پلتفرم</h1>
@@ -124,4 +125,5 @@
 </div>
 {% endif %}
 
+</div>
 {% endblock %}
