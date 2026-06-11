@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {# Filters #}
 <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-5">
   <form method="get" class="flex flex-wrap gap-3 items-end">
@@ -123,4 +124,5 @@
   {% include "includes/components/empty_state.html" with title="هیچ رکوردی یافت نشد" description="پس از انجام اولین پرداخت آنلاین، اطلاعات اینجا نمایش داده می‌شود." icon="reports" %}
 </div>
 {% endif %}
+</div>
 {% endblock %}

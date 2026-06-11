@@ -9,76 +9,65 @@
 {% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
 
 {% block content %}
-<div style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px;">
-  <p style="font-size:.85rem;color:#64748b;margin-bottom:12px;">
+<div class="admin-compact">
+
+<div class="alert alert-info">
+  <div class="alert-body">
     پیش‌فرض: <strong>مالک پلتفرم</strong> هزینه همه پیامک‌های بازیابی رمز عبور را می‌پردازد.
     اگر شرکتی سوءاستفاده کند می‌توانید هزینه را به شرکت منتقل کنید.
-  </p>
+  </div>
+</div>
 
-  <div style="overflow-x:auto;">
-    <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+<div class="card card-compact">
+  <div class="table-wrapper">
+    <table class="data-table">
       <thead>
-        <tr style="background:#f8fafc;">
-          <th style="padding:10px 14px;text-align:right;color:#475569;font-weight:600;">شرکت</th>
-          <th style="padding:10px 14px;text-align:right;color:#475569;font-weight:600;">مدیر</th>
-          <th style="padding:10px 14px;text-align:right;color:#475569;font-weight:600;">اپراتور</th>
-          <th style="padding:10px 14px;text-align:right;color:#475569;font-weight:600;">نیروی خدماتی</th>
-          <th style="padding:10px 14px;text-align:right;color:#475569;font-weight:600;">مشتری</th>
-          <th style="padding:10px 14px;"></th>
+        <tr>
+          <th>شرکت</th>
+          <th>مدیر</th>
+          <th>اپراتور</th>
+          <th>نیروی خدماتی</th>
+          <th>مشتری</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         {% for row in rows %}
-        <tr style="border-top:1px solid #eef2f7;">
-          <td style="padding:10px 14px;font-weight:600;">
+        <tr>
+          <td>
             {{ row.company.name }}
-            <div style="font-size:.75rem;color:#94a3b8;">{{ row.company.code }}</div>
+            <div class="form-hint font-mono">{{ row.company.code }}</div>
           </td>
           {% if row.has_policy %}
           {% with p=row.policy %}
           {% for payer_val in p.company_admin_payer|make_list %}{% endfor %}
-          <td style="padding:10px 14px;">
-            <span class="pr-payer-badge pr-payer-{{ p.company_admin_payer|lower }}">
-              {% if p.company_admin_payer == 'COMPANY' %}شرکت{% else %}پلتفرم{% endif %}
-            </span>
+          <td>
+            {% if p.company_admin_payer == 'COMPANY' %}<span class="badge badge-danger">شرکت</span>{% else %}<span class="badge badge-success">پلتفرم</span>{% endif %}
           </td>
-          <td style="padding:10px 14px;">
-            <span class="pr-payer-badge pr-payer-{{ p.operator_payer|lower }}">
-              {% if p.operator_payer == 'COMPANY' %}شرکت{% else %}پلتفرم{% endif %}
-            </span>
+          <td>
+            {% if p.operator_payer == 'COMPANY' %}<span class="badge badge-danger">شرکت</span>{% else %}<span class="badge badge-success">پلتفرم</span>{% endif %}
           </td>
-          <td style="padding:10px 14px;">
-            <span class="pr-payer-badge pr-payer-{{ p.technician_payer|lower }}">
-              {% if p.technician_payer == 'COMPANY' %}شرکت{% else %}پلتفرم{% endif %}
-            </span>
+          <td>
+            {% if p.technician_payer == 'COMPANY' %}<span class="badge badge-danger">شرکت</span>{% else %}<span class="badge badge-success">پلتفرم</span>{% endif %}
           </td>
-          <td style="padding:10px 14px;">
-            <span class="pr-payer-badge pr-payer-{{ p.customer_payer|lower }}">
-              {% if p.customer_payer == 'COMPANY' %}شرکت{% else %}پلتفرم{% endif %}
-            </span>
+          <td>
+            {% if p.customer_payer == 'COMPANY' %}<span class="badge badge-danger">شرکت</span>{% else %}<span class="badge badge-success">پلتفرم</span>{% endif %}
           </td>
           {% endwith %}
           {% else %}
-          <td colspan="4" style="padding:10px 14px;color:#94a3b8;font-size:.8rem;">{{ default_label }}</td>
+          <td colspan="4" class="form-hint">{{ default_label }}</td>
           {% endif %}
-          <td style="padding:10px 14px;">
-            <a href="/owner-platform/password-reset-policy/{{ row.company.id }}/"
-               style="padding:.3rem .7rem;border:1px solid #e5e7eb;border-radius:8px;font-size:.78rem;background:#fff;color:#334155;text-decoration:none;">
-              ویرایش
-            </a>
+          <td>
+            <a href="/owner-platform/password-reset-policy/{{ row.company.id }}/" class="btn btn-outline btn-sm">ویرایش</a>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" style="padding:16px;color:#94a3b8;text-align:center;">هیچ شرکتی ثبت نشده.</td></tr>
+        <tr><td colspan="6"><div class="empty-state"><p class="empty-state-title">هیچ شرکتی ثبت نشده.</p></div></td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
-<style>
-.pr-payer-badge{display:inline-flex;align-items:center;border-radius:999px;padding:.2rem .55rem;font-size:.75rem;font-weight:700;}
-.pr-payer-company{background:#fee2e2;color:#991b1b;}
-.pr-payer-platform{background:#dcfce7;color:#166534;}
-</style>
+</div>
 {% endblock %}

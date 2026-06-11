@@ -20,6 +20,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {% with tech=snapshot.invoice.order.technician %}
 
 {# Explanation #}
@@ -95,4 +96,5 @@
 </div>
 
 {% endwith %}
+</div>
 {% endblock %}

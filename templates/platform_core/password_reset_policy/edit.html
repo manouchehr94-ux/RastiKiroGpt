@@ -7,57 +7,51 @@
 {% block page_description %}مشخص کنید هزینه پیامک بازیابی رمز عبور هر نقش در این شرکت بر عهده کیست.{% endblock %}
 {% block logout_url %}/owner-platform/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_platform.html" %}{% endblock %}
+{% block navbar_actions %}
+<a href="/owner-platform/password-reset-policy/" class="btn btn-outline btn-sm">بازگشت به لیست</a>
+{% endblock %}
 
 {% block content %}
-<div style="max-width:520px;">
-  {% if error %}
-  <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.85rem;color:#991b1b;">
-    {{ error }}
-  </div>
-  {% endif %}
-  {% if success %}
-  <div style="background:#dcfce7;border:1px solid #86efac;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.85rem;color:#166534;">
-    {{ success }}
-  </div>
-  {% endif %}
+<div class="admin-compact">
 
-  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:24px;">
-    <form method="post" style="display:flex;flex-direction:column;gap:16px;">
+{% if error %}<div class="alert alert-danger"><div class="alert-body">{{ error }}</div></div>{% endif %}
+{% if success %}<div class="alert alert-success"><div class="alert-body">{{ success }}</div></div>{% endif %}
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-header-title">تنظیم پرداخت‌کننده هر نقش — {{ company.name }}</span>
+  </div>
+  <div class="card-body">
+    <form method="post" class="form-grid">
       {% csrf_token %}
 
       {% for row in field_rows %}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;">
-        <span style="font-size:.875rem;font-weight:600;color:#334155;">{{ row.label }}</span>
-        <div style="display:flex;gap:8px;">
+      <div class="form-group">
+        <label class="form-label">{{ row.label }}</label>
+        <div class="page-header-actions">
           {% for val, label in payer_choices %}
-          <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;cursor:pointer;
-                        padding:.25rem .6rem;border-radius:8px;
-                        background:{% if row.value == val %}{% if val == 'COMPANY' %}#fee2e2{% else %}#dcfce7{% endif %}{% else %}#f8fafc{% endif %};
-                        border:1px solid {% if row.value == val %}{% if val == 'COMPANY' %}#fca5a5{% else %}#86efac{% endif %}{% else %}#e5e7eb{% endif %};">
-            <input type="radio" name="{{ row.field }}" value="{{ val }}"
-                   {% if row.value == val %}checked{% endif %}
-                   style="accent-color:{% if val == 'COMPANY' %}#dc2626{% else %}#16a34a{% endif %};">
-            {{ label }}
+          <label class="form-check">
+            <input type="radio" name="{{ row.field }}" value="{{ val }}" class="form-check-input" {% if row.value == val %}checked{% endif %}>
+            <span class="form-check-label">{{ label }}</span>
           </label>
           {% endfor %}
         </div>
       </div>
       {% endfor %}
 
-      <div style="display:flex;gap:10px;margin-top:8px;">
-        <button type="submit" style="flex:1;padding:.55rem 1rem;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer;">
-          ذخیره
-        </button>
-        <a href="/owner-platform/password-reset-policy/"
-           style="flex:1;padding:.55rem 1rem;background:#fff;color:#334155;border:1px solid #e5e7eb;border-radius:10px;font-size:.9rem;font-weight:600;text-align:center;text-decoration:none;">
-          انصراف
-        </a>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">ذخیره</button>
+        <a href="/owner-platform/password-reset-policy/" class="btn btn-outline">انصراف</a>
       </div>
     </form>
   </div>
+</div>
 
-  <p style="font-size:.78rem;color:#94a3b8;margin-top:12px;">
+<div class="alert alert-info">
+  <div class="alert-body">
     پیش‌فرض همه نقش‌ها: <strong>مالک پلتفرم</strong>. تغییر تنها زمانی توصیه می‌شود که شرکت از ارسال پیامک بازیابی رمز سوءاستفاده کند.
-  </p>
+  </div>
+</div>
+
 </div>
 {% endblock %}

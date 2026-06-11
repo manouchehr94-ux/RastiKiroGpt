@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="admin-compact">
 {# Filters #}
 <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-5">
   <form method="get" class="flex flex-wrap gap-3 items-end">
@@ -125,4 +126,5 @@
   {% include "includes/components/empty_state.html" with title="تکنسینی یافت نشد" description="هیچ تکنسینی با این فیلترها وجود ندارد." icon="users" %}
 </div>
 {% endif %}
+</div>
 {% endblock %}
