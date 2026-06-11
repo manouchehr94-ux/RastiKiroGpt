@@ -15,56 +15,68 @@
 {% endblock %}
 
 {% block navbar_actions %}
-<a href="/owner-platform/companies/create/"
-   class="btn btn-primary btn-sm">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-    <span class="hidden sm:inline">شرکت جدید</span>
+<a href="/owner-platform/companies/create/" class="btn btn-primary btn-sm">
+  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+  شرکت جدید
 </a>
 {% endblock %}
 
 {% block content %}
-<div class="admin-compact">
+<div class="admin-compact" dir="rtl">
+
 {% if companies %}
-<div class="card card-flush">
-    <div class="table-wrapper">
-        <table class="w-full data-table">
-            <thead>
-                <tr class="bg-gray-50/50">
-                    <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">نام</th>
-                    <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">کد</th>
-                    <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">وضعیت</th>
-                    <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">تلفن</th>
-                    <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">تاریخ</th>
-                    <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">عملیات</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                {% for c in companies %}
-                <tr class="hover:bg-gray-50/50 transition-colors">
-                    <td class="px-5 py-3 text-sm font-medium text-gray-900">{{ c.name }}</td>
-                    <td class="px-5 py-3 text-sm text-gray-500 font-mono">{{ c.code }}</td>
-                    <td class="px-5 py-3">
-                        {% if c.is_active %}
-                        {% include "includes/components/badge.html" with status="active" label="فعال" %}
-                        {% else %}
-                        {% include "includes/components/badge.html" with status="inactive" label="غیرفعال" %}
-                        {% endif %}
-                    </td>
-                    <td class="px-5 py-3 text-sm text-gray-500">{{ c.phone|default:"-" }}</td>
-                    <td class="px-5 py-3 text-sm text-gray-500">{{ c.created_at|jalali_date }}</td>
-                    <td class="px-5 py-3">
-                        <a href="/owner-platform/companies/{{ c.id }}/" class="text-sm text-brand-600 hover:text-brand-700 font-medium">جزئیات</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class="card card-compact card-flush">
+  <div class="card-header">
+    <span class="card-header-title">لیست شرکت‌ها</span>
+    <span class="badge badge-info">{{ companies|length }} مورد</span>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>نام</th>
+          <th>کد</th>
+          <th>وضعیت</th>
+          <th>تلفن</th>
+          <th>تاریخ</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in companies %}
+        <tr>
+          <td><strong>{{ c.name }}</strong></td>
+          <td class="ltr-cell">{{ c.code }}</td>
+          <td>
+            {% if c.is_active %}
+              <span class="badge badge-success">فعال</span>
+            {% else %}
+              <span class="badge badge-neutral">غیرفعال</span>
+            {% endif %}
+          </td>
+          <td>{{ c.phone|default:"—" }}</td>
+          <td>{{ c.created_at|jalali_date }}</td>
+          <td>
+            <a href="/owner-platform/companies/{{ c.id }}/" class="btn btn-sm btn-secondary">جزئیات</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% else %}
 <div class="card">
-    {% include "includes/components/empty_state.html" with title="شرکتی ثبت نشده" description="اولین شرکت را ایجاد کنید." icon="company" action_url="/owner-platform/companies/create/" action_label="شرکت جدید" %}
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+    </div>
+    <p class="empty-state-title">شرکتی ثبت نشده</p>
+    <p class="empty-state-description">اولین شرکت را ایجاد کنید.</p>
+    <a href="/owner-platform/companies/create/" class="btn btn-primary btn-sm">شرکت جدید</a>
+  </div>
 </div>
 {% endif %}
+
 </div>
 {% endblock %}

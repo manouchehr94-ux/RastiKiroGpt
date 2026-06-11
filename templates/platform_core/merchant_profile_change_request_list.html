@@ -17,72 +17,93 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-compact">
-<div class="px-6 py-8" dir="rtl">
-  <h1 class="text-xl font-bold text-gray-800 mb-6">درخواست‌های تغییر پروفایل پذیرنده</h1>
+<div class="admin-compact" dir="rtl">
 
-  <form method="get" class="bg-white border border-gray-200 rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end">
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">وضعیت</label>
-      <select name="status" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm">
-        <option value="">همه</option>
-        {% for val, label in status_choices %}
-          <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">شرکت</label>
-      <select name="company" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm">
-        <option value="">همه شرکت‌ها</option>
-        {% for c in companies %}
-          <option value="{{ c.id }}" {% if c.id|stringformat:"s" == company_filter %}selected{% endif %}>{{ c.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <button type="submit" class="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">فیلتر</button>
-    <a href="?" class="px-4 py-1.5 border border-gray-300 text-sm rounded-md text-gray-600 hover:bg-gray-50">پاک</a>
-  </form>
+{# ── Filter bar ── #}
+<form method="get" class="filter-bar">
+  <div class="filter-group">
+    <label>وضعیت</label>
+    <select name="status" class="filter-input">
+      <option value="">همه</option>
+      {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>شرکت</label>
+    <select name="company" class="filter-input">
+      <option value="">همه شرکت‌ها</option>
+      {% for c in companies %}
+        <option value="{{ c.id }}" {% if c.id|stringformat:"s" == company_filter %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary btn-sm">فیلتر</button>
+  <a href="?" class="btn btn-outline btn-sm">پاک</a>
+</form>
 
-  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-    <table class="w-full text-sm text-right">
-      <thead class="bg-gray-50 text-gray-600 text-xs">
+{# ── Table ── #}
+<div class="card card-compact card-flush">
+  <div class="card-header">
+    <span class="card-header-title">درخواست‌های تغییر</span>
+    {% if requests %}
+    <span class="badge badge-info">{{ requests|length }} مورد</span>
+    {% endif %}
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
         <tr>
-          <th class="px-4 py-3">شرکت</th>
-          <th class="px-4 py-3">ارسال‌کننده</th>
-          <th class="px-4 py-3">تاریخ ارسال</th>
-          <th class="px-4 py-3">وضعیت</th>
-          <th class="px-4 py-3">بررسی‌کننده</th>
-          <th class="px-4 py-3"></th>
+          <th>شرکت</th>
+          <th>ارسال‌کننده</th>
+          <th>تاریخ ارسال</th>
+          <th>وضعیت</th>
+          <th>بررسی‌کننده</th>
+          <th>عملیات</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody>
         {% for req in requests %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3 font-medium">{{ req.company.name }}<br><span class="text-xs text-gray-400">{{ req.company.code }}</span></td>
-          <td class="px-4 py-3 text-gray-600">{{ req.created_by|default:"—" }}</td>
-          <td class="px-4 py-3 text-gray-500 text-xs">{{ req.created_at|jalali_date }}</td>
-          <td class="px-4 py-3">
+        <tr>
+          <td>
+            <strong>{{ req.company.name }}</strong><br>
+            <span class="form-hint">{{ req.company.code }}</span>
+          </td>
+          <td>{{ req.created_by|default:"—" }}</td>
+          <td>{{ req.created_at|jalali_date }}</td>
+          <td>
             {% if req.status == "approved" %}
-              <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">تأییدشده</span>
+              <span class="badge badge-success">تأییدشده</span>
             {% elif req.status == "rejected" %}
-              <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">رد شده</span>
+              <span class="badge badge-danger">رد شده</span>
             {% else %}
-              <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">در انتظار</span>
+              <span class="badge badge-warning">در انتظار</span>
             {% endif %}
           </td>
-          <td class="px-4 py-3 text-gray-500 text-xs">{{ req.reviewed_by|default:"—" }}</td>
-          <td class="px-4 py-3">
+          <td>{{ req.reviewed_by|default:"—" }}</td>
+          <td>
             <a href="/owner-platform/merchant-profile-change-requests/{{ req.id }}/"
-               class="text-blue-600 hover:underline text-xs">بررسی</a>
+               class="btn btn-sm btn-secondary">بررسی</a>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">درخواستی یافت نشد.</td></tr>
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </div>
+              <p class="empty-state-title">درخواستی یافت نشد</p>
+              <p class="empty-state-description">با فیلترهای انتخابی نتیجه‌ای وجود ندارد.</p>
+            </div>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
 </div>
 {% endblock %}

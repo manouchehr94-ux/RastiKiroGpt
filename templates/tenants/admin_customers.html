@@ -5,32 +5,118 @@
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
 {% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
 {% block content %}
-<div class="admin-compact">
-<style>
-.customer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin-bottom:1rem}.customer-stat{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:1rem}.customer-stat .num{font-size:1.35rem;font-weight:900}.customer-stat .lbl{font-size:.78rem;color:#64748b}.customer-search{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}.customer-search input{min-width:260px;flex:1}.customer-phone{direction:ltr;unicode-bidi:plaintext;font-weight:700}.customer-actions{display:flex;gap:.35rem;flex-wrap:wrap}@media(max-width:900px){.customer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.customer-grid{grid-template-columns:1fr}.customer-search input{min-width:100%}}
-</style>
-<div class="page-header"><div><h1>مشتریان</h1><p style="color:#64748b;margin:.35rem 0 0;">پرونده مشتریان بر اساس شماره موبایل و سفارش‌های ثبت‌شده ساخته می‌شود.</p></div><a href="/{{ company.code }}/admin/orders/create/" class="btn btn-primary">+ سفارش جدید</a></div>
-<div class="customer-grid">
-<div class="customer-stat"><div class="num">{{ stats.total_customers|smart_number }}</div><div class="lbl">کل مشتریان</div></div>
-<div class="customer-stat"><div class="num">{{ stats.total_orders|smart_number }}</div><div class="lbl">کل سفارش‌ها</div></div>
-<div class="customer-stat"><div class="num">{{ stats.active_orders|smart_number }}</div><div class="lbl">سفارش‌های باز</div></div>
-<div class="customer-stat"><div class="num">{{ stats.done_orders|smart_number }}</div><div class="lbl">سفارش‌های انجام‌شده</div></div>
+<div class="admin-compact" dir="rtl">
+
+<div class="page-header">
+  <div class="page-header-content">
+    <h1 class="page-header-title">مشتریان</h1>
+    <p class="page-header-subtitle">پرونده مشتریان بر اساس شماره موبایل و سفارش‌های ثبت‌شده ساخته می‌شود.</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="/{{ company.code }}/admin/orders/create/" class="btn btn-primary btn-sm">+ سفارش جدید</a>
+  </div>
 </div>
-<div class="card">
-<form method="get" class="customer-search"><input class="form-control" name="q" value="{{ q }}" placeholder="جستجو بر اساس نام، موبایل یا ایمیل"><button class="btn btn-outline" type="submit">جستجو</button>{% if q %}<a class="btn btn-outline" href="/{{ company.code }}/admin/customers/">حذف فیلتر</a>{% endif %}</form>
+
+{# ── Stat cards ── #}
+<div class="stat-grid stat-grid-4">
+  <div class="stat-card">
+    <div class="stat-card-icon blue">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    </div>
+    <span class="stat-card-value">{{ stats.total_customers|smart_number }}</span>
+    <div class="stat-card-label">کل مشتریان</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon green">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    </div>
+    <span class="stat-card-value">{{ stats.total_orders|smart_number }}</span>
+    <div class="stat-card-label">کل سفارش‌ها</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon amber">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value">{{ stats.active_orders|smart_number }}</span>
+    <div class="stat-card-label">سفارش‌های باز</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon green">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value">{{ stats.done_orders|smart_number }}</span>
+    <div class="stat-card-label">سفارش‌های انجام‌شده</div>
+  </div>
+</div>
+
+{# ── Search ── #}
+<form method="get" class="filter-bar">
+  <div class="filter-group">
+    <label>جستجو</label>
+    <input class="filter-input" name="q" value="{{ q }}" placeholder="جستجو بر اساس نام، موبایل یا ایمیل" style="min-width:16rem;">
+  </div>
+  <button class="btn btn-primary btn-sm" type="submit">جستجو</button>
+  {% if q %}<a class="btn btn-outline btn-sm" href="/{{ company.code }}/admin/customers/">حذف فیلتر</a>{% endif %}
+</form>
+
+{# ── Table ── #}
 {% if customers %}
-<div class="table-wrapper"><table><thead><tr><th>مشتری</th><th>شماره موبایل</th><th>سفارش‌ها</th><th>وضعیت سفارش‌ها</th><th>آخرین سفارش</th><th>آدرس‌ها</th><th>عملیات</th></tr></thead><tbody>
-{% for c in customers %}<tr>
-<td><strong>{{ c.full_name }}</strong><br><small class="stat-card-hint">{{ c.email|default:"-" }}</small></td>
-<td><span class="customer-phone">{{ c.phone }}</span></td>
-<td>{{ c.orders_count|smart_number }}</td>
-<td><span class="status-badge status-info">باز: {{ c.active_orders_count|smart_number }}</span> <span class="status-badge status-success">انجام: {{ c.done_orders_count|smart_number }}</span> <span class="status-badge status-danger">لغو: {{ c.cancelled_orders_count|smart_number }}</span></td>
-<td>{% if c.last_order_at %}{{ c.last_order_at|jalali_datetime }}{% else %}-{% endif %}</td>
-<td>{{ c.addresses_count|smart_number }}</td>
-<td><div class="customer-actions"><a href="/{{ company.code }}/admin/customers/{{ c.id }}/" class="btn btn-sm btn-outline">پرونده</a><a href="/{{ company.code }}/admin/orders/create/?customer_id={{ c.id }}" class="btn btn-sm btn-primary">سفارش جدید</a></div></td>
-</tr>{% endfor %}
-</tbody></table></div>
-{% else %}<p class="stat-card-hint">مشتری‌ای ثبت نشده یا با جستجوی شما پیدا نشد.</p>{% endif %}
+<div class="card card-compact card-flush">
+  <div class="card-header">
+    <span class="card-header-title">لیست مشتریان</span>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>مشتری</th>
+          <th>شماره موبایل</th>
+          <th>سفارش‌ها</th>
+          <th>وضعیت سفارش‌ها</th>
+          <th>آخرین سفارش</th>
+          <th>آدرس‌ها</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td>
+            <strong>{{ c.full_name }}</strong><br>
+            <span class="form-hint">{{ c.email|default:"—" }}</span>
+          </td>
+          <td class="ltr-cell"><strong>{{ c.phone }}</strong></td>
+          <td>{{ c.orders_count|smart_number }}</td>
+          <td>
+            <span class="badge badge-info">باز: {{ c.active_orders_count|smart_number }}</span>
+            <span class="badge badge-success">انجام: {{ c.done_orders_count|smart_number }}</span>
+            <span class="badge badge-danger">لغو: {{ c.cancelled_orders_count|smart_number }}</span>
+          </td>
+          <td>{% if c.last_order_at %}{{ c.last_order_at|jalali_datetime }}{% else %}—{% endif %}</td>
+          <td>{{ c.addresses_count|smart_number }}</td>
+          <td>
+            <div class="actions-row">
+              <a href="/{{ company.code }}/admin/customers/{{ c.id }}/" class="btn btn-sm btn-outline">پرونده</a>
+              <a href="/{{ company.code }}/admin/orders/create/?customer_id={{ c.id }}" class="btn btn-sm btn-primary">سفارش جدید</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    </div>
+    <p class="empty-state-title">مشتری‌ای ثبت نشده</p>
+    <p class="empty-state-description">با جستجوی شما نتیجه‌ای پیدا نشد.</p>
+  </div>
+</div>
+{% endif %}
+
 </div>
 {% endblock %}

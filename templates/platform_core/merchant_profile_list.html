@@ -17,87 +17,108 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-compact">
-<div class="px-6 py-8" dir="rtl">
-  <h1 class="text-xl font-bold text-gray-800 mb-6">پروفایل‌های پذیرنده (KYC)</h1>
+<div class="admin-compact" dir="rtl">
 
-  <form method="get" class="bg-white border border-gray-200 rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end">
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">جستجو</label>
-      <input name="q" value="{{ q }}" type="text" placeholder="نام شرکت، کد، موبایل..."
-             class="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-52">
-    </div>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">وضعیت</label>
-      <select name="status" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm">
-        <option value="">همه</option>
-        {% for val, label in status_choices %}
-          <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">شرکت</label>
-      <select name="company" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm">
-        <option value="">همه شرکت‌ها</option>
-        {% for c in companies %}
-          <option value="{{ c.id }}" {% if c.id|stringformat:"s" == company_filter %}selected{% endif %}>{{ c.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <button type="submit" class="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">فیلتر</button>
-    <a href="?" class="px-4 py-1.5 border border-gray-300 text-sm rounded-md text-gray-600 hover:bg-gray-50">پاک</a>
-  </form>
+{# ── Filter bar ── #}
+<form method="get" class="filter-bar">
+  <div class="filter-group">
+    <label>جستجو</label>
+    <input name="q" value="{{ q }}" type="text" placeholder="نام شرکت، کد، موبایل..."
+           class="filter-input" style="min-width:13rem;">
+  </div>
+  <div class="filter-group">
+    <label>وضعیت</label>
+    <select name="status" class="filter-input">
+      <option value="">همه</option>
+      {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>شرکت</label>
+    <select name="company" class="filter-input">
+      <option value="">همه شرکت‌ها</option>
+      {% for c in companies %}
+        <option value="{{ c.id }}" {% if c.id|stringformat:"s" == company_filter %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary btn-sm">فیلتر</button>
+  <a href="?" class="btn btn-outline btn-sm">پاک</a>
+</form>
 
-  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-    <table class="w-full text-sm text-right">
-      <thead class="bg-gray-50 text-gray-600 text-xs">
+{# ── Table ── #}
+<div class="card card-compact card-flush">
+  <div class="card-header">
+    <span class="card-header-title">لیست پروفایل‌های پذیرنده (KYC)</span>
+    {% if profiles %}
+    <span class="badge badge-info">{{ profiles|length }} مورد</span>
+    {% endif %}
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
         <tr>
-          <th class="px-4 py-3">شرکت</th>
-          <th class="px-4 py-3">نام حقوقی</th>
-          <th class="px-4 py-3">موبایل مالک</th>
-          <th class="px-4 py-3">وضعیت</th>
-          <th class="px-4 py-3">تاریخ ارسال</th>
-          <th class="px-4 py-3">بررسی‌کننده</th>
-          <th class="px-4 py-3"></th>
+          <th>شرکت</th>
+          <th>نام حقوقی</th>
+          <th>موبایل مالک</th>
+          <th>وضعیت</th>
+          <th>تاریخ ارسال</th>
+          <th>بررسی‌کننده</th>
+          <th>عملیات</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody>
         {% for profile in profiles %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3 font-medium">{{ profile.company.name }}<br><span class="text-xs text-gray-400">{{ profile.company.code }}</span></td>
-          <td class="px-4 py-3 text-gray-700">{{ profile.legal_company_name|default:"—" }}</td>
-          <td class="px-4 py-3 text-gray-500 ltr-text">{{ profile.owner_mobile|default:"—" }}</td>
-          <td class="px-4 py-3">
+        <tr>
+          <td>
+            <strong>{{ profile.company.name }}</strong><br>
+            <span class="form-hint">{{ profile.company.code }}</span>
+          </td>
+          <td>{{ profile.legal_company_name|default:"—" }}</td>
+          <td class="ltr-cell">{{ profile.owner_mobile|default:"—" }}</td>
+          <td>
             {% if profile.status == "approved" %}
-              <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">تأییدشده</span>
+              <span class="badge badge-success">تأییدشده</span>
             {% elif profile.status == "rejected" %}
-              <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">رد شده</span>
+              <span class="badge badge-danger">رد شده</span>
             {% elif profile.status == "under_review" %}
-              <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">در حال بررسی</span>
+              <span class="badge badge-info">در حال بررسی</span>
             {% elif profile.status == "submitted" %}
-              <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">ارسال شده</span>
+              <span class="badge badge-warning">ارسال شده</span>
             {% elif profile.status == "change_requested" %}
-              <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">درخواست تغییر</span>
+              <span class="badge badge-brand">درخواست تغییر</span>
             {% else %}
-              <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">ارسال نشده</span>
+              <span class="badge badge-neutral">ارسال نشده</span>
             {% endif %}
           </td>
-          <td class="px-4 py-3 text-gray-500 text-xs">
+          <td>
             {% if profile.submitted_at %}{{ profile.submitted_at|jalali_date }}{% else %}—{% endif %}
           </td>
-          <td class="px-4 py-3 text-gray-500 text-xs">{{ profile.reviewed_by|default:"—" }}</td>
-          <td class="px-4 py-3">
+          <td>{{ profile.reviewed_by|default:"—" }}</td>
+          <td>
             <a href="/owner-platform/merchant-profiles/{{ profile.id }}/"
-               class="text-blue-600 hover:underline text-xs">بررسی</a>
+               class="btn btn-sm btn-secondary">بررسی</a>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">پروفایلی یافت نشد.</td></tr>
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </div>
+              <p class="empty-state-title">پروفایلی یافت نشد</p>
+              <p class="empty-state-description">با فیلترهای انتخابی نتیجه‌ای وجود ندارد.</p>
+            </div>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
 </div>
 {% endblock %}
