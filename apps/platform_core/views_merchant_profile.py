@@ -54,6 +54,17 @@ def merchant_profile_list(request: HttpRequest) -> HttpResponse:
     companies = Company.objects.filter(is_active=True).order_by("name")
     status_choices = CompanyMerchantProfile.Status.choices
 
+    # KPI stats for dashboard cards (read-only aggregation)
+    all_profiles = CompanyMerchantProfile.objects.all()
+    stats = {
+        "total": all_profiles.count(),
+        "pending": all_profiles.filter(
+            status__in=["submitted", "under_review"]
+        ).count(),
+        "approved": all_profiles.filter(status="approved").count(),
+        "rejected": all_profiles.filter(status="rejected").count(),
+    }
+
     return render(request, "platform_core/merchant_profile_list.html", {
         "profiles": qs[:300],
         "companies": companies,
@@ -61,6 +72,7 @@ def merchant_profile_list(request: HttpRequest) -> HttpResponse:
         "status_filter": status_filter,
         "company_filter": company_filter,
         "q": q,
+        "stats": stats,
     })
 
 
@@ -172,12 +184,21 @@ def change_request_list(request: HttpRequest) -> HttpResponse:
     companies = Company.objects.filter(is_active=True).order_by("name")
     status_choices = CompanyMerchantProfileChangeRequest.Status.choices
 
+    # KPI stats for dashboard cards (read-only aggregation)
+    all_requests = CompanyMerchantProfileChangeRequest.objects.all()
+    stats = {
+        "total": all_requests.count(),
+        "pending": all_requests.filter(status="pending").count(),
+        "approved": all_requests.filter(status="approved").count(),
+    }
+
     return render(request, "platform_core/merchant_profile_change_request_list.html", {
         "requests": qs[:300],
         "companies": companies,
         "status_choices": status_choices,
         "status_filter": status_filter,
         "company_filter": company_filter,
+        "stats": stats,
     })
 
 

@@ -17,46 +17,99 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-compact" dir="rtl">
+<div class="admin-compact">
+
+{# ── Page header ── #}
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>پروفایل‌های پذیرنده (KYC)</h1>
+    <p class="page-header-subtitle">مدیریت و بررسی وضعیت احراز هویت پذیرندگان — تمام شرکت‌ها</p>
+  </div>
+</div>
+
+{# ── KPI Stat Cards ── #}
+<div class="stat-grid stat-grid-4" dir="rtl">
+  <div class="stat-card">
+    <div class="stat-card-icon blue">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+    </div>
+    <span class="stat-card-value">{{ stats.total }}</span>
+    <div class="stat-card-label">کل پروفایل‌ها</div>
+    <div class="stat-card-hint">مجموع شرکت‌های ثبت‌شده</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon amber">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value stat-value-warning">{{ stats.pending }}</span>
+    <div class="stat-card-label">منتظر بررسی</div>
+    <div class="stat-card-hint">ارسال‌شده + درحال‌بررسی</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon green">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value stat-value-success">{{ stats.approved }}</span>
+    <div class="stat-card-label">تأییدشده</div>
+    <div class="stat-card-hint">احراز هویت کامل</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon red">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    </div>
+    <span class="stat-card-value stat-value-danger">{{ stats.rejected }}</span>
+    <div class="stat-card-label">رد شده</div>
+    <div class="stat-card-hint">نیاز به اصلاح مدارک</div>
+  </div>
+</div>
 
 {# ── Filter bar ── #}
-<form method="get" class="filter-bar">
-  <div class="filter-group">
-    <label>جستجو</label>
-    <input name="q" value="{{ q }}" type="text" placeholder="نام شرکت، کد، موبایل..."
-           class="filter-input" style="min-width:13rem;">
+<div class="card card-compact" dir="rtl" style="padding:0;overflow:hidden;">
+  <div class="card-header" style="padding:var(--space-3) var(--space-4);">
+    <span class="card-header-title">فیلتر و جستجو</span>
   </div>
-  <div class="filter-group">
-    <label>وضعیت</label>
-    <select name="status" class="filter-input">
-      <option value="">همه</option>
-      {% for val, label in status_choices %}
-        <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="filter-group">
-    <label>شرکت</label>
-    <select name="company" class="filter-input">
-      <option value="">همه شرکت‌ها</option>
-      {% for c in companies %}
-        <option value="{{ c.id }}" {% if c.id|stringformat:"s" == company_filter %}selected{% endif %}>{{ c.name }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <button type="submit" class="btn btn-primary btn-sm">فیلتر</button>
-  <a href="?" class="btn btn-outline btn-sm">پاک</a>
-</form>
-
-{# ── Table ── #}
-<div class="card card-compact card-flush">
-  <div class="card-header">
-    <span class="card-header-title">لیست پروفایل‌های پذیرنده (KYC)</span>
-    {% if profiles %}
-    <span class="badge badge-info">{{ profiles|length }} مورد</span>
+  <form method="get" class="filter-bar" style="border:none;border-radius:0;margin-bottom:0;">
+    <div class="filter-group">
+      <label>جستجو</label>
+      <input name="q" value="{{ q }}" type="text" placeholder="نام شرکت، کد، موبایل..."
+             class="filter-input" style="min-width:13rem;">
+    </div>
+    <div class="filter-group">
+      <label>وضعیت</label>
+      <select name="status" class="filter-input">
+        <option value="">همه</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>شرکت</label>
+      <select name="company" class="filter-input">
+        <option value="">همه شرکت‌ها</option>
+        {% for c in companies %}
+          <option value="{{ c.id }}" {% if c.id|stringformat:"s" == company_filter %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">اعمال فیلتر</button>
+    {% if q or status_filter or company_filter %}
+    <a href="?" class="btn btn-outline btn-sm">حذف فیلتر</a>
     {% endif %}
+  </form>
+</div>
+
+{# ── Data Table ── #}
+{% if profiles %}
+<div class="card" dir="rtl" style="padding:0;overflow:hidden;">
+  <div class="card-header" style="padding:var(--space-3) var(--space-4);">
+    <span class="card-header-title">لیست پروفایل‌ها</span>
+    <span class="badge badge-info">{{ profiles|length }} مورد</span>
   </div>
-  <div class="table-wrapper">
+  <div class="table-wrapper" style="border:none;border-radius:0;">
     <table class="data-table">
       <thead>
         <tr>
@@ -73,8 +126,8 @@
         {% for profile in profiles %}
         <tr>
           <td>
-            <strong>{{ profile.company.name }}</strong><br>
-            <span class="form-hint">{{ profile.company.code }}</span>
+            <div style="font-weight:var(--font-weight-semibold);color:var(--color-slate-800);">{{ profile.company.name }}</div>
+            <div style="font-size:.75rem;color:var(--color-slate-400);">{{ profile.company.code }}</div>
           </td>
           <td>{{ profile.legal_company_name|default:"—" }}</td>
           <td class="ltr-cell">{{ profile.owner_mobile|default:"—" }}</td>
@@ -93,31 +146,37 @@
               <span class="badge badge-neutral">ارسال نشده</span>
             {% endif %}
           </td>
-          <td>
+          <td style="white-space:nowrap;color:var(--color-slate-500);">
             {% if profile.submitted_at %}{{ profile.submitted_at|jalali_date }}{% else %}—{% endif %}
           </td>
-          <td>{{ profile.reviewed_by|default:"—" }}</td>
+          <td style="color:var(--color-slate-500);">{{ profile.reviewed_by|default:"—" }}</td>
           <td>
             <a href="/owner-platform/merchant-profiles/{{ profile.id }}/"
                class="btn btn-sm btn-secondary">بررسی</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7">
-            <div class="empty-state">
-              <div class="empty-state-icon">
-                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              </div>
-              <p class="empty-state-title">پروفایلی یافت نشد</p>
-              <p class="empty-state-description">با فیلترهای انتخابی نتیجه‌ای وجود ندارد.</p>
-            </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+</div>
+{% else %}
+<div class="card empty-state" dir="rtl">
+  <div class="empty-state-icon" style="background-color:var(--color-brand-50);color:var(--color-brand-600);">
+    <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+  </div>
+  <p class="empty-state-title">پروفایلی یافت نشد</p>
+  <p class="empty-state-description">با فیلترهای انتخابی نتیجه‌ای وجود ندارد. فیلترها را پاک کنید یا شرایط جستجو را تغییر دهید.</p>
+  <a href="?" class="btn btn-primary btn-sm">نمایش همه</a>
+</div>
+{% endif %}
+
+{# ── Help note ── #}
+<div class="report-help" dir="rtl">
+  <strong>راهنما:</strong>
+  پروفایل‌ها پس از ارسال توسط شرکت، در وضعیت «ارسال شده» قرار می‌گیرند.
+  با کلیک روی «بررسی» وارد صفحه جزئیات شوید و پس از تأیید مدارک، وضعیت را تغییر دهید.
+  برای مشاهده درخواست‌های ویرایش اطلاعات، از دکمه «درخواست‌های تغییر» بالای صفحه استفاده کنید.
 </div>
 
 </div>

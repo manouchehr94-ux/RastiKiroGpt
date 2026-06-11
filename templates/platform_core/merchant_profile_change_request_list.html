@@ -17,41 +17,98 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-compact" dir="rtl">
+<div class="admin-compact">
+
+{# ── Page header ── #}
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>درخواست‌های تغییر پروفایل</h1>
+    <p class="page-header-subtitle">مدیریت درخواست‌های اصلاح اطلاعات ثبتی و بانکی — ارسال‌شده توسط شرکت‌ها</p>
+  </div>
+</div>
+
+{# ── KPI Stat Cards ── #}
+<div class="stat-grid stat-grid-3" dir="rtl">
+  <div class="stat-card">
+    <div class="stat-card-icon blue">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    </div>
+    <span class="stat-card-value">{{ stats.total }}</span>
+    <div class="stat-card-label">کل درخواست‌ها</div>
+    <div class="stat-card-hint">مجموع ارسال‌شده</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon amber">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value stat-value-warning">{{ stats.pending }}</span>
+    <div class="stat-card-label">در انتظار بررسی</div>
+    <div class="stat-card-hint">نیاز به اقدام</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon green">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value stat-value-success">{{ stats.approved }}</span>
+    <div class="stat-card-label">تأیید و اعمال‌شده</div>
+    <div class="stat-card-hint">تغییرات اعمال شده</div>
+  </div>
+</div>
+
+{# ── Pending alert ── #}
+{% if stats.pending > 0 %}
+<div class="balance-insight warning" dir="rtl">
+  <div class="balance-insight-icon">
+    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+  </div>
+  <div class="balance-insight-body">
+    <div class="balance-insight-title">{{ stats.pending }} درخواست منتظر بررسی</div>
+    <div class="balance-insight-detail">این درخواست‌ها توسط شرکت‌ها ارسال شده‌اند و نیاز به تأیید یا رد دارند.</div>
+  </div>
+</div>
+{% endif %}
 
 {# ── Filter bar ── #}
-<form method="get" class="filter-bar">
-  <div class="filter-group">
-    <label>وضعیت</label>
-    <select name="status" class="filter-input">
-      <option value="">همه</option>
-      {% for val, label in status_choices %}
-        <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
+<div class="card card-compact" dir="rtl" style="padding:0;overflow:hidden;">
+  <div class="card-header" style="padding:var(--space-3) var(--space-4);">
+    <span class="card-header-title">فیلتر درخواست‌ها</span>
   </div>
-  <div class="filter-group">
-    <label>شرکت</label>
-    <select name="company" class="filter-input">
-      <option value="">همه شرکت‌ها</option>
-      {% for c in companies %}
-        <option value="{{ c.id }}" {% if c.id|stringformat:"s" == company_filter %}selected{% endif %}>{{ c.name }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <button type="submit" class="btn btn-primary btn-sm">فیلتر</button>
-  <a href="?" class="btn btn-outline btn-sm">پاک</a>
-</form>
-
-{# ── Table ── #}
-<div class="card card-compact card-flush">
-  <div class="card-header">
-    <span class="card-header-title">درخواست‌های تغییر</span>
-    {% if requests %}
-    <span class="badge badge-info">{{ requests|length }} مورد</span>
+  <form method="get" class="filter-bar" style="border:none;border-radius:0;margin-bottom:0;">
+    <div class="filter-group">
+      <label>وضعیت</label>
+      <select name="status" class="filter-input">
+        <option value="">همه</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>شرکت</label>
+      <select name="company" class="filter-input">
+        <option value="">همه شرکت‌ها</option>
+        {% for c in companies %}
+          <option value="{{ c.id }}" {% if c.id|stringformat:"s" == company_filter %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">اعمال فیلتر</button>
+    {% if status_filter or company_filter %}
+    <a href="?" class="btn btn-outline btn-sm">حذف فیلتر</a>
     {% endif %}
+  </form>
+</div>
+
+{# ── Data Table ── #}
+{% if requests %}
+<div class="card" dir="rtl" style="padding:0;overflow:hidden;">
+  <div class="card-header" style="padding:var(--space-3) var(--space-4);">
+    <span class="card-header-title">لیست درخواست‌ها</span>
+    <span class="badge badge-info">{{ requests|length }} مورد</span>
   </div>
-  <div class="table-wrapper">
+  <div class="table-wrapper" style="border:none;border-radius:0;">
     <table class="data-table">
       <thead>
         <tr>
@@ -67,11 +124,11 @@
         {% for req in requests %}
         <tr>
           <td>
-            <strong>{{ req.company.name }}</strong><br>
-            <span class="form-hint">{{ req.company.code }}</span>
+            <div style="font-weight:var(--font-weight-semibold);color:var(--color-slate-800);">{{ req.company.name }}</div>
+            <div style="font-size:.75rem;color:var(--color-slate-400);">{{ req.company.code }}</div>
           </td>
-          <td>{{ req.created_by|default:"—" }}</td>
-          <td>{{ req.created_at|jalali_date }}</td>
+          <td style="color:var(--color-slate-600);">{{ req.created_by|default:"—" }}</td>
+          <td style="white-space:nowrap;color:var(--color-slate-500);">{{ req.created_at|jalali_date }}</td>
           <td>
             {% if req.status == "approved" %}
               <span class="badge badge-success">تأییدشده</span>
@@ -81,28 +138,33 @@
               <span class="badge badge-warning">در انتظار</span>
             {% endif %}
           </td>
-          <td>{{ req.reviewed_by|default:"—" }}</td>
+          <td style="color:var(--color-slate-500);">{{ req.reviewed_by|default:"—" }}</td>
           <td>
             <a href="/owner-platform/merchant-profile-change-requests/{{ req.id }}/"
                class="btn btn-sm btn-secondary">بررسی</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="6">
-            <div class="empty-state">
-              <div class="empty-state-icon">
-                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              </div>
-              <p class="empty-state-title">درخواستی یافت نشد</p>
-              <p class="empty-state-description">با فیلترهای انتخابی نتیجه‌ای وجود ندارد.</p>
-            </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+</div>
+{% else %}
+<div class="card empty-state" dir="rtl">
+  <div class="empty-state-icon" style="background-color:var(--color-brand-50);color:var(--color-brand-600);">
+    <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+  </div>
+  <p class="empty-state-title">درخواست تغییری ثبت نشده</p>
+  <p class="empty-state-description">هیچ شرکتی درخواست ویرایش اطلاعات پذیرندگی ارسال نکرده‌ است. با تغییر فیلتر، نتایج بیشتری ببینید.</p>
+  <a href="?" class="btn btn-primary btn-sm">نمایش همه</a>
+</div>
+{% endif %}
+
+{# ── Help note ── #}
+<div class="report-help" dir="rtl">
+  <strong>راهنما:</strong>
+  شرکت‌ها پس از تأیید اولیه پروفایل، می‌توانند درخواست تغییر اطلاعات بانکی یا ثبتی ارسال کنند.
+  هر درخواست باید بررسی و تأیید یا رد شود. تغییرات تأییدشده بلافاصله روی پروفایل اصلی اعمال می‌شوند.
 </div>
 
 </div>
