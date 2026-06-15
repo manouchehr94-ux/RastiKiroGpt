@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% block title %}جزئیات پیامک {{ display_id }}{% endblock %}
 {% block page_title %}جزئیات پیامک {{ display_id }}{% endblock %}
 {% load fa_labels %}
@@ -11,7 +11,7 @@
 {% block page_description %}این پیام فقط متعلق به شرکت {{ company.name }} است و شرکت‌های دیگر به آن دسترسی ندارند.{% endblock %}
 {% block content %}
 <div class="admin-compact">
-<style>.sms-status{display:inline-flex;align-items:center;border-radius:999px;padding:.3rem .75rem;font-size:.82rem;font-weight:700}.sms-status.queued{background:#fef3c7;color:#92400e}.sms-status.sending{background:#dbeafe;color:#1d4ed8}.sms-status.sent{background:#dcfce7;color:#166534}.sms-status.delivered{background:#d1fae5;color:#065f46}.sms-status.failed{background:#fee2e2;color:#991b1b}.sms-status.cancelled{background:#e5e7eb;color:#374151}.sms-box{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px}.sms-message{white-space:pre-wrap;line-height:2}.sms-id{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;direction:ltr;display:inline-block}.readiness{display:inline-flex;border-radius:999px;padding:.25rem .65rem;font-size:.78rem;font-weight:700}.readiness.ready,.readiness.success{background:#dcfce7;color:#166534}.readiness.sending{background:#dbeafe;color:#1d4ed8}.readiness.no_provider,.readiness.insufficient_credit,.readiness.failed{background:#fee2e2;color:#991b1b}.readiness.cancelled,.readiness.unknown{background:#e5e7eb;color:#374151}.ltr{direction:ltr;display:inline-block}</style>
+<style>.sms-status{display:inline-flex;align-items:center;border-radius:999px;padding:.3rem .75rem;font-size:.82rem;font-weight:700}.sms-status.queued{background:var(--color-warning-bg);color:var(--color-warning-dark)}.sms-status.sending{background:var(--color-info-bg);color:var(--color-info-dark)}.sms-status.sent{background:var(--color-success-bg);color:var(--color-success-dark)}.sms-status.delivered{background:var(--color-success-bg);color:var(--color-success-dark)}.sms-status.failed{background:var(--color-danger-bg);color:var(--color-danger-dark)}.sms-status.cancelled{background:var(--color-slate-100);color:var(--color-slate-600)}.sms-box{background:var(--color-surface-0);border:1px solid var(--color-slate-200);border-radius:18px;padding:18px}.sms-message{white-space:pre-wrap;line-height:2}.sms-id{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;direction:ltr;display:inline-block}.readiness{display:inline-flex;border-radius:999px;padding:.25rem .65rem;font-size:.78rem;font-weight:700}.readiness.ready,.readiness.success{background:var(--color-success-bg);color:var(--color-success-dark)}.readiness.sending{background:var(--color-info-bg);color:var(--color-info-dark)}.readiness.no_provider,.readiness.insufficient_credit,.readiness.failed{background:var(--color-danger-bg);color:var(--color-danger-dark)}.readiness.cancelled,.readiness.unknown{background:var(--color-slate-100);color:var(--color-slate-600)}.ltr{direction:ltr;display:inline-block}</style>
 <div class="mb-4 flex gap-2 flex-wrap">
   <a class="px-4 py-2 bg-white border rounded-lg" href="/{{ company.code }}/admin/sms/outbox/">بازگشت به صندوق ارسال</a>
   {% if sms.status == "failed" %}
@@ -107,3 +107,4 @@
 
 </div>
 {% endblock %}
+

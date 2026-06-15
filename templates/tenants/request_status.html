@@ -1,46 +1,70 @@
 {% extends "base.html" %}
-{% load jalali_tags  fa_labels %}
-
+{% load jalali_tags fa_labels %}
 {% block title %}پیگیری درخواست - {{ company.name }}{% endblock %}
 
 {% block body %}
-<div class="page-full" style="max-width: 600px; margin: 2rem auto;">
-    <div class="card">
-        <div class="card-header">پیگیری وضعیت درخواست</div>
+<div class="page-full" style="max-width:600px;margin:var(--space-8) auto;">
 
-        <form method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <label>شماره تلفن</label>
-                <input type="text" name="phone" value="{{ phone }}" class="form-control" placeholder="09xxxxxxxxx" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">جستجو</button>
-        </form>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-title">پیگیری وضعیت درخواست</span>
+    </div>
+    <form method="post" class="form-stack">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">شماره تلفن</label>
+        <input type="text" name="phone" value="{{ phone }}" class="form-control ltr-field" placeholder="09xxxxxxxxx" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">جستجو</button>
+    </form>
+  </div>
+
+  {% if results is not None %}
+  <div class="card" style="margin-top:var(--space-4);">
+    <div class="card-header">
+      <span class="card-header-title">نتایج</span>
     </div>
 
-    {% if results is not None %}
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">نتایج</div>
-
-        {% if results %}
-        <div class="table-wrapper"><table>
-            <thead><tr><th>شماره</th><th>عنوان</th><th>وضعیت</th><th>تاریخ</th></tr></thead>
-            <tbody>{% for order in results %}
-            <tr>
-                <td><strong>#{{ order.id }}</strong></td>
-                <td>{{ order.title }}</td>
-                <td><span class="badge badge-{{ order.status|status_css }}">{{ order.status|status_fa }}</span></td>
-                <td>{{ order.created_at|jalali_date }}</td>
-            </tr>{% endfor %}</tbody>
-        </table></div>
-        {% else %}
-        <p style="color: #64748b;">سفارشی با این شماره تلفن یافت نشد.</p>
-        {% endif %}
+    {% if results %}
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>شماره</th>
+            <th>عنوان</th>
+            <th>وضعیت</th>
+            <th>تاریخ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in results %}
+          <tr>
+            <td><strong>#{{ order.id }}</strong></td>
+            <td>{{ order.title }}</td>
+            <td><span class="badge badge-{{ order.status|status_css }}">{{ order.status|status_fa }}</span></td>
+            <td>{{ order.created_at|jalali_date }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p class="empty-state-title">سفارشی یافت نشد</p>
+      <p class="empty-state-description">سفارشی با این شماره تلفن یافت نشد.</p>
     </div>
     {% endif %}
+  </div>
+  {% endif %}
 
-    <p style="text-align: center; margin-top: 1.5rem;">
-        <a href="/{{ company.code }}/">بازگشت به صفحه اصلی</a>
-    </p>
+  <p style="text-align:center;margin-top:var(--space-4);">
+    <a href="/{{ company.code }}/" class="btn btn-ghost">بازگشت به صفحه اصلی</a>
+  </p>
+
 </div>
 {% endblock %}

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tenants - Forms.
 
 Forms for public service request and admin management.
@@ -82,10 +82,6 @@ class TechnicianCreateForm(forms.Form):
     phone = forms.CharField(
         max_length=15,
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "09121234567", "style": "direction:ltr;"}),
-    )
-    password = forms.CharField(
-        required=False,
-        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "رمز ورود؛ اگر خالی باشد changeme123"}),
     )
     first_name = forms.CharField(
         max_length=100,

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -7,10 +7,6 @@
     {% load static %}
     {# Central UI theme — single entrypoint for all visual styling (P24) #}
     <link rel="stylesheet" href="{% static 'css/theme.css' %}">
-    <link rel="stylesheet" href="{% static 'css/rasti_ui_hotfix.css' %}">
-    <link rel="stylesheet" href="{% static 'css/rasti_sidebar_fix.css' %}">
-    {# UI Core consistency patch: keeps admin/owner layouts on the central UI Core #}
-    <link rel="stylesheet" href="{% static 'css/rasti_ui_core_consistency.css' %}">
     {# RASTI_UI_HOTFIX_20260607: global Jalali datepicker styles #}
     <link rel="stylesheet" href="{% static 'css/jalali_datepicker.css' %}">
         <link rel="stylesheet" href="{% static 'css/tech_bottom_nav_fix.css' %}">
@@ -31,3 +27,4 @@
     <script src="{% static 'js/tech_bottom_nav_fix.js' %}?v=local-hotfix-1" defer></script>
 </body>
 </html>
+

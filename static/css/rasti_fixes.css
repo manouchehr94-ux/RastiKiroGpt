@@ -1,0 +1,290 @@
+/* =============================================================================
+   Rasti Fixes — فایل یکپارچه
+   
+   جایگزین این سه فایل میشه:
+     - rasti_ui_hotfix.css
+     - rasti_sidebar_fix.css
+     - rasti_ui_core_consistency.css
+
+   در theme.css این سه @import را حذف کن و فقط این را بذار:
+     @import url('rasti_fixes.css');
+   ============================================================================= */
+
+
+/* =============================================================================
+   ۱. اعداد در RTL — همیشه LTR نمایش داده بشن
+   (از rasti_ui_hotfix.css)
+   ============================================================================= */
+
+.rasti-number,
+[data-format-number] {
+  direction: ltr;
+  unicode-bidi: plaintext;
+}
+
+
+/* =============================================================================
+   ۲. Layout — عرض کامل برای dashboard
+   (از rasti_ui_core_consistency.css)
+   ============================================================================= */
+
+.dashboard-content {
+  max-width: none !important;
+  width: 100% !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+#app > .flex-1 > main,
+.flex-1.flex.flex-col.min-w-0 > main {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.dashboard-content > .max-w-6xl,
+.dashboard-content > .max-w-7xl,
+.dashboard-content > .max-w-5xl,
+.dashboard-content > .max-w-4xl {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.dashboard-content .table-wrapper,
+.dashboard-content .overflow-x-auto {
+  max-width: 100%;
+}
+
+
+/* =============================================================================
+   ۳. Page Shell Utilities
+   (از rasti_ui_core_consistency.css)
+   ============================================================================= */
+
+.rasti-page-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+  direction: rtl;
+}
+
+.rasti-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.rasti-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, .75rem);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.rasti-action-bar .page-header,
+.rasti-action-bar .page-header-content {
+  margin-bottom: 0;
+}
+
+.rasti-stat-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4, 1rem);
+}
+
+
+/* =============================================================================
+   ۴. Sidebar Nav Groups
+   (از rasti_ui_core_consistency.css)
+   ============================================================================= */
+
+.sidebar .nav-group,
+.admin-sidebar .nav-group {
+  margin-bottom: var(--space-3, .75rem);
+}
+
+.sidebar .nav-group-title,
+.admin-sidebar .nav-group-title {
+  padding: var(--space-2, .5rem) var(--space-3, .75rem) var(--space-1, .25rem);
+  font-size: var(--font-size-2xs, .65rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-slate-500, #64748b);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider, .04em);
+  border-top: 1px solid rgba(51, 65, 85, .3);
+}
+
+.sidebar .nav-group:first-child .nav-group-title,
+.admin-sidebar .nav-group:first-child .nav-group-title {
+  border-top: 0;
+}
+
+.sidebar .nav-item,
+.admin-sidebar .nav-item {
+  min-height: 38px;
+}
+
+
+/* =============================================================================
+   ۵. Sidebar — Desktop (min-width: 1024px)
+   همیشه visible، بدون transform
+   ============================================================================= */
+
+@media (min-width: 1024px) {
+
+  /* sidebar همیشه نمایش داده میشه */
+  #sidebar,
+  .sidebar,
+  .admin-sidebar {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    position: relative !important;
+  }
+
+  /* overlay هیچوقت روی desktop نمایش داده نمیشه */
+  #sidebarOverlay,
+  .sidebar-overlay,
+  #sidebarOverlay.active,
+  .sidebar-overlay.active,
+  #sidebarOverlay.open,
+  .sidebar-overlay.open {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  /* body scroll lock روی desktop فعال نمیشه */
+  body.rasti-sidebar-open,
+  body.admin-sidebar-is-open {
+    overflow: auto !important;
+  }
+
+}
+
+
+/* =============================================================================
+   ۶. Sidebar — Mobile (max-width: 1023px)
+   به صورت drawer از راست باز میشه
+   ============================================================================= */
+
+@media (max-width: 1023px) {
+
+  /* sidebar بسته — خارج از صفحه */
+  #sidebar,
+  #app #sidebar,
+  .sidebar,
+  .admin-sidebar {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: min(18rem, 86vw) !important;
+    max-width: 86vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+    z-index: 50 !important;
+    background: #0f172a !important;
+    box-shadow: -18px 0 40px rgba(15, 23, 42, 0.28) !important;
+    transform: translateX(110%) !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: transform .22s ease, opacity .22s ease, visibility .22s ease !important;
+  }
+
+  /* sidebar باز — با class روی body یا خود sidebar */
+  body.rasti-sidebar-open #sidebar,
+  body.rasti-sidebar-open #app #sidebar,
+  body.rasti-sidebar-open .sidebar,
+  body.rasti-sidebar-open .admin-sidebar,
+  body.admin-sidebar-is-open #sidebar,
+  body.admin-sidebar-is-open #app #sidebar,
+  #sidebar.open,
+  #sidebar.sidebar-opened,
+  #sidebar.is-open,
+  .sidebar.open,
+  .sidebar.sidebar-opened,
+  .admin-sidebar.open,
+  .admin-sidebar.sidebar-opened {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* overlay — پیش‌فرض مخفی */
+  #sidebarOverlay,
+  #sidebarOverlay.sidebar-overlay,
+  .sidebar-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 49 !important;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    background: rgba(15, 23, 42, 0.45) !important;
+    backdrop-filter: none !important;
+    transition: opacity .18s ease, visibility .18s ease;
+  }
+
+  /* overlay — وقتی sidebar باز است */
+  body.rasti-sidebar-open #sidebarOverlay,
+  body.rasti-sidebar-open .sidebar-overlay,
+  body.admin-sidebar-is-open #sidebarOverlay,
+  body.admin-sidebar-is-open .sidebar-overlay,
+  #sidebarOverlay.active,
+  .sidebar-overlay.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    backdrop-filter: blur(2px) !important;
+  }
+
+  /* body scroll lock */
+  body.rasti-sidebar-open,
+  body.admin-sidebar-is-open,
+  body.no-scroll {
+    overflow: hidden !important;
+  }
+
+  /* dashboard padding روی موبایل */
+  .dashboard-content {
+    padding: var(--space-4, 1rem) !important;
+  }
+
+  .rasti-stat-grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .rasti-action-bar {
+    align-items: stretch;
+  }
+
+}
+
+
+/* =============================================================================
+   ۷. Responsive — stat grid روی تبلت
+   ============================================================================= */
+
+@media (max-width: 1100px) {
+  .rasti-stat-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

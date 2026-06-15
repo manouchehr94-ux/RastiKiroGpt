@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load smart_numbers %}
 {% block title %}ویرایش فاکتور {{ invoice.invoice_number }} - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -10,7 +10,7 @@
 <div class="page-header"><h1>ویرایش فاکتور {{ invoice.invoice_number }}</h1></div>
 {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
 <style>
-.readonly-value { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:0.65rem 0.75rem; min-height:42px; color:#334155; }
+.readonly-value { background:var(--color-surface-2); border:1px solid var(--color-slate-200); border-radius:var(--radius-md); padding:var(--space-2-5) var(--space-3); min-height:42px; color:var(--color-slate-700); }
 .readonly-value.multi-line { white-space:pre-wrap; min-height:58px; }
 </style>
 
@@ -21,7 +21,7 @@
 {% else %}
 <form method="post">{% csrf_token %}
 <div class="card"><div class="card-header">اطلاعات فاکتور</div>
-<p style="color:#64748b; margin-top:0;">این اطلاعات از سفارش کپی شده و برای حفظ اعتبار فاکتور قابل تغییر نیست. فقط آیتم‌ها و جمع‌بندی مالی از همین صفحه ویرایش می‌شوند.</p>
+<p class="stat-card-hint">این اطلاعات از سفارش کپی شده و برای حفظ اعتبار فاکتور قابل تغییر نیست. فقط آیتم‌ها و جمع‌بندی مالی از همین صفحه ویرایش می‌شوند.</p>
 <div class="form-grid readonly-grid">
 <div class="form-group"><label>نام مشتری</label><div class="readonly-value">{{ invoice.customer_name_snapshot|default:"-" }}</div></div>
 <div class="form-group"><label>شماره تماس مشتری</label><div class="readonly-value">{{ invoice.customer_phone_snapshot|default:"-" }}</div></div>
@@ -72,3 +72,5 @@
 {% endif %}
 </div>
 {% endblock %}
+
+

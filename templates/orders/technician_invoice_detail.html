@@ -1,4 +1,4 @@
-{% extends "layouts/technician.html" %}
+﻿{% extends "layouts/technician.html" %}
 {% load static  fa_labels %}
 {% load jalali_tags %}
 {% load smart_numbers %}
@@ -22,7 +22,7 @@
     <div class="card-header">وضعیت پرداخت</div>
     <span class="status-badge status-success">پرداخت شده</span>
     {% if latest_payment %}
-        <p style="margin-top:.75rem;color:#475569;">
+        <p style="margin-top:.75rem;color:var(--color-slate-600);">
             شماره سند / کد پیگیری:
             <strong style="direction:ltr;unicode-bidi:plaintext;">{{ latest_payment.tracking_code|default:latest_payment.reference_id|default:"-" }}</strong>
             {% if latest_payment.metadata.method == "cash" %}
@@ -718,16 +718,16 @@
 
 <!-- discount_campaign_candidate_rows_7c8 -->
 <style>
-.discount-recipient-card{margin-top:1rem;background:#fff;border:1px solid #e5e7eb;border-radius:1rem;overflow:hidden}
-.discount-recipient-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:1rem;border-bottom:1px solid #e5e7eb;background:#f8fafc}
-.discount-recipient-title{font-weight:900;color:#0f172a}
-.discount-recipient-muted{color:#64748b;font-size:.84rem;margin-top:.25rem}
+.discount-recipient-card{margin-top:1rem;background:var(--color-surface-0);border:1px solid var(--color-slate-200);border-radius:1rem;overflow:hidden}
+.discount-recipient-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:1rem;border-bottom:1px solid var(--color-slate-200);background:#f8fafc}
+.discount-recipient-title{font-weight:900;color:var(--color-slate-900)}
+.discount-recipient-muted{color:var(--color-text-muted);font-size:.84rem;margin-top:.25rem}
 .discount-recipient-actions{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
 .discount-recipient-table{width:100%;border-collapse:collapse;font-size:.88rem}
 .discount-recipient-table th,.discount-recipient-table td{padding:.75rem;border-bottom:1px solid #eef2f7;text-align:right;vertical-align:middle}
-.discount-recipient-table th{background:#f8fafc;color:#475569;font-size:.78rem;font-weight:900}
+.discount-recipient-table th{background:var(--color-surface-1);color:var(--color-slate-600);font-size:.78rem;font-weight:900}
 .discount-recipient-phone{direction:ltr;unicode-bidi:plaintext;font-weight:800}
-.discount-recipient-submit{padding:1rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;border-top:1px solid #e5e7eb;background:#fff}
+.discount-recipient-submit{padding:1rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;border-top:1px solid var(--color-slate-200);background:#fff}
 @media(max-width:800px){.discount-recipient-table{min-width:760px}.discount-recipient-scroll{overflow-x:auto}}
 </style>
 
@@ -820,3 +820,4 @@
 <!-- /discount_campaign_candidate_rows_7c8 -->
 
 {% endblock %}
+

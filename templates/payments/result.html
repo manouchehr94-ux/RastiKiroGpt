@@ -4,16 +4,34 @@
 
 {% block body %}
 <div class="page-center">
-    <div class="login-box" style="text-align: center;">
-        {% if success %}
-        <h1 style="color: #16a34a;">پرداخت موفق</h1>
-        <p style="margin: 1rem 0;">{{ message }}</p>
-        {% if payment %}<p style="color: #64748b;">کد پیگیری: <strong>{{ payment.tracking_code }}</strong></p>{% endif %}
-        {% else %}
-        <h1 style="color: #dc2626;">پرداخت ناموفق</h1>
-        <p style="margin: 1rem 0; color: #64748b;">{{ message }}</p>
-        {% endif %}
-        {% if company %}<a href="/{{ company.code }}/invoices/" class="btn btn-outline" class="">بازگشت به فاکتورها</a>{% endif %}
+  <div class="login-box" style="text-align:center;">
+
+    {% if success %}
+    <div class="stat-card-icon green" style="margin:0 auto var(--space-4);">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
     </div>
+    <h1 class="page-header-title" style="color:var(--color-success);">پرداخت موفق</h1>
+    <p style="margin:var(--space-3) 0;">{{ message }}</p>
+    {% if payment %}
+    <p class="page-header-subtitle">کد پیگیری: <strong>{{ payment.tracking_code }}</strong></p>
+    {% endif %}
+
+    {% else %}
+    <div class="stat-card-icon red" style="margin:0 auto var(--space-4);">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <h1 class="page-header-title" style="color:var(--color-danger);">پرداخت ناموفق</h1>
+    <p class="page-header-subtitle" style="margin:var(--space-3) 0;">{{ message }}</p>
+    {% endif %}
+
+    {% if company %}
+    <a href="/{{ company.code }}/invoices/" class="btn btn-outline" style="margin-top:var(--space-4);">بازگشت به فاکتورها</a>
+    {% endif %}
+
+  </div>
 </div>
 {% endblock %}

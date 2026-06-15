@@ -1,26 +1,33 @@
 {% extends "base.html" %}
-
 {% block title %}درخواست ثبت شد - {{ company.name }}{% endblock %}
 
 {% block body %}
 <div class="page-center">
-    <div class="login-box" style="text-align: center; max-width: 450px;">
-        <h1 style="color: #16a34a;">درخواست با موفقیت ثبت شد</h1>
-        <p style="margin: 1rem 0;">{{ service_request.customer_name }} عزیز، درخواست شما ثبت شد.</p>
+  <div class="login-box" style="text-align:center;max-width:450px;">
 
-        {% if order %}
-        <div class="card" style="margin: 1.5rem 0; text-align: center;">
-            <p style="color: #64748b; font-size: 0.85rem;">شماره پیگیری سفارش:</p>
-            <p style="font-size: 1.5rem; font-weight: 700; color: #2563eb;">#{{ order.id }}</p>
-        </div>
-        {% endif %}
-
-        <p style="color: #64748b;">به‌زودی با شماره {{ service_request.customer_phone }} تماس خواهیم گرفت.</p>
-
-        <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-            <a href="/{{ company.code }}/" class="btn btn-outline">صفحه اصلی</a>
-            <a href="/{{ company.code }}/request/status/" class="btn btn-primary">پیگیری وضعیت</a>
-        </div>
+    <div class="stat-card-icon green" style="margin:0 auto var(--space-4);">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
     </div>
+
+    <h1 class="page-header-title" style="color:var(--color-success);">درخواست با موفقیت ثبت شد</h1>
+    <p style="margin:var(--space-3) 0;">{{ service_request.customer_name }} عزیز، درخواست شما ثبت شد.</p>
+
+    {% if order %}
+    <div class="card" style="margin:var(--space-5) 0;text-align:center;">
+      <p class="page-header-subtitle">شماره پیگیری سفارش:</p>
+      <p style="font-size:var(--font-size-2xl);font-weight:var(--font-weight-extrabold);color:var(--color-primary);">#{{ order.id }}</p>
+    </div>
+    {% endif %}
+
+    <p class="page-header-subtitle">به‌زودی با شماره {{ service_request.customer_phone }} تماس خواهیم گرفت.</p>
+
+    <div style="margin-top:var(--space-5);display:flex;gap:var(--space-2);justify-content:center;flex-wrap:wrap;">
+      <a href="/{{ company.code }}/" class="btn btn-outline">صفحه اصلی</a>
+      <a href="/{{ company.code }}/request/status/" class="btn btn-primary">پیگیری وضعیت</a>
+    </div>
+
+  </div>
 </div>
 {% endblock %}

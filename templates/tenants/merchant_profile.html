@@ -10,55 +10,76 @@
 <div class="page-header">
   <div>
     <h1>پروفایل بانکی و ثبتی شرکت</h1>
-    <p style="color:#64748b;margin:.3rem 0 0;">اطلاعات لازم جهت فعال‌سازی درگاه پرداخت</p>
+    <p class="page-header-subtitle">اطلاعات لازم جهت فعال‌سازی درگاه پرداخت</p>
   </div>
   {% if not profile.is_editable %}
   <a href="/{{ company.code }}/admin/payment/merchant-profile/edit-request/" class="btn btn-outline">ثبت درخواست ویرایش</a>
   {% endif %}
 </div>
 
-{# Status Banner #}
-<div class="card" style="margin-bottom:1.25rem;padding:.85rem 1.25rem;background:
-  {% if profile.status == 'approved' %}#f0fdf4{% elif profile.status == 'rejected' %}#fef2f2{% elif profile.status == 'submitted' or profile.status == 'under_review' %}#eff6ff{% elif profile.status == 'change_requested' %}#fffbeb{% else %}#f8fafc{% endif %};
-  border:1px solid {% if profile.status == 'approved' %}#bbf7d0{% elif profile.status == 'rejected' %}#fecaca{% elif profile.status == 'submitted' or profile.status == 'under_review' %}#bfdbfe{% elif profile.status == 'change_requested' %}#fde68a{% else %}#e2e8f0{% endif %};border-radius:.75rem;
-  display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-  <div>
-    <span style="font-size:.75rem;font-weight:600;color:#64748b;">وضعیت:</span>
-    <strong style="margin-right:.35rem;color:
-      {% if profile.status == 'approved' %}#16a34a
-      {% elif profile.status == 'rejected' %}#dc2626
-      {% elif profile.status == 'submitted' or profile.status == 'under_review' %}#2563eb
-      {% elif profile.status == 'change_requested' %}#d97706
-      {% else %}#64748b{% endif %};">
-      {{ profile.get_status_display }}
-    </strong>
+{# Status Banner — از کلاس‌های UI Core استفاده میکنه #}
+{% if profile.status == 'approved' %}
+<div class="alert alert-success" dir="rtl" style="margin-bottom:1.25rem;">
+  <div class="alert-body">
+    <div class="alert-title">وضعیت: {{ profile.get_status_display }}</div>
   </div>
-  {% if profile.status == 'rejected' and profile.rejected_reason %}
-  <div style="font-size:.82rem;color:#dc2626;">دلیل رد: {{ profile.rejected_reason }}</div>
-  {% endif %}
-  {% if profile.status == 'change_requested' and profile.review_note %}
-  <div style="font-size:.82rem;color:#92400e;">یادداشت پلتفرم: {{ profile.review_note }}</div>
-  {% endif %}
-  {% if profile.status == 'not_submitted' %}
-  <div class="stat-card-hint">برای فعال‌سازی درگاه پرداخت، اطلاعات زیر را تکمیل و ارسال کنید.</div>
-  {% endif %}
 </div>
+{% elif profile.status == 'rejected' %}
+<div class="alert alert-danger" dir="rtl" style="margin-bottom:1.25rem;">
+  <div class="alert-body">
+    <div class="alert-title">وضعیت: {{ profile.get_status_display }}</div>
+    {% if profile.rejected_reason %}
+    <div>دلیل رد: {{ profile.rejected_reason }}</div>
+    {% endif %}
+  </div>
+</div>
+{% elif profile.status == 'submitted' or profile.status == 'under_review' %}
+<div class="alert alert-info" dir="rtl" style="margin-bottom:1.25rem;">
+  <div class="alert-body">
+    <div class="alert-title">وضعیت: {{ profile.get_status_display }}</div>
+  </div>
+</div>
+{% elif profile.status == 'change_requested' %}
+<div class="alert alert-warning" dir="rtl" style="margin-bottom:1.25rem;">
+  <div class="alert-body">
+    <div class="alert-title">وضعیت: {{ profile.get_status_display }}</div>
+    {% if profile.review_note %}
+    <div>یادداشت پلتفرم: {{ profile.review_note }}</div>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info" dir="rtl" style="margin-bottom:1.25rem;">
+  <div class="alert-body">
+    <div class="alert-title">وضعیت: {{ profile.get_status_display }}</div>
+    {% if profile.status == 'not_submitted' %}
+    <div>برای فعال‌سازی درگاه پرداخت، اطلاعات زیر را تکمیل و ارسال کنید.</div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
 
 {% if success %}
-<div class="card" style="background:#f0fdf4;border:1px solid #bbf7d0;padding:.75rem 1rem;margin-bottom:1rem;border-radius:.75rem;color:#166534;">{{ success }}</div>
+<div class="alert alert-success" dir="rtl">
+  <div class="alert-body">{{ success }}</div>
+</div>
 {% endif %}
 
 {% if errors %}
-<div class="card" style="background:#fef2f2;border:1px solid #fecaca;padding:.75rem 1rem;margin-bottom:1rem;border-radius:.75rem;">
-  <ul class="audit-meta fin-number-negative">
-    {% for e in errors %}<li>{{ e }}</li>{% endfor %}
-  </ul>
+<div class="alert alert-danger" dir="rtl">
+  <div class="alert-body">
+    <ul style="margin:0;padding-right:var(--space-4);">
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+  </div>
 </div>
 {% endif %}
 
 {% if pending_requests %}
-<div class="card" style="background:#eff6ff;border:1px solid #bfdbfe;padding:.75rem 1rem;margin-bottom:1rem;border-radius:.75rem;font-size:.85rem;color:#1e40af;">
-  {{ pending_requests.count }} درخواست ویرایش در انتظار بررسی توسط مالک پلتفرم وجود دارد.
+<div class="alert alert-info" dir="rtl">
+  <div class="alert-body">
+    {{ pending_requests.count }} درخواست ویرایش در انتظار بررسی توسط مالک پلتفرم وجود دارد.
+  </div>
 </div>
 {% endif %}
 
@@ -102,12 +123,10 @@
     <div class="stat-grid stat-grid-3">
 
       <div>
-        <label class="detail-label">
-          تصویر کارت ملی <span style="color:#dc2626;">*</span>
-        </label>
+        <label class="form-label required">تصویر کارت ملی</label>
         {% if profile.national_card_image %}
         <div class="stat-card-hint stat-value-success">
-          ✓ بارگذاری شده —
+          ✔ بارگذاری شده —
           <a href="/{{ company.code }}/admin/payment/merchant-profile/document/national_card_image/" target="_blank" class="text-accent-purple">مشاهده</a>
         </div>
         {% endif %}
@@ -116,10 +135,10 @@
       </div>
 
       <div>
-        <label class="detail-label">جواز کسب / پروانه (اختیاری)</label>
+        <label class="form-label">جواز کسب / پروانه (اختیاری)</label>
         {% if profile.business_license_image %}
         <div class="stat-card-hint stat-value-success">
-          ✓ بارگذاری شده —
+          ✔ بارگذاری شده —
           <a href="/{{ company.code }}/admin/payment/merchant-profile/document/business_license_image/" target="_blank" class="text-accent-purple">مشاهده</a>
         </div>
         {% endif %}
@@ -127,10 +146,10 @@
       </div>
 
       <div>
-        <label class="detail-label">آگهی روزنامه رسمی (اختیاری)</label>
+        <label class="form-label">آگهی روزنامه رسمی (اختیاری)</label>
         {% if profile.latest_official_newspaper_image %}
         <div class="stat-card-hint stat-value-success">
-          ✓ بارگذاری شده —
+          ✔ بارگذاری شده —
           <a href="/{{ company.code }}/admin/payment/merchant-profile/document/latest_official_newspaper_image/" target="_blank" class="text-accent-purple">مشاهده</a>
         </div>
         {% endif %}
@@ -143,72 +162,65 @@
   {# Notes #}
   <div class="card" class="report-card">
     <div class="report-card-header">یادداشت (اختیاری)</div>
-    <div class="">
-      <textarea name="notes" rows="3" class="filter-input">{{ profile.notes }}</textarea>
-    </div>
+    <textarea name="notes" rows="3" class="filter-input">{{ profile.notes }}</textarea>
   </div>
 
-  <div style="display:flex;gap:.75rem;">
-    <button type="submit" class="btn btn-primary">ارسال برای بررسی</button>
+  <div class="form-actions">
     <a href="/{{ company.code }}/admin/" class="btn btn-outline">انصراف</a>
+    <button type="submit" class="btn btn-primary">ارسال برای بررسی</button>
   </div>
 </form>
 
 {% else %}
 {# ========= READ-ONLY VIEW ========= #}
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+<div class="stat-grid stat-grid-2">
 
-  <div class="card" class="report-card">
+  <div class="card report-card">
     <div class="report-card-header">اطلاعات ثبتی</div>
-    <div class="">
-      {% include "tenants/includes/readonly_row.html" with label="نام رسمی" value=profile.legal_company_name %}
-      {% include "tenants/includes/readonly_row.html" with label="تلفن شرکت" value=profile.company_phone %}
-      {% include "tenants/includes/readonly_row.html" with label="نام مالک/نماینده" value=profile.owner_full_name %}
-      {% include "tenants/includes/readonly_row.html" with label="کد ملی مالک" value=profile.owner_national_code_masked %}
-      {% include "tenants/includes/readonly_row.html" with label="موبایل مالک" value=profile.owner_mobile %}
-      {% include "tenants/includes/readonly_row.html" with label="شناسه ملی/کد ملی" value=profile.national_id %}
-      {% include "tenants/includes/readonly_row.html" with label="کد اقتصادی" value=profile.economic_code %}
-      {% include "tenants/includes/readonly_row.html" with label="کد پستی" value=profile.postal_code %}
-      {% include "tenants/includes/readonly_row.html" with label="آدرس ثبتی" value=profile.registered_address %}
-    </div>
+    {% include "tenants/includes/readonly_row.html" with label="نام رسمی" value=profile.legal_company_name %}
+    {% include "tenants/includes/readonly_row.html" with label="تلفن شرکت" value=profile.company_phone %}
+    {% include "tenants/includes/readonly_row.html" with label="نام مالک/نماینده" value=profile.owner_full_name %}
+    {% include "tenants/includes/readonly_row.html" with label="کد ملی مالک" value=profile.owner_national_code_masked %}
+    {% include "tenants/includes/readonly_row.html" with label="موبایل مالک" value=profile.owner_mobile %}
+    {% include "tenants/includes/readonly_row.html" with label="شناسه ملی/کد ملی" value=profile.national_id %}
+    {% include "tenants/includes/readonly_row.html" with label="کد اقتصادی" value=profile.economic_code %}
+    {% include "tenants/includes/readonly_row.html" with label="کد پستی" value=profile.postal_code %}
+    {% include "tenants/includes/readonly_row.html" with label="آدرس ثبتی" value=profile.registered_address %}
   </div>
 
-  <div class="card" class="report-card">
+  <div class="card report-card">
     <div class="report-card-header">اطلاعات بانکی</div>
-    <div class="">
-      {% include "tenants/includes/readonly_row.html" with label="بانک" value=profile.bank_name %}
-      {% include "tenants/includes/readonly_row.html" with label="صاحب حساب" value=profile.account_holder_name %}
-      {% include "tenants/includes/readonly_row.html" with label="شماره شبا" value=profile.shaba_masked %}
-      {% include "tenants/includes/readonly_row.html" with label="شماره حساب" value=profile.bank_account_number %}
-      {% include "tenants/includes/readonly_row.html" with label="شماره کارت" value=profile.bank_card_number_masked %}
+    {% include "tenants/includes/readonly_row.html" with label="بانک" value=profile.bank_name %}
+    {% include "tenants/includes/readonly_row.html" with label="صاحب حساب" value=profile.account_holder_name %}
+    {% include "tenants/includes/readonly_row.html" with label="شماره شبا" value=profile.shaba_masked %}
+    {% include "tenants/includes/readonly_row.html" with label="شماره حساب" value=profile.bank_account_number %}
+    {% include "tenants/includes/readonly_row.html" with label="شماره کارت" value=profile.bank_card_number_masked %}
+
+    <div class="report-card-header" style="margin-top:var(--space-4);">مدارک</div>
+    <div class="snapshot-row">
+      <span class="snapshot-label">کارت ملی</span>
+      {% if profile.national_card_image %}
+      <a href="/{{ company.code }}/admin/payment/merchant-profile/document/national_card_image/" target="_blank" class="text-accent-purple">مشاهده</a>
+      {% else %}<span class="fin-number-neutral">بارگذاری نشده</span>{% endif %}
     </div>
-    <div class="report-card-header">مدارک</div>
-    <div class="">
-      <div class="snapshot-row">
-        <span class="snapshot-label">کارت ملی</span>
-        {% if profile.national_card_image %}
-        <a href="/{{ company.code }}/admin/payment/merchant-profile/document/national_card_image/" target="_blank" class="text-accent-purple">مشاهده</a>
-        {% else %}<span class="fin-number-neutral">بارگذاری نشده</span>{% endif %}
-      </div>
-      <div class="snapshot-row">
-        <span class="snapshot-label">جواز کسب</span>
-        {% if profile.business_license_image %}
-        <a href="/{{ company.code }}/admin/payment/merchant-profile/document/business_license_image/" target="_blank" class="text-accent-purple">مشاهده</a>
-        {% else %}<span class="fin-number-neutral">—</span>{% endif %}
-      </div>
-      <div class="snapshot-row">
-        <span class="snapshot-label">آگهی روزنامه</span>
-        {% if profile.latest_official_newspaper_image %}
-        <a href="/{{ company.code }}/admin/payment/merchant-profile/document/latest_official_newspaper_image/" target="_blank" class="text-accent-purple">مشاهده</a>
-        {% else %}<span class="fin-number-neutral">—</span>{% endif %}
-      </div>
+    <div class="snapshot-row">
+      <span class="snapshot-label">جواز کسب</span>
+      {% if profile.business_license_image %}
+      <a href="/{{ company.code }}/admin/payment/merchant-profile/document/business_license_image/" target="_blank" class="text-accent-purple">مشاهده</a>
+      {% else %}<span class="fin-number-neutral">—</span>{% endif %}
+    </div>
+    <div class="snapshot-row">
+      <span class="snapshot-label">آگهی روزنامه</span>
+      {% if profile.latest_official_newspaper_image %}
+      <a href="/{{ company.code }}/admin/payment/merchant-profile/document/latest_official_newspaper_image/" target="_blank" class="text-accent-purple">مشاهده</a>
+      {% else %}<span class="fin-number-neutral">—</span>{% endif %}
     </div>
   </div>
 
 </div>
 
 {% if profile.status == 'approved' %}
-<div class="">
+<div class="form-actions">
   <a href="/{{ company.code }}/admin/payment/merchant-profile/edit-request/" class="btn btn-outline">ثبت درخواست ویرایش اطلاعات ثبتی و بانکی</a>
 </div>
 {% endif %}

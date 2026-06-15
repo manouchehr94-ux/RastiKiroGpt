@@ -1,4 +1,4 @@
-﻿/* =============================================================================
+/* =============================================================================
    Rasti Service — Central Theme Entrypoint (P24)
    
    This is the SINGLE source of truth for the site's visual design.
@@ -32,5 +32,5 @@
 @import url('dashboard.css');
 @import url('responsive.css');
 
-@import url('rasti_fixes.css');
+@import url('rasti_ui_hotfix.css');
 @import url('monthly-theme.css');

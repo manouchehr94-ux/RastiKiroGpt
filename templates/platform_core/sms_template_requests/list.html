@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load fa_labels jalali_tags %}
 {% block title %}درخواست‌های تغییر قالب پیامک - پلتفرم{% endblock %}
 {% block sidebar_brand %}رستی سرویس{% endblock %}
@@ -21,7 +21,7 @@
 {% if requests %}
 <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
 <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
-<thead><tr style="background:#f8fafc;">
+<thead><tr style="background:var(--color-surface-1);">
 <th style="padding:.7rem;text-align:right;font-weight:700;">شرکت</th>
 <th class="">رویداد</th>
 <th class="">لحن</th>
@@ -36,9 +36,9 @@
 <td class=""><code style="font-size:.75rem;">{{ req.event_key }}</code></td>
 <td class="">{{ req.get_requested_tone_display }}</td>
 <td class="">
-{% if req.status == "pending" %}<span style="background:#fef3c7;color:#92400e;padding:.2rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;">در انتظار</span>
-{% elif req.status == "approved" %}<span style="background:#dcfce7;color:#166534;padding:.2rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;">تأیید شده</span>
-{% else %}<span style="background:#fee2e2;color:#991b1b;padding:.2rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;">رد شده</span>{% endif %}
+{% if req.status == "pending" %}<span style="background:var(--color-warning-bg);color:var(--color-warning-dark);padding:.2rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;">در انتظار</span>
+{% elif req.status == "approved" %}<span style="background:var(--color-success-bg);color:var(--color-success-dark);padding:.2rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;">تأیید شده</span>
+{% else %}<span style="background:var(--color-danger-bg);color:var(--color-danger-dark);padding:.2rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;">رد شده</span>{% endif %}
 </td>
 <td style="padding:.6rem .7rem;font-size:.78rem;">{{ req.created_at|jalali_datetime }}</td>
 <td class=""><a href="/owner-platform/sms-template-requests/{{ req.id }}/" class="btn btn-sm btn-outline">بررسی</a></td>

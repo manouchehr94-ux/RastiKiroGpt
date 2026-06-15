@@ -1,13 +1,17 @@
 {% extends "base.html" %}
-
 {% block title %}درخواست غیرفعال - {{ company.name }}{% endblock %}
 
 {% block body %}
 <div class="page-center">
-    <div class="login-box" style="text-align: center;">
-        <h1 style="color: #f59e0b;">فرم درخواست غیرفعال است</h1>
-        <p style="margin: 1rem 0; color: #64748b;">{{ company.name }} در حال حاضر درخواست آنلاین نمی‌پذیرد.</p>
-        <a href="/{{ company.code }}/" class="btn btn-outline" style="margin-top: 1rem;">بازگشت</a>
+  <div class="login-box" style="text-align:center;">
+    <div class="stat-card-icon amber" style="margin:0 auto var(--space-4);">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+      </svg>
     </div>
+    <h1 class="page-header-title" style="color:var(--color-warning);">فرم درخواست غیرفعال است</h1>
+    <p class="page-header-subtitle" style="margin:var(--space-3) 0;">{{ company.name }} در حال حاضر درخواست آنلاین نمی‌پذیرد.</p>
+    <a href="/{{ company.code }}/" class="btn btn-outline" style="margin-top:var(--space-4);">بازگشت</a>
+  </div>
 </div>
 {% endblock %}

@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load fa_labels smart_numbers jalali_tags %}
 {% block title %}گزارش هدفمند مشتریان - {{ company.name }}{% endblock %}
 {% block page_title %}گزارش هدفمند مشتریان{% endblock %}
@@ -12,18 +12,18 @@
 {% block content %}
 <div class="admin-compact">
 <style>
-.segment-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:1rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.segment-card{background:var(--color-surface-0);border:1px solid var(--color-slate-200);border-radius:1rem;padding:1rem;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .segment-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
-.segment-field label{display:block;font-size:.78rem;font-weight:800;color:#475569;margin-bottom:.35rem}
-.segment-field input,.segment-field select{width:100%;border:1px solid #cbd5e1;border-radius:.65rem;padding:.55rem .7rem;background:#fff}
+.segment-field label{display:block;font-size:.78rem;font-weight:800;color:var(--color-slate-600);margin-bottom:.35rem}
+.segment-field input,.segment-field select{width:100%;border:1px solid var(--color-slate-300);border-radius:.65rem;padding:.55rem .7rem;background:var(--color-surface-0)}
 .segment-actions{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:1rem}
 .segment-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;margin-bottom:1rem}
-.segment-stat{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:1rem}
-.segment-stat .num{font-size:1.35rem;font-weight:900;color:#0f172a}
-.segment-stat .lbl{font-size:.78rem;color:#64748b;margin-top:.25rem}
+.segment-stat{background:var(--color-surface-0);border:1px solid var(--color-slate-200);border-radius:1rem;padding:1rem}
+.segment-stat .num{font-size:1.35rem;font-weight:900;color:var(--color-slate-900)}
+.segment-stat .lbl{font-size:.78rem;color:var(--color-text-muted);margin-top:.25rem}
 .customer-phone{direction:ltr;unicode-bidi:plaintext;font-weight:800}
-.segment-muted{color:#64748b;font-size:.82rem}
-.segment-hint{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:1rem;padding:.85rem;color:#475569;font-size:.86rem;margin-bottom:1rem}
+.segment-muted{color:var(--color-text-muted);font-size:.82rem}
+.segment-hint{background:var(--color-surface-1);border:1px dashed var(--color-slate-300);border-radius:1rem;padding:.85rem;color:var(--color-slate-600);font-size:.86rem;margin-bottom:1rem}
 @media(max-width:1000px){.segment-grid,.segment-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.segment-grid,.segment-stats{grid-template-columns:1fr}}
 </style>
@@ -141,3 +141,4 @@
 </div>
 </div>
 {% endblock %}
+

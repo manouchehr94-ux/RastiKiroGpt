@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load fa_labels jalali_tags %}
 {% block title %}درخواست تغییر قالب #{{ change_request.id }} - پلتفرم{% endblock %}
 {% block sidebar_brand %}رستی سرویس{% endblock %}
@@ -11,10 +11,10 @@
 {% block content %}
 <div class="admin-compact">
 <style>
-.req-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:1.25rem;margin-bottom:1rem}
-.req-label{font-size:.78rem;font-weight:600;color:#64748b;margin-bottom:.25rem}
-.req-value{font-size:.85rem;color:#1e293b}
-.req-pre{background:#f8fafc;border:1px solid #e2e8f0;border-radius:.6rem;padding:.75rem;font-size:.82rem;white-space:pre-wrap;direction:rtl;line-height:1.8;font-family:Tahoma,sans-serif}
+.req-card{background:var(--color-surface-0);border:1px solid var(--color-slate-200);border-radius:1rem;padding:1.25rem;margin-bottom:1rem}
+.req-label{font-size:.78rem;font-weight:600;color:var(--color-text-muted);margin-bottom:.25rem}
+.req-value{font-size:.85rem;color:var(--color-slate-800)}
+.req-pre{background:var(--color-surface-1);border:1px solid var(--color-slate-200);border-radius:.6rem;padding:.75rem;font-size:.82rem;white-space:pre-wrap;direction:rtl;line-height:1.8;font-family:Tahoma,sans-serif}
 </style>
 
 <div class="req-card">
@@ -36,7 +36,7 @@
 
 <div class="req-card">
 <div class="req-label">متن درخواستی شرکت</div>
-<div class="req-pre" style="border-color:#a5b4fc;background:#eef2ff;">{{ change_request.requested_template_text }}</div>
+<div class="req-pre" style="border-color:var(--color-indigo-bg);background:var(--color-indigo-bg);">{{ change_request.requested_template_text }}</div>
 </div>
 
 {% if master_template %}
@@ -64,7 +64,7 @@
 <small class="stat-card-hint">می‌توانید متن درخواستی شرکت را اصلاح و سپس تأیید کنید.</small>
 </div>
 <div class=""><label class="detail-value-strong">پاسخ مدیر (اختیاری)</label><textarea name="admin_response" rows="2" class="filter-input" placeholder="توضیح تأیید..."></textarea></div>
-<button type="submit" class="btn btn-primary" style="background:#059669;border-color:#059669;">تأیید و اعمال قالب</button>
+<button type="submit" class="btn btn-primary" style="background:var(--color-success);border-color:var(--color-success);">تأیید و اعمال قالب</button>
 </form>
 <form method="post" action="/owner-platform/sms-template-requests/{{ change_request.id }}/reject/" style="flex:1;min-width:250px;">{% csrf_token %}
 <div class=""><label class="detail-value-strong">دلیل رد</label><textarea name="admin_response" rows="2" class="filter-input" placeholder="دلیل رد درخواست..."></textarea></div>
@@ -73,15 +73,15 @@
 </div>
 </div>
 {% elif change_request.status == "approved" %}
-<div class="req-card" style="background:#f0fdf4;border-color:#86efac;">
-<strong style="color:#166534;">تأیید شده</strong>
+<div class="req-card" class="card-success-border">
+<strong class="stat-value-success">تأیید شده</strong>
 {% if change_request.reviewed_by %}<span class="stat-card-hint"> توسط {{ change_request.reviewed_by.get_full_name|default:change_request.reviewed_by.username }}</span>{% endif %}
 {% if change_request.approved_template_text %}<div style="margin-top:.5rem;"><div class="req-label">متن نهایی تاییدشده</div><div class="req-pre">{{ change_request.approved_template_text }}</div></div>{% endif %}
 {% if change_request.admin_response %}<p class="stat-card-hint">{{ change_request.admin_response }}</p>{% endif %}
 </div>
 {% elif change_request.status == "rejected" %}
-<div class="req-card" style="background:#fef2f2;border-color:#fca5a5;">
-<strong style="color:#991b1b;">رد شده</strong>
+<div class="req-card" class="card card-compact" style="border-color:var(--color-danger-border);background:var(--color-danger-light);">
+<strong class="fin-number-negative">رد شده</strong>
 {% if change_request.reviewed_by %}<span class="stat-card-hint"> توسط {{ change_request.reviewed_by.get_full_name|default:change_request.reviewed_by.username }}</span>{% endif %}
 {% if change_request.admin_response %}<p class="stat-card-hint">{{ change_request.admin_response }}</p>{% endif %}
 </div>
@@ -90,3 +90,4 @@
 <p class=""><a href="/owner-platform/sms-template-requests/">بازگشت به لیست درخواست‌ها</a></p>
 </div>
 {% endblock %}
+

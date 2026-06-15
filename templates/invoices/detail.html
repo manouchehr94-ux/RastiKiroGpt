@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load smart_numbers fa_labels jalali_tags %}
 
 {% block title %}فاکتور {{ invoice.invoice_number }} - {{ company.name }}{% endblock %}
@@ -20,7 +20,7 @@
         <tr><td class="detail-value-strong">جمع جزء</td><td>{{ invoice.subtotal|smart_number }} ریال</td></tr>
         <tr><td class="detail-value-strong">مالیات</td><td>{{ invoice.tax_amount|smart_number }} ریال</td></tr>
         <tr><td class="detail-value-strong">تخفیف</td><td>{{ invoice.discount_amount|smart_number }} ریال</td></tr>
-        <tr><td class="detail-value-strong">مبلغ کل</td><td style="font-weight:700;color:#2563eb;">{{ invoice.total_amount|smart_number }} ریال</td></tr>
+        <tr><td class="detail-value-strong">مبلغ کل</td><td class="section-header-action">{{ invoice.total_amount|smart_number }} ریال</td></tr>
         <tr><td class="detail-value-strong">صدور</td><td>{{ invoice.issued_at|jalali_date|default:"-" }}</td></tr>
         <tr><td class="detail-value-strong">پرداخت</td><td>{{ invoice.paid_at|jalali_date|default:"-" }}</td></tr>
     </table></div>
@@ -30,7 +30,7 @@
 <div class="card" id="paid_invoice_display_9c_invoice_detail">
     <div class="card-header">وضعیت پرداخت</div>
     <span class="status-badge status-success">پرداخت شده</span>
-    <p style="margin-top:.75rem;color:#475569;line-height:2;">
+    <p class="detail-value" style="line-height:2;">
         روش پرداخت: <strong>{{ payment_info.method_label|default:"-" }}</strong><br>
         شماره سند / کد پیگیری: <strong style="direction:ltr;unicode-bidi:plaintext;">{{ payment_info.reference|default:"-" }}</strong>
         {% if payment_info.paid_at %}<br>تاریخ پرداخت: {{ payment_info.paid_at|jalali_datetime }}{% elif invoice.paid_at %}<br>تاریخ پرداخت: {{ invoice.paid_at|jalali_datetime }}{% endif %}
@@ -67,3 +67,4 @@
 <p style="margin-top:1.5rem;"><a href="/{{ company.code }}/invoices/">بازگشت به لیست</a></p>
 </div>
 {% endblock %}
+

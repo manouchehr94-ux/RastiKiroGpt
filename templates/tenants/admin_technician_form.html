@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load jalali_tags %}
 {% block title %}{% if is_edit %}ویرایش{% else %}ایجاد{% endif %} نیروی خدماتی - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -14,7 +14,6 @@
 <form method="post">{% csrf_token %}
 <div class="form-group"><label>نام کاربری *</label>{{ form.username }}<div class="help-text">{% if is_edit %}نام کاربری قابل تغییر نیست.{% else %}نیرو با این نام کاربری وارد سیستم می‌شود. باید یکتا باشد.{% endif %}</div></div>
 <div class="form-group"><label>شماره موبایل *</label>{{ form.phone }}<div class="help-text">شماره تماس نیرو برای ارسال پیامک و تماس. فرمت: 09xxxxxxxxx</div></div>
-<div class="form-group"><label>رمز عبور</label>{{ form.password }}<div class="help-text">{% if is_edit %}اگر خالی بماند رمز قبلی تغییر نمی‌کند.{% else %}اگر خالی بماند رمز پیش‌فرض changeme123 ثبت می‌شود.{% endif %}</div></div>
 <div class="form-group"><label>نام</label>{{ form.first_name }}</div>
 <div class="form-group"><label>نام خانوادگی</label>{{ form.last_name }}</div>
 <div class="form-group"><label><input type="checkbox" name="is_available" {% if form.is_available.value %}checked{% endif %}> فعال</label></div>

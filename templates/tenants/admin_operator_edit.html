@@ -1,0 +1,197 @@
+{% extends "layouts/dashboard.html" %}
+{% block title %}ویرایش اپراتور - {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+.perm-group{background:var(--color-surface-0);border:1px solid var(--color-slate-200);border-radius:var(--radius-lg);margin-bottom:.75rem;overflow:hidden;}
+.perm-group-header{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;cursor:pointer;user-select:none;background:var(--color-surface-1);}
+.perm-group-header:hover{background:var(--color-surface-2);}
+.perm-group-left{display:flex;align-items:center;gap:.5rem;}
+.perm-group-icon{font-size:16px;color:var(--color-text-muted);}
+.perm-group-name{font-size:.88rem;font-weight:700;color:var(--color-text);}
+.perm-group-count{font-size:.72rem;background:var(--color-surface-2);color:var(--color-text-muted);padding:2px 8px;border-radius:999px;border:1px solid var(--color-slate-200);}
+.perm-group-right{display:flex;align-items:center;gap:.5rem;}
+.perm-group-btn{font-size:.72rem;padding:3px 10px;border-radius:var(--radius-sm);border:1px solid var(--color-slate-300);background:transparent;cursor:pointer;color:var(--color-text-muted);}
+.perm-group-btn:hover{background:var(--color-surface-2);}
+.perm-chevron{font-size:14px;color:var(--color-text-muted);transition:transform .2s;}
+.perm-group.open .perm-chevron{transform:rotate(180deg);}
+.perm-body{display:none;padding:.75rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.5rem;}
+.perm-body.closed{display:none!important;}
+.perm-item{display:flex;align-items:center;justify-content:space-between;padding:.5rem .65rem;border-radius:var(--radius-md);border:1px solid var(--color-slate-200);background:var(--color-surface-0);gap:.5rem;cursor:pointer;transition:all .12s;}
+.perm-item:hover{border-color:var(--color-brand-300);background:var(--color-brand-50);}
+.perm-item.on{border-color:var(--color-success-border);background:var(--color-success-bg);}
+.perm-label{font-size:.78rem;color:var(--color-text-muted);line-height:1.4;flex:1;}
+.perm-item.on .perm-label{color:var(--color-success-dark);}
+.toggle-sw{width:30px;height:17px;border-radius:999px;background:var(--color-slate-300);position:relative;flex-shrink:0;transition:background .15s;}
+.toggle-sw.on{background:var(--color-success);}
+.toggle-sw::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .12s;}
+.toggle-sw.on::after{left:15px;}
+.perm-summary{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;border-top:1px solid var(--color-slate-200);background:var(--color-surface-1);font-size:.82rem;color:var(--color-text-muted);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+
+{% include "includes/settings_center.html" %}
+
+<div class="page-header">
+  <div>
+    <h1>ویرایش اپراتور: {{ operator_display }}</h1>
+    <p class="page-header-subtitle">اطلاعات اپراتور و دسترسی‌های او را از این صفحه تنظیم کنید.</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="/{{ company.code }}/admin/settings/operators/" class="btn btn-outline">بازگشت</a>
+    <form method="post" action="/{{ company.code }}/admin/settings/operators/" style="display:inline;"
+          onsubmit="return confirm('اپراتور {{ operator_display }} حذف شود؟ این عمل قابل بازگشت نیست.')">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete_operator">
+      <input type="hidden" name="operator_id" value="{{ operator.id }}">
+      <button type="submit" class="btn btn-danger btn-sm">حذف اپراتور</button>
+    </form>
+  </div>
+</div>
+
+{% if error %}<div class="alert alert-danger"><div class="alert-body">{{ error }}</div></div>{% endif %}
+{% if success %}<div class="alert alert-success"><div class="alert-body">{{ success }}</div></div>{% endif %}
+
+<form method="post" id="mainForm" autocomplete="off">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="update_operator">
+  <input type="hidden" name="operator_id" value="{{ operator.id }}">
+
+  <div class="card card-compact" style="max-width:700px;margin-bottom:var(--space-4);">
+    <div class="card-header"><span class="card-header-title">اطلاعات اپراتور</span></div>
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label class="form-label">نام کاربری</label>
+        <input type="text" value="{{ operator.username }}" readonly class="form-control ltr-field" style="background:var(--color-surface-1);">
+        <span class="form-hint">نام کاربری قابل تغییر نیست.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">نام اپراتور</label>
+        <input type="text" name="display_name" autocomplete="off" class="form-control" value="{% if has_display_name %}{{ operator_display }}{% endif %}" placeholder="نام کامل اپراتور">
+      </div>
+      <div class="form-group">
+        <label class="form-label">شماره موبایل</label>
+        <input type="text" name="phone" autocomplete="off" class="form-control ltr-field" value="{{ operator.phone|default:'' }}" placeholder="09121234567">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ایمیل</label>
+        <input type="email" name="email" autocomplete="off" class="form-control ltr-field" value="{{ operator.email|default:'' }}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="check-card">
+        <input type="checkbox" name="is_active" {% if operator.is_active %}checked{% endif %}>
+        <span>اپراتور فعال باشد</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="card card-compact">
+    <div class="card-header">
+      <span class="card-header-title">دسترسی‌ها</span>
+      <div class="page-header-actions">
+        <button type="button" class="btn btn-sm btn-outline" onclick="toggleAll(true)">انتخاب همه</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="toggleAll(false)">حذف همه</button>
+      </div>
+    </div>
+
+    <div id="permGroups" style="padding:.75rem;">
+      {% for group in grouped_permissions %}
+      <div class="perm-group open" data-group="{{ forloop.counter0 }}">
+        <div class="perm-group-header" onclick="toggleGroup(this)">
+          <div class="perm-group-left">
+            <i class="ti ti-shield perm-group-icon" aria-hidden="true"></i>
+            <span class="perm-group-name">{{ group.group }}</span>
+            <span class="perm-group-count" id="gc{{ forloop.counter0 }}">{{ group.items|length }} مورد</span>
+          </div>
+          <div class="perm-group-right">
+            <button type="button" class="perm-group-btn" onclick="event.stopPropagation();toggleGroup_all(this,{{ forloop.counter0 }})">انتخاب گروه</button>
+            <i class="ti ti-chevron-down perm-chevron" aria-hidden="true"></i>
+          </div>
+        </div>
+        <div class="perm-body" id="pb{{ forloop.counter0 }}">
+          {% for item in group.items %}
+          <div class="perm-item {% if item.is_allowed %}on{% endif %}" onclick="togglePerm(this,'{{ item.key }}')" title="{{ item.description }}">
+            <span class="perm-label">{{ item.title }}</span>
+            <div class="toggle-sw {% if item.is_allowed %}on{% endif %}"></div>
+            <input type="checkbox" name="permissions" value="{{ item.key }}" {% if item.is_allowed %}checked{% endif %} style="display:none;" id="cb_{{ item.key }}">
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="perm-summary">
+      <span><span id="selCount">0</span> دسترسی انتخاب شده</span>
+      <button type="submit" class="btn btn-primary btn-sm">ذخیره اطلاعات و دسترسی‌ها</button>
+    </div>
+  </div>
+
+  <div class="form-actions" style="margin-top:var(--space-4);">
+    <a href="/{{ company.code }}/admin/settings/operators/" class="btn btn-outline">انصراف</a>
+    <button type="submit" class="btn btn-primary">ذخیره اطلاعات و دسترسی‌ها</button>
+  </div>
+</form>
+
+</div>
+
+<script>
+function updateCount(){
+  var n = document.querySelectorAll('input[name="permissions"]:checked').length;
+  document.getElementById('selCount').textContent = n;
+}
+
+function togglePerm(el, key){
+  var cb = document.getElementById('cb_' + key);
+  var sw = el.querySelector('.toggle-sw');
+  var on = !el.classList.contains('on');
+  el.classList.toggle('on', on);
+  sw.classList.toggle('on', on);
+  cb.checked = on;
+  updateCount();
+}
+
+function toggleAll(val){
+  document.querySelectorAll('.perm-item').forEach(function(el){
+    var key = el.querySelector('input[name="permissions"]').value;
+    var cb = document.getElementById('cb_' + key);
+    el.classList.toggle('on', val);
+    el.querySelector('.toggle-sw').classList.toggle('on', val);
+    cb.checked = val;
+  });
+  updateCount();
+}
+
+function toggleGroup(hdr){
+  var group = hdr.closest('.perm-group');
+  var body = group.querySelector('.perm-body');
+  var isOpen = !body.classList.contains('closed');
+  body.classList.toggle('closed', isOpen);
+  group.classList.toggle('open', !isOpen);
+}
+
+function toggleGroup_all(btn, gi){
+  var body = document.getElementById('pb' + gi);
+  var items = body.querySelectorAll('.perm-item');
+  var allOn = Array.from(items).every(function(el){ return el.classList.contains('on'); });
+  items.forEach(function(el){
+    var cb = el.querySelector('input[name="permissions"]');
+    var sw = el.querySelector('.toggle-sw');
+    el.classList.toggle('on', !allOn);
+    sw.classList.toggle('on', !allOn);
+    cb.checked = !allOn;
+  });
+  btn.textContent = allOn ? 'انتخاب گروه' : 'حذف گروه';
+  updateCount();
+}
+
+updateCount();
+</script>
+{% endblock %}

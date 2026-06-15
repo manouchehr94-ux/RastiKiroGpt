@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load fa_labels %}
 {% block title %}درگاه پرداخت - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -23,7 +23,7 @@
     <strong>پروفایل پذیرنده (KYC) تأیید نشده است.</strong>
     برای فعال‌سازی درگاه پرداخت واقعی، ابتدا باید پروفایل پذیرنده شرکت تکمیل و تأیید شود.
     <br>
-    <a href="/{{ company.code }}/admin/payment/merchant-profile/" style="color:#721c24;font-weight:bold;">
+    <a href="/{{ company.code }}/admin/payment/merchant-profile/" class="fin-number-negative" style="font-weight:bold;">
         تکمیل پروفایل پذیرنده ←
     </a>
     {% if not gateway_eligible_reason %}{% else %}<br><small>{{ gateway_eligible_reason }}</small>{% endif %}
@@ -92,3 +92,4 @@
 </form>
 </div>
 {% endblock %}
+

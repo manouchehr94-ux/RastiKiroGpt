@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% block title %}برندینگ - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
@@ -19,13 +19,13 @@
 
 <div class="form-group">
     <label>لوگو (JPEG/PNG/WebP, حداکثر 2MB)</label>
-    {% if page.logo %}<p style="font-size:0.8rem;color:#64748b;">فایل فعلی: {{ page.logo.name }}</p>{% endif %}
+    {% if page.logo %}<p class="stat-card-hint">فایل فعلی: {{ page.logo.name }}</p>{% endif %}
     <input type="file" name="logo" accept="image/*" class="form-control">
 </div>
 
 <div class="form-group">
     <label>تصویر هدر (Hero Image)</label>
-    {% if page.hero_image %}<p style="font-size:0.8rem;color:#64748b;">فایل فعلی: {{ page.hero_image.name }}</p>{% endif %}
+    {% if page.hero_image %}<p class="stat-card-hint">فایل فعلی: {{ page.hero_image.name }}</p>{% endif %}
     <input type="file" name="hero_image" accept="image/*" class="form-control">
 </div>
 
@@ -41,3 +41,6 @@
 </div>
 </div>
 {% endblock %}
+
+
+

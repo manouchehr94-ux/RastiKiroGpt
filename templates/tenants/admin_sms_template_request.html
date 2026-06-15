@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 
 {% load fa_labels %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -8,18 +8,18 @@
 {% block content %}
 <div class="admin-compact">
 <style>
-.tpl-card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:24px;margin-bottom:16px}
-.tpl-pre{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.85rem;direction:rtl;white-space:pre-wrap;word-wrap:break-word;color:#334155;line-height:1.7}
+.tpl-card{background:var(--color-surface-0);border:1px solid var(--color-slate-200);border-radius:18px;padding:24px;margin-bottom:16px}
+.tpl-pre{background:var(--color-surface-1);border:1px solid var(--color-slate-200);border-radius:12px;padding:16px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.85rem;direction:rtl;white-space:pre-wrap;word-wrap:break-word;color:var(--color-slate-700);line-height:1.7}
 .tpl-form-group{margin-bottom:1.2rem}
-.tpl-form-group label{display:block;font-size:.85rem;font-weight:600;color:#374151;margin-bottom:.4rem}
+.tpl-form-group label{display:block;font-size:.85rem;font-weight:600;color:var(--color-slate-700);margin-bottom:.4rem}
 .tpl-textarea{width:100%;border:1px solid #d1d5db;border-radius:12px;padding:12px;font-size:.9rem;direction:rtl;min-height:120px;resize:vertical;font-family:inherit;line-height:1.6}
-.tpl-textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.tpl-select{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:.6rem .8rem;font-size:.9rem;background:#fff;direction:rtl}
-.tpl-select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.tpl-btn{display:inline-flex;align-items:center;gap:.5rem;border-radius:10px;padding:.5rem 1rem;font-size:.85rem;font-weight:600;border:1px solid #e5e7eb;background:#fff;color:#374151;text-decoration:none;transition:all .2s}
-.tpl-btn:hover{background:#f8fafc;border-color:#cbd5e1}
-.tpl-btn-submit{background:#2563eb;color:white;border-color:#2563eb;padding:.6rem 1.5rem;font-size:.9rem;cursor:pointer}
-.tpl-btn-submit:hover{background:#1d4ed8}
+.tpl-textarea:focus{outline:none;border-color:var(--color-brand-600);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.tpl-select{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:.6rem .8rem;font-size:.9rem;background:var(--color-surface-0);direction:rtl}
+.tpl-select:focus{outline:none;border-color:var(--color-brand-600);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.tpl-btn{display:inline-flex;align-items:center;gap:.5rem;border-radius:10px;padding:.5rem 1rem;font-size:.85rem;font-weight:600;border:1px solid var(--color-slate-200);background:var(--color-surface-0);color:var(--color-slate-700);text-decoration:none;transition:all .2s}
+.tpl-btn:hover{background:var(--color-surface-1);border-color:var(--color-slate-300)}
+.tpl-btn-submit{background:var(--color-brand-600);color:white;border-color:var(--color-brand-600);padding:.6rem 1.5rem;font-size:.9rem;cursor:pointer}
+.tpl-btn-submit:hover{background:var(--color-brand-700)}
 </style>
 
 {% if success %}
@@ -72,3 +72,4 @@
 </div>
 </div>
 {% endblock %}
+

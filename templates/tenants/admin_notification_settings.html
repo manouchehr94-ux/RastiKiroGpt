@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% block title %}تنظیمات نوتیفیکیشن - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
@@ -54,7 +54,7 @@
                     <tr>
                         <td>
                             <strong>{{ row.title|default:row.get_event_key_display }}</strong>
-                            <div style="color:#94a3b8;font-size:.85rem;margin-top:.25rem;">
+                            <div class="stat-card-hint">
                                 {% if "order" in row.event_key %}
                                     بخش سفارش‌ها
                                 {% elif "invoice" in row.event_key %}
@@ -96,3 +96,4 @@
 </form>
 </div>
 {% endblock %}
+

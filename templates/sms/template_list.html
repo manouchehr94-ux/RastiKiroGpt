@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 
 {% block title %}قالب‌های پیامک - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -18,7 +18,7 @@
 </div>
 
 <div class="card" class="mb-item">
-    <p style="color:#64748b;margin:0;">
+    <p class="page-header-subtitle">
         وضعیت فعال/غیرفعال پیامک‌ها با صفحه تنظیمات نوتیفیکیشن هماهنگ است.
         اگر پیامک یک رویداد را از هر کدام از این دو صفحه خاموش یا روشن کنید، صفحه دیگر هم همان وضعیت را نشان می‌دهد.
     </p>
@@ -61,3 +61,4 @@
 {% endif %}
 </div>
 {% endblock %}
+

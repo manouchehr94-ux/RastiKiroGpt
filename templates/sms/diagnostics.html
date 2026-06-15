@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load jalali_tags  fa_labels %}
 
 {% block title %}تشخیص پیامک - {{ company.name }}{% endblock %}
@@ -30,7 +30,7 @@
 </div>
 
 {% if not provider_info.sending_enabled %}
-<div class="alert" style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;margin-bottom:1rem;">
+<div class="alert alert-danger">
 <strong>⚠️ ارسال پیامک غیرفعال است.</strong><br>
 {% if provider_info.sending_reason %}{{ provider_info.sending_reason }}{% else %}ارائه‌دهنده فعالی برای این شرکت تنظیم نشده است. پیام‌های جدید در صف باقی می‌مانند یا با خطا مشخص می‌شوند.{% endif %}
 </div>
@@ -41,15 +41,15 @@
 {% endif %}
 
 {% if result %}
-<div class="card" style="margin-bottom:1rem;border:2px solid #16a34a;background:#f0fdf4;">
-<div class="card-header" style="color:#16a34a;">نتیجه ارسال تست</div>
+<div class="card card-success-border">
+<div class="card-header" class="stat-value-success">نتیجه ارسال تست</div>
 <table>
 <tr><td class="snapshot-label detail-value-strong">شناسه صندوق</td><td>{{ result.id }}</td></tr>
 <tr><td class="detail-value-strong">وضعیت</td><td><span class="badge badge-{{ result.status|status_css }}">{{ result.status|status_fa }}</span></td></tr>
 <tr><td class="detail-value-strong">گیرنده</td><td>{{ result.phone_number }}</td></tr>
 <tr><td class="detail-value-strong">پیام</td><td>{{ result.message }}</td></tr>
 {% if result.provider_message_id %}<tr><td class="detail-value-strong">شناسه ارائه‌دهنده</td><td><code>{{ result.provider_message_id }}</code></td></tr>{% endif %}
-{% if result.error_message %}<tr><td class="detail-value-strong">خطا</td><td style="color:#dc2626;">{{ result.error_message }}</td></tr>{% endif %}
+{% if result.error_message %}<tr><td class="detail-value-strong">خطا</td><td class="fin-number-negative">{{ result.error_message }}</td></tr>{% endif %}
 {% if result.sent_at %}<tr><td class="detail-value-strong">زمان ارسال</td><td>{{ result.sent_at|jalali_datetime }}</td></tr>{% endif %}
 </table>
 </div>
@@ -115,3 +115,6 @@
 
 </div>
 {% endblock %}
+
+
+

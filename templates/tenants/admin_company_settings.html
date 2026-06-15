@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% block title %}تنظیمات سایت - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
@@ -51,7 +51,7 @@
 
     <div class="card" class="mb-item">
         <div class="card-header">تنظیمات سفارش و نیروی خدماتی</div>
-        <p style="color:#64748b;margin-top:0;">این تنظیمات روی نمایش و پذیرش سفارش توسط نیروها اثر می‌گذارد.</p>
+        <p class="page-header-subtitle">این تنظیمات روی نمایش و پذیرش سفارش توسط نیروها اثر می‌گذارد.</p>
 
         <div class="form-group">
             <label>محدودیت عمومی تعداد سفارش در انتظار خدمت برای هر نیرو</label>
@@ -100,7 +100,7 @@
 
     <div class="card" class="mb-item">
         <div class="card-header">تنظیمات مالی و پرداخت دستمزد</div>
-        <p style="color:#64748b;margin-top:0;">
+        <p class="page-header-subtitle">
             نحوه پرداخت دستمزد نیروی خدماتی پس از وصول فاکتور را از اینجا تنظیم کنید.
         </p>
 
@@ -114,7 +114,7 @@
                     تسهیم با تکنسین تأییدشده
                 </option>
             </select>
-            <small style="color:#64748b;display:block;margin-top:.4rem;">
+            <small class="form-hint">
                 اگر تسهیم با تکنسین فعال باشد، فقط در صورتی سهم تکنسین مستقیم پرداخت می‌شود که اطلاعات مالی تکنسین توسط پلتفرم تأیید شده باشد.
                 در غیر این صورت سهم تکنسین در حساب دفتری او ثبت می‌شود.
             </small>
@@ -123,16 +123,20 @@
         {% if financial_policy.platform_fee_percent %}
         <div class="form-group">
             <label>درصد کارمزد پلتفرم</label>
-            <input class="form-control" value="{{ financial_policy.platform_fee_percent }}٪" readonly style="max-width:160px;background:#f8fafc;color:#64748b;">
+            <input class="form-control" value="{{ financial_policy.platform_fee_percent }}٪" readonly style="max-width:160px;" class="form-control">
             <small class="stat-card-hint">این مقدار توسط پلتفرم تنظیم می‌شود و قابل تغییر نیست.</small>
         </div>
         {% endif %}
     </div>
 
-    <div style="display:flex;gap:.5rem;align-items:center;">
+    <div class="form-actions">
         <button type="submit" class="btn btn-primary">ذخیره تنظیمات</button>
         <a href="/{{ company.code }}/admin/" class="btn btn-outline">بازگشت</a>
     </div>
 </form>
 </div>
 {% endblock %}
+
+
+
+

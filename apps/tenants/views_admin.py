@@ -1589,6 +1589,166 @@ def admin_base_category_delete(request: HttpRequest, category_id: int, **kwargs)
 # -----------------------------------------------------------------------------
 
 @require_tenant_role("COMPANY_ADMIN")
+@require_tenant_role("COMPANY_ADMIN")
+def admin_operator_create(request: HttpRequest, **kwargs) -> HttpResponse:
+    company = request.company
+    from django.contrib.auth import get_user_model
+    from apps.accounts.operator_access import (
+        get_operator_queryset,
+        get_staff_role_value,
+        model_has_field,
+        set_user_display_name,
+    )
+    from apps.common.phone_utils import normalize_iran_mobile
+    User = get_user_model()
+    error = ""
+
+    if request.method == "POST":
+        username = (request.POST.get("username") or "").strip().lower()
+        phone_raw = (request.POST.get("phone") or "").strip()
+        display_name = (request.POST.get("display_name") or "").strip()
+        email = (request.POST.get("email") or "").strip()
+        password = "123456"
+        is_active = request.POST.get("is_active") == "on"
+
+        if not username:
+            error = "نام کاربری اپراتور الزامی است."
+        elif User.objects.filter(username=username).exists():
+            error = "این نام کاربری قبلاً استفاده شده است. لطفاً نام کاربری دیگری انتخاب کنید."
+        else:
+            normalized_phone = normalize_iran_mobile(phone_raw) or phone_raw
+            operator = User()
+            operator.username = username
+            operator.phone = normalized_phone
+            operator.email = email
+            set_user_display_name(operator, display_name)
+            if model_has_field(User, "company"):
+                operator.company = company
+            if model_has_field(User, "role"):
+                operator.role = get_staff_role_value()
+            if model_has_field(User, "is_active"):
+                operator.is_active = is_active
+            operator.set_password(password)
+            if hasattr(operator, "must_change_password"):
+                operator.must_change_password = True
+            operator.save()
+            from django.shortcuts import redirect
+            return redirect(f"/{company.code}/admin/settings/operators/")
+
+    from apps.accounts.operator_access import grouped_permission_items
+    grouped_master = grouped_permission_items()
+    grouped = []
+    for group, group_items in grouped_master.items():
+        grouped.append({
+            "group": group,
+            "items": [
+                {
+                    "key": item.key,
+                    "title": item.title,
+                    "description": item.description,
+                    "action_label": item.action_label,
+                    "is_allowed": False,
+                }
+                for item in group_items
+            ],
+        })
+    return render(request, "tenants/admin_operator_create.html", {
+        "company": company,
+        "error": error,
+        "grouped_permissions": grouped,
+    })
+
+
+@require_tenant_role("COMPANY_ADMIN")
+def admin_operator_edit(request: HttpRequest, operator_id: int, **kwargs) -> HttpResponse:
+    company = request.company
+    from django.contrib.auth import get_user_model
+    from apps.accounts.models import OperatorPermission
+    from apps.accounts.operator_access import (
+        get_operator_queryset,
+        get_user_display,
+        get_user_identifier,
+        grouped_permission_items,
+        list_operator_permission_items,
+        model_has_field,
+        set_if_field,
+        set_user_display_name,
+    )
+    User = get_user_model()
+    operator = get_operator_queryset(company).filter(id=operator_id).first()
+    if not operator:
+        from django.shortcuts import redirect
+        return redirect(f"/{company.code}/admin/settings/operators/")
+
+    items = list_operator_permission_items()
+    error = ""
+    success = ""
+
+    if request.method == "POST":
+        display_name = (request.POST.get("display_name") or "").strip()
+        email = (request.POST.get("email") or "").strip()
+        phone_raw = (request.POST.get("phone") or "").strip()
+        is_active = request.POST.get("is_active") == "on"
+        selected = set(request.POST.getlist("permissions"))
+
+        set_user_display_name(operator, display_name)
+        set_if_field(operator, "email", email)
+        if phone_raw:
+            from apps.common.phone_utils import normalize_iran_mobile
+            set_if_field(operator, "phone", normalize_iran_mobile(phone_raw) or phone_raw)
+        if model_has_field(User, "is_active"):
+            operator.is_active = is_active
+        operator.save()
+
+        for item in items:
+            row, _ = OperatorPermission.objects.get_or_create(
+                company=company,
+                operator=operator,
+                permission_key=item.key,
+                defaults={"is_allowed": False},
+            )
+            row.is_allowed = item.key in selected
+            row.save(update_fields=["is_allowed"])
+
+        success = "اطلاعات و دسترسی‌های اپراتور ذخیره شد."
+
+    allowed_keys = set(
+        OperatorPermission.objects.filter(
+            company=company, operator=operator, is_allowed=True,
+        ).values_list("permission_key", flat=True)
+    )
+    grouped_master = grouped_permission_items()
+    grouped = []
+    for group, group_items in grouped_master.items():
+        grouped.append({
+            "group": group,
+            "items": [
+                {
+                    "key": item.key,
+                    "title": item.title,
+                    "description": item.description,
+                    "action_label": item.action_label,
+                    "path_template": item.path_template.replace("{company_code}", company.code),
+                    "is_allowed": item.key in allowed_keys,
+                }
+                for item in group_items
+            ],
+        })
+
+    display = get_user_display(operator)
+    identifier = get_user_identifier(operator)
+
+    return render(request, "tenants/admin_operator_edit.html", {
+        "company": company,
+        "operator": operator,
+        "operator_display": display,
+        "has_display_name": bool(display and display != identifier),
+        "grouped_permissions": grouped,
+        "error": error,
+        "success": success,
+    })
+
+
 def admin_operator_list(request: HttpRequest, **kwargs) -> HttpResponse:
     company = request.company
     from django.contrib.auth import get_user_model

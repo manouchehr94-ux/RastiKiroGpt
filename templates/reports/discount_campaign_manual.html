@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load fa_labels smart_numbers jalali_tags %}
 {% block title %}کمپین دستی - {{ company.name }}{% endblock %}
 {% block page_title %}ساخت کمپین تخفیف دستی{% endblock %}
@@ -12,12 +12,12 @@
 <div class="admin-compact">
 <style>
   .discount-form-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; }
-  .discount-field label { display:block; font-size:.82rem; font-weight:800; color:#475569; margin-bottom:.35rem; }
-  .discount-field input, .discount-field textarea { width:100%; border:1px solid #cbd5e1; border-radius:.65rem; padding:.6rem .75rem; background:#fff; }
-  .discount-field input:required { border-color:#94a3b8; }
-  .discount-field textarea[readonly] { background:#f8fafc; color:#334155; cursor:not-allowed; }
-  .discount-help { font-size:.75rem; color:#64748b; margin-top:.35rem; }
-  .discount-required { color:#dc2626; margin-right:.2rem; }
+  .discount-field label { display:block; font-size:.82rem; font-weight:800; color:var(--color-slate-600); margin-bottom:.35rem; }
+  .discount-field input, .discount-field textarea { width:100%; border:1px solid var(--color-slate-300); border-radius:.65rem; padding:.6rem .75rem; background:var(--color-surface-0); }
+  .discount-field input:required { border-color:var(--color-slate-400); }
+  .discount-field textarea[readonly] { background:var(--color-surface-1); color:var(--color-slate-700); cursor:not-allowed; }
+  .discount-help { font-size:.75rem; color:var(--color-text-muted); margin-top:.35rem; }
+  .discount-required { color:var(--color-danger); margin-right:.2rem; }
   @media(max-width:900px){ .discount-form-grid { grid-template-columns:1fr 1fr; } }
   @media(max-width:560px){ .discount-form-grid { grid-template-columns:1fr; } }
 </style>
@@ -26,9 +26,9 @@
 <div class="mb-item">
   {% for message in messages %}
   <div style="padding:.7rem 1rem;border-radius:.75rem;font-size:.85rem;margin-bottom:.4rem;
-              background:{% if message.tags == 'error' %}#fee2e2{% else %}#dcfce7{% endif %};
-              color:{% if message.tags == 'error' %}#991b1b{% else %}#166534{% endif %};
-              border:1px solid {% if message.tags == 'error' %}#fca5a5{% else %}#86efac{% endif %};">
+              background:{% if message.tags == 'error' %}var(--color-danger-bg){% else %}var(--color-success-bg){% endif %};
+              color:{% if message.tags == 'error' %}var(--color-danger-dark){% else %}var(--color-success-dark){% endif %};
+              border:1px solid {% if message.tags == 'error' %}var(--color-danger-border){% else %}var(--color-success-border){% endif %};">
     {{ message }}
   </div>
   {% endfor %}
@@ -81,7 +81,7 @@
   <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
     <button type="submit" class="btn btn-primary">ساخت کمپین و ارسال پیامک</button>
     <a href="/{{ company.code }}/admin/reports/discount-campaigns/" class="btn btn-outline">بازگشت</a>
-    <span style="color:#64748b;font-size:.8rem;">کد واقعی در پنل نمایش داده نمی‌شود و فقط از طریق پیامک ارسال می‌شود.</span>
+    <span style="color:var(--color-text-muted);font-size:.8rem;">کد واقعی در پنل نمایش داده نمی‌شود و فقط از طریق پیامک ارسال می‌شود.</span>
   </div>
 </form>
 
@@ -167,3 +167,4 @@
 </script>
 </div>
 {% endblock %}
+

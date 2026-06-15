@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load smart_numbers %}
 {% block title %}حذف رسته خدمات - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -14,7 +14,7 @@
 <div class="card" style="max-width:760px;">
     <h2 style="margin-top:0;">رسته «{{ category.title }}» واقعاً حذف شود؟</h2>
 
-    <div class="alert" style="background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;">
+    <div class="alert" class="alert alert-warning">
         این عملیات با «غیرفعال‌سازی» فرق دارد. با حذف رسته، خود رسته و آیتم‌های سفارش زیرمجموعه آن حذف می‌شوند.
     </div>
 
@@ -36,3 +36,4 @@
 </div>
 </div>
 {% endblock %}
+

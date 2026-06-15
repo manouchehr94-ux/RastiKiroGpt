@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 
 {% block title %}تنظیمات پیام‌ها - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -10,20 +10,20 @@
 {% block content %}
 <div class="admin-compact">
 <style>
-.comm-card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px}
+.comm-card{background:var(--color-surface-0);border:1px solid var(--color-slate-200);border-radius:18px;padding:18px}
 .comm-table{width:100%;border-collapse:collapse}
 .comm-table th,.comm-table td{padding:11px 14px;border-top:1px solid #eef2f7;text-align:right;vertical-align:middle}
-.comm-table thead th{background:#f8fafc;border-top:0;color:#475569;font-size:.82rem;font-weight:600}
-.comm-key{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;direction:ltr;display:inline-block;color:#64748b;font-size:.75rem}
+.comm-table thead th{background:var(--color-surface-1);border-top:0;color:var(--color-slate-600);font-size:.82rem;font-weight:600}
+.comm-key{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;direction:ltr;display:inline-block;color:var(--color-text-muted);font-size:.75rem}
 .comm-badge{display:inline-flex;align-items:center;border-radius:999px;padding:.22rem .6rem;font-size:.78rem;font-weight:700;transition:background .15s}
-.comm-on{background:#dcfce7;color:#166534}
-.comm-off{background:#fee2e2;color:#991b1b}
-.comm-btn{border-radius:9px;padding:.38rem .75rem;font-size:.8rem;font-weight:600;border:1px solid #e5e7eb;background:#fff;cursor:pointer;transition:background .15s,border-color .15s}
-.comm-btn:hover{background:#f1f5f9}
-.comm-btn-on{background:#16a34a;color:#fff;border-color:#16a34a}
-.comm-btn-on:hover{background:#15803d}
+.comm-on{background:var(--color-success-bg);color:var(--color-success-dark)}
+.comm-off{background:var(--color-danger-bg);color:var(--color-danger-dark)}
+.comm-btn{border-radius:9px;padding:.38rem .75rem;font-size:.8rem;font-weight:600;border:1px solid var(--color-slate-200);background:var(--color-surface-0);cursor:pointer;transition:background .15s,border-color .15s}
+.comm-btn:hover{background:var(--color-surface-2)}
+.comm-btn-on{background:var(--color-success);color:var(--color-surface-0);border-color:var(--color-success)}
+.comm-btn-on:hover{background:var(--color-success-hover)}
 .comm-btn[disabled]{opacity:.55;cursor:not-allowed}
-.comm-toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:.55rem 1.2rem;border-radius:999px;font-size:.85rem;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none}
+.comm-toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--color-slate-800);color:var(--color-surface-0);padding:.55rem 1.2rem;border-radius:999px;font-size:.85rem;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none}
 .comm-toast.show{opacity:1}
 @media(max-width:800px){.comm-desktop{display:none}.comm-mobile{display:flex;flex-direction:column;gap:.75rem}}
 @media(min-width:801px){.comm-mobile{display:none}}
@@ -193,7 +193,7 @@
 
     function showToast(msg, isError) {
         toast.textContent = msg;
-        toast.style.background = isError ? '#991b1b' : '#1e293b';
+        toast.style.background = isError ? 'var(--color-danger-dark)' : 'var(--color-slate-800)';
         toast.classList.add('show');
         clearTimeout(toastTimer);
         toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2800);
@@ -319,3 +319,4 @@
 
 </div>
 {% endblock %}
+

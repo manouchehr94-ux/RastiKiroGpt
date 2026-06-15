@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard.html" %}
+﻿{% extends "layouts/dashboard.html" %}
 {% load smart_numbers %}
 {% block title %}شارژ اعتبار پیامک - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -13,14 +13,14 @@
 </div>
 
 {% if success %}
-<div class="card" style="background:#ecfdf5;border-color:#a7f3d0;padding:1rem;margin-bottom:1rem;">
-    <p style="color:#065f46;margin:0;">درخواست شارژ با موفقیت ثبت شد. فاکتور شماره <strong>{{ invoice.invoice_number }}</strong> ایجاد شد. پس از پرداخت، اعتبار شما شارژ خواهد شد.</p>
+<div class="card" class="alert alert-success">
+    <div class="alert-body">درخواست شارژ با موفقیت ثبت شد. فاکتور شماره <strong>{{ invoice.invoice_number }}</strong> ایجاد شد. پس از پرداخت، اعتبار شما شارژ خواهد شد.</p>
 </div>
 {% endif %}
 
 {% if errors.amount_rial %}
-<div class="card" style="background:#fef2f2;border-color:#fecaca;padding:1rem;margin-bottom:1rem;">
-    <p style="color:#991b1b;margin:0;">{{ errors.amount_rial|smart_number }}</p>
+<div class="card" class="alert alert-danger">
+    <div class="alert-body">{{ errors.amount_rial|smart_number }}</p>
 </div>
 {% endif %}
 
@@ -37,7 +37,7 @@
         </div>
 
         <div class="mb-item">
-            <label style="display:block;font-size:0.875rem;font-weight:500;color:#374151;margin-bottom:0.25rem;">مبلغ (ریال)</label>
+            <label class="form-label">مبلغ (ریال)</label>
             <input type="number" id="amount_input" name="amount_rial" min="10000" placeholder="مبلغ به ریال"
                    class="form-control" style="max-width:300px;">
         </div>
@@ -47,3 +47,4 @@
 </div>
 </div>
 {% endblock %}
+

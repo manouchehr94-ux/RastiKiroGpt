@@ -62,6 +62,8 @@ urlpatterns = [
     path("admin/settings/", views_admin.admin_company_settings, name="admin_company_settings"),
     path("admin/settings/notifications/", views_admin.admin_notification_settings, name="admin_notification_settings"),
     path("admin/settings/operators/", views_admin.admin_operator_list, name="admin_operator_list"),
+    path("admin/settings/operators/create/", views_admin.admin_operator_create, name="admin_operator_create"),
+    path("admin/settings/operators/<int:operator_id>/edit/", views_admin.admin_operator_edit, name="admin_operator_edit"),
 
     # Admin: Payment Gateway
     path("admin/payment-gateway/", tenant_pg_views.tenant_gateway_settings, name="admin_payment_gateway"),
