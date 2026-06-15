@@ -223,6 +223,13 @@
 <div class="card card-compact">
   <div class="card-header"><span class="card-header-title">عملیات</span></div>
   <div class="actions-row">
+    {% if order.status == "pending_review" %}
+    <form method="post" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="approve_order" value="1">
+      <button type="submit" class="btn btn-success btn-sm">تأیید و ورود به چرخه</button>
+    </form>
+    {% endif %}
     {% if can_edit_order %}
     <a href="/{{ company.code }}/admin/orders/{{ order.id }}/edit/" class="btn btn-outline btn-sm">ویرایش سفارش</a>
     {% endif %}

@@ -83,7 +83,9 @@ class ServiceRequestSelector:
     @staticmethod
     def get_for_company(*, company) -> QuerySet[ServiceRequest]:
         """Get all service requests for a company (admin view)."""
-        return ServiceRequest.objects.filter(company=company)
+        return ServiceRequest.objects.filter(company=company).select_related(
+            "order", "order__service_category",
+        )
 
     @staticmethod
     def get_by_id_for_company(*, request_id: int, company) -> Optional[ServiceRequest]:

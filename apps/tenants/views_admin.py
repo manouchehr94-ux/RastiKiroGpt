@@ -695,6 +695,33 @@ def admin_order_detail(request: HttpRequest, order_id: int, **kwargs) -> HttpRes
         except ValueError as e:
             error = str(e)
 
+    # Handle approve (PENDING_REVIEW → NEW, then dispatch to technicians)
+    if request.method == "POST" and "approve_order" in request.POST:
+        if order.status == Order.Status.PENDING_REVIEW:
+            from django.utils import timezone as tz
+            from apps.orders.models import OrderStatusLog
+            from apps.orders.eligibility import set_missing_priority_visibility_times
+            old_status = order.status
+            order.status = Order.Status.NEW
+            # Calculate priority visibility timestamps relative to approval time
+            set_missing_priority_visibility_times(order=order, base_time=tz.now())
+            order.save(update_fields=[
+                "status", "priority2_visible_at", "priority3_visible_at", "updated_at",
+            ])
+            OrderStatusLog.objects.create(
+                company=order.company,
+                order=order,
+                old_status=old_status,
+                new_status=Order.Status.NEW,
+                changed_by=request.user,
+                note="Admin approved customer request.",
+            )
+            from apps.orders.order_events import dispatch_order_available_events
+            dispatch_order_available_events(order=order)
+            return redirect(f"/{company.code}/admin/orders/{order.id}/")
+        else:
+            error = "این سفارش در وضعیت «در انتظار بررسی» نیست."
+
     # Handle confirm cancel (CANCEL_REQUESTED → CANCELLED)
     if request.method == "POST" and "confirm_cancel" in request.POST:
         if order.status == Order.Status.CANCEL_REQUESTED:
@@ -2986,6 +3013,9 @@ def admin_orders(request, **kwargs):
     # Track which column indices are status type for badge rendering in template
     status_col_indices = [i for i, col in enumerate(selected_columns) if col["type"] == "status"]
 
+    # Count pending-review orders for the quick-filter banner
+    pending_review_count = base_qs.filter(status="pending_review").count()
+
     context = {
         "company": company,
         "orders": orders,
@@ -3006,6 +3036,7 @@ def admin_orders(request, **kwargs):
         "can_edit": can_edit,
         "can_create": can_create,
         "can_assign": can_assign,
+        "pending_review_count": pending_review_count,
     }
 
     return render(request, "tenants/admin_orders.html", context)

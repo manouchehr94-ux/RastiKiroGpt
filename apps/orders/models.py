@@ -16,12 +16,14 @@ class Order(CompanyOwnedModel):
     Service order placed by a customer.
 
     Workflow:
+        PENDING_REVIEW → NEW (admin approves customer request)
         NEW → WAITING → IN_PROGRESS → DONE
         NEW → CANCELLED (admin force cancel)
         IN_PROGRESS → CANCEL_REQUESTED → CANCELLED (cancel request flow)
     """
 
     class Status(models.TextChoices):
+        PENDING_REVIEW = "pending_review", "Pending Review"
         NEW = "new", "New"
         WAITING = "waiting", "Waiting"
         IN_PROGRESS = "in_progress", "In Progress"

@@ -146,7 +146,7 @@ class ServiceRequestCreateService:
                 id=service_category_id, company=company, is_active=True,
             ).first()
 
-        # Step 3: Create Order
+        # Step 3: Create Order (pending admin review — NOT visible to technicians)
         order_title = service.title if service else "Service Request"
         price_estimate = int(service.base_price) if service else 0
 
@@ -156,7 +156,7 @@ class ServiceRequestCreateService:
             title=order_title,
             description=description,
             address=address,
-            status=Order.Status.NEW,
+            status=Order.Status.PENDING_REVIEW,
             price_estimate=price_estimate,
             required_skill="",
             service_category=service_category,
@@ -178,8 +178,10 @@ class ServiceRequestCreateService:
             order=order,
         )
 
-        from apps.orders.order_events import dispatch_order_available_events
-        dispatch_order_available_events(order=order)
+        # NOTE: Do NOT dispatch_order_available_events here.
+        # Orders in PENDING_REVIEW are not visible to technicians.
+        # Technician notifications will be triggered when admin approves
+        # the order (transitions it to NEW).
 
         return request
 

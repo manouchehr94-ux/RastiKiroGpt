@@ -15,6 +15,17 @@
 {% block content %}
 <div class="admin-compact" dir="rtl">
 
+{# ===== Pending Review Banner ===== #}
+{% if pending_review_count %}
+<div class="alert alert-warning" style="display:flex;align-items:center;justify-content:space-between;">
+  <div>
+    <strong>درخواست‌های جدید:</strong>
+    {{ pending_review_count }} سفارش در انتظار بررسی
+  </div>
+  <a href="?status=pending_review" class="btn btn-warning btn-sm">نمایش درخواست‌های جدید</a>
+</div>
+{% endif %}
+
 {# ===== Filters ===== #}
 <details class="card card-compact" {% if q or from_date or to_date or selected_technician or selected_status %}open{% endif %}>
   <summary class="card-header" style="cursor:pointer;list-style:none;">

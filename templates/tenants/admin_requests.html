@@ -12,10 +12,25 @@
 
 {% if requests %}
 <div class="card">
-    <div class="table-wrapper"><table>
-        <thead><tr><th>نام</th><th>تلفن</th><th>خدمات</th><th>تاریخ</th></tr></thead>
+    <div class="table-wrapper"><table class="data-table">
+        <thead><tr><th>نام</th><th>تلفن</th><th>خدمات</th><th>وضعیت</th><th>تاریخ</th><th>عملیات</th></tr></thead>
         <tbody>{% for req in requests %}
-        <tr><td>{{ req.customer_name }}</td><td>{{ req.customer_phone }}</td><td>{{ req.service|default:"-" }}</td><td>{{ req.created_at|jalali_date }}</td></tr>
+        <tr{% if req.order and req.order.status == "pending_review" %} style="background:var(--color-warning-50, #fffbeb);"{% endif %}>
+          <td>{{ req.customer_name }}</td>
+          <td>{{ req.customer_phone }}</td>
+          <td>{{ req.service|default:"-" }}</td>
+          <td>
+            {% if req.order %}
+            <span class="badge badge-{{ req.order.status|status_css }}">{{ req.order.status|status_fa }}</span>
+            {% else %}&mdash;{% endif %}
+          </td>
+          <td>{{ req.created_at|jalali_date }}</td>
+          <td>
+            {% if req.order %}
+            <a href="/{{ company.code }}/admin/orders/{{ req.order.id }}/" class="btn btn-sm btn-outline">مشاهده / بررسی</a>
+            {% else %}&mdash;{% endif %}
+          </td>
+        </tr>
         {% endfor %}</tbody>
     </table></div>
 </div>

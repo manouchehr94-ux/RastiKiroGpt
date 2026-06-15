@@ -7,6 +7,7 @@ from django.utils import timezone
 register = template.Library()
 
 STATUS_LABELS = {
+    "pending_review": "\u062f\u0631 \u0627\u0646\u062a\u0638\u0627\u0631 \u0628\u0631\u0631\u0633\u06cc",
     "new": "\u062c\u062f\u06cc\u062f",
     "pending": "\u062f\u0631 \u0627\u0646\u062a\u0638\u0627\u0631",
     "waiting": "\u062f\u0631 \u0627\u0646\u062a\u0638\u0627\u0631",
@@ -84,6 +85,7 @@ STATUS_CSS_GROUPS = {
     ],
     "warning": [
         "pending",
+        "pending_review",
         "waiting",
         "draft",
         "issued",
