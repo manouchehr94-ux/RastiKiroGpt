@@ -4,6 +4,13 @@ Local development settings for Rasti Service.
 Uses SQLite by default so the project runs locally without PostgreSQL.
 Override with environment variables if you want to use PostgreSQL.
 """
+import os
+
+# Dev-only fallback — must be set before base.py is imported because
+# base.py calls decouple.config() at module load time. This value is
+# never used in production (production.py requires the real env var).
+os.environ.setdefault("DJANGO_SECRET_KEY", "dev-only-insecure-key-do-not-use-in-production")
+
 from .base import *  # noqa: F401, F403
 
 DEBUG = True

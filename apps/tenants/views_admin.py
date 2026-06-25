@@ -864,17 +864,22 @@ def admin_invoice_detail(request: HttpRequest, invoice_id: int, **kwargs) -> Htt
         if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_edit")):
             return permission_denied_response(request, permission_key="admin_invoice_edit")
         try:
-            if not invoice.is_payable:
-                raise ValueError("این فاکتور قابل پرداخت نیست. فقط فاکتورهای صادرشده قابل ثبت پرداخت هستند.")
             from apps.payments.models import Payment
-            payment = Payment.objects.create(
-                company=company,
-                invoice=invoice,
-                amount=invoice.total_amount,
-                status=Payment.Status.PAID,
-                metadata={"payment_source": "CASH_RECEIVED_BY_COMPANY", "method": "cash"},
-            )
-            InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment, payment_method="cash")
+            from django.db import transaction as _tx
+            with _tx.atomic():
+                # Lock invoice row first — prevents concurrent double-click from creating
+                # two Payment rows before mark_paid can reject the second request.
+                invoice = Invoice.objects.select_for_update().get(pk=invoice.pk, company=company)
+                if invoice.status != Invoice.Status.ISSUED:
+                    raise ValueError("این فاکتور قابل پرداخت نیست. فقط فاکتورهای صادرشده قابل ثبت پرداخت هستند.")
+                payment = Payment.objects.create(
+                    company=company,
+                    invoice=invoice,
+                    amount=invoice.total_amount,
+                    status=Payment.Status.PAID,
+                    metadata={"payment_source": "CASH_RECEIVED_BY_COMPANY", "method": "cash"},
+                )
+                InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment, payment_method="cash")
             return redirect(f"/{company.code}/admin/invoices/{invoice.id}/")
         except (ValueError, Exception) as e:
             error = str(e)
@@ -883,23 +888,28 @@ def admin_invoice_detail(request: HttpRequest, invoice_id: int, **kwargs) -> Htt
         if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_edit")):
             return permission_denied_response(request, permission_key="admin_invoice_edit")
         try:
-            if not invoice.is_payable:
-                raise ValueError("این فاکتور قابل پرداخت نیست. فقط فاکتورهای صادرشده قابل ثبت پرداخت هستند.")
             from apps.payments.models import Payment
-            order = getattr(invoice, "order", None)
-            technician_id = getattr(getattr(order, "technician", None), "id", None)
-            payment = Payment.objects.create(
-                company=company,
-                invoice=invoice,
-                amount=invoice.total_amount,
-                status=Payment.Status.PAID,
-                metadata={
-                    "payment_source": "CASH_RECEIVED_BY_TECHNICIAN",
-                    "method": "cash",
-                    "technician_id": technician_id,
-                },
-            )
-            InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment, payment_method="cash")
+            from django.db import transaction as _tx
+            with _tx.atomic():
+                # Lock invoice row first — prevents concurrent double-click from creating
+                # two Payment rows before mark_paid can reject the second request.
+                invoice = Invoice.objects.select_for_update().get(pk=invoice.pk, company=company)
+                if invoice.status != Invoice.Status.ISSUED:
+                    raise ValueError("این فاکتور قابل پرداخت نیست. فقط فاکتورهای صادرشده قابل ثبت پرداخت هستند.")
+                order = getattr(invoice, "order", None)
+                technician_id = getattr(getattr(order, "technician", None), "id", None)
+                payment = Payment.objects.create(
+                    company=company,
+                    invoice=invoice,
+                    amount=invoice.total_amount,
+                    status=Payment.Status.PAID,
+                    metadata={
+                        "payment_source": "CASH_RECEIVED_BY_TECHNICIAN",
+                        "method": "cash",
+                        "technician_id": technician_id,
+                    },
+                )
+                InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment, payment_method="cash")
             return redirect(f"/{company.code}/admin/invoices/{invoice.id}/")
         except (ValueError, Exception) as e:
             error = str(e)
