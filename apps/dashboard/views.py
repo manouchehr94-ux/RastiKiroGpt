@@ -51,7 +51,7 @@ def technician_home(request: HttpRequest, **kwargs) -> HttpResponse:
         "company": company,
         "stats": stats,
         "recent_orders": recent_orders,
-        "chart_data": chart_data,
+        "chart_data": {},
     })
 
 
@@ -71,5 +71,5 @@ def customer_home(request: HttpRequest, **kwargs) -> HttpResponse:
         "company": company,
         "stats": stats,
         "recent_orders": recent_orders,
-        "chart_data": chart_data,
+        "chart_data": {},
     })
