@@ -1,15 +1,10 @@
-{% extends "layouts/dashboard.html" %}
+{% extends "layouts/technician.html" %}
 {% load jalali_tags  fa_labels %}
 
 {% block title %}سفارش‌های من - {{ company.name }}{% endblock %}
-{% block sidebar_brand %}{{ company.name }}{% endblock %}
-{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
-{% block sidebar_nav %}
-<li><a href="/{{ company.code }}/tech/">داشبورد</a></li>
-<li><a href="/{{ company.code }}/tech/orders/available/">سفارش‌های جدید</a></li>
-<li><a href="/{{ company.code }}/tech/orders/my/" class="active">سفارش‌های من</a></li>
-<li><a href="/{{ company.code }}/tech/invoices/">فاکتورها</a></li>
-{% endblock %}
+
+
+
 
 {% block content %}
 <div class="admin-compact">

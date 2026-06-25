@@ -530,3 +530,80 @@ class CompanyMerchantProfileChangeRequest(models.Model):
 
     def __str__(self) -> str:
         return f"ChangeRequest [{self.status}]: {self.company.name} @ {self.created_at}"
+
+
+class OrderCustomField(models.Model):
+    """
+    A custom field definition per company (tenant).
+    Admins define these; they appear on order create/edit forms.
+    No calculations — pure data storage and display.
+    """
+
+    class FieldType(models.TextChoices):
+        TEXT = "text", "متن آزاد"
+        NUMBER = "number", "عدد"
+        CHECKBOX = "checkbox", "بلی/خیر"
+        SELECT = "select", "لیست انتخابی"
+
+    company = models.ForeignKey(
+        "tenants.Company",
+        on_delete=models.CASCADE,
+        related_name="custom_fields",
+    )
+    name = models.CharField(max_length=100, help_text="نام فیلد، مثلاً «وضعیت گارانتی»")
+    field_type = models.CharField(
+        max_length=20,
+        choices=FieldType.choices,
+        default=FieldType.TEXT,
+    )
+    select_options = models.TextField(
+        blank=True,
+        help_text="گزینه‌ها برای نوع لیست انتخابی، با کاما جدا کنید. مثال: گارانتی دارد,گارانتی ندارد,نامشخص",
+    )
+    is_required = models.BooleanField(default=False)
+    order_index = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["order_index", "id"]
+        verbose_name = "Custom Order Field"
+
+    def __str__(self) -> str:
+        return f"{self.company.name} — {self.name}"
+
+    def get_select_options_list(self) -> list:
+        """Return select_options as a list. Accepts comma or Persian comma as separator."""
+        if not self.select_options:
+            return []
+        PERSIAN_COMMA = chr(0x060C)
+        text = self.select_options.replace(PERSIAN_COMMA, ",")
+        return [opt.strip() for opt in text.split(",") if opt.strip()]
+
+class OrderCustomFieldValue(models.Model):
+    """Value of a custom field for a specific order."""
+
+    order = models.ForeignKey(
+        "orders.Order",
+        on_delete=models.CASCADE,
+        related_name="custom_field_values",
+    )
+    field = models.ForeignKey(
+        OrderCustomField,
+        on_delete=models.CASCADE,
+        related_name="values",
+    )
+    value = models.TextField(blank=True)
+
+    class Meta:
+        unique_together = [("order", "field")]
+        verbose_name = "Custom Order Field Value"
+
+    def __str__(self) -> str:
+        return f"Order#{self.order_id} — {self.field.name}: {self.value}"
+
+    def display_value(self) -> str:
+        if self.field.field_type == OrderCustomField.FieldType.CHECKBOX:
+            return "✓ بله" if self.value == "true" else "✗ خیر"
+        return self.value or "—"

@@ -303,10 +303,16 @@ def technician_invoice_list(request, company_code=None, **kwargs):
         invoices = invoices.filter(order_id=int(order_id))
 
     if date_from:
-        invoices = invoices.filter(created_at__date__gte=date_from)
+        from apps.common.jalali import parse_jalali_date
+        parsed_from = parse_jalali_date(date_from)
+        if parsed_from:
+            invoices = invoices.filter(created_at__date__gte=parsed_from)
 
     if date_to:
-        invoices = invoices.filter(created_at__date__lte=date_to)
+        from apps.common.jalali import parse_jalali_date
+        parsed_to = parse_jalali_date(date_to)
+        if parsed_to:
+            invoices = invoices.filter(created_at__date__lte=parsed_to)
 
     invoice_list = list(invoices)
 
@@ -520,7 +526,6 @@ def technician_invoice_create(request, order_id, company_code=None, **kwargs):
                 return redirect(f"/{company.code}/tech/invoices/{invoice.id}/")
 
     messages.success(request, f"فاکتور #{invoice.id} با موفقیت صادر شد.")
-    _emit_invoice_issued_customer_event(invoice, getattr(request, "user", None))
     return redirect(f"/{company.code}/tech/invoices/{invoice.id}/")
 
 
@@ -614,6 +619,66 @@ def technician_invoice_detail(request, invoice_id, company_code=None, **kwargs):
 
 
 # =============================================================================
+# INVOICE CANCELLATION REQUEST
+# =============================================================================
+
+
+@require_tenant_role("TECHNICIAN")
+def technician_invoice_cancel_request(request, invoice_id, **kwargs):
+    """
+    Technician submits a cancellation request for one of their own invoices.
+
+    GET  → show the request form (or a notice if a request is already pending).
+    POST → submit the request via InvoiceCancellationRequestService.request().
+
+    Access rule: invoice must belong to an order whose technician is the
+    logged-in user. This is enforced by the get_object_or_404 filter on
+    order__technician=technician.
+    """
+    company = _company(request)
+    technician = _technician(request, company)
+
+    invoice = get_object_or_404(
+        Invoice.objects.select_related("order", "company"),
+        id=invoice_id,
+        company=company,
+        order__technician=technician,
+    )
+
+    from apps.invoices.models import InvoiceCancellationRequest
+    from apps.invoices.services_cancel_request import InvoiceCancellationRequestService
+
+    existing_request = InvoiceCancellationRequest.objects.filter(
+        invoice=invoice,
+        status=InvoiceCancellationRequest.Status.PENDING,
+    ).first()
+
+    error = ""
+    if request.method == "POST":
+        reason = request.POST.get("reason", "").strip()
+        try:
+            InvoiceCancellationRequestService.request(
+                invoice=invoice,
+                requested_by=request.user,
+                reason=reason,
+            )
+            messages.success(
+                request,
+                "درخواست لغو فاکتور با موفقیت ثبت شد. پس از بررسی توسط مدیر اطلاع‌رسانی می‌شود.",
+            )
+            return redirect(f"/{company.code}/tech/invoices/{invoice.id}/")
+        except ValueError as e:
+            error = str(e)
+
+    return render(request, "invoices/technician_cancel_request_form.html", {
+        "company": company,
+        "invoice": invoice,
+        "existing_request": existing_request,
+        "error": error,
+    })
+
+
+# =============================================================================
 # EVENT HOOK
 # =============================================================================
 
@@ -690,6 +755,7 @@ def technician_invoice_mark_cash_paid(request, invoice_id, company_code=None, **
             paid_at=timezone.now(),
             metadata={
                 "method": "cash",
+                "payment_source": "CASH_RECEIVED_BY_TECHNICIAN",
                 "received_by_user_id": getattr(request.user, "id", None),
                 "received_by_username": getattr(request.user, "username", ""),
                 "technician_id": getattr(technician, "id", None),

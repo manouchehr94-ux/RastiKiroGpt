@@ -42,7 +42,11 @@
 {# === گروه: داده‌های پایه === #}
 <div class="nav-group">
     <p class="nav-group-title">داده‌های پایه</p>
-    <a href="/{{ company_code }}/admin/base-data/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth {% if '/admin/base-data/' in current_path %}active{% endif %}">
+    <a href="/{{ company_code }}/admin/custom-fields/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth {% if '/admin/custom-fields/' in current_path %}active{% endif %}">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        <span>فیلدهای سفارشی</span>
+    </a>
+        <a href="/{{ company_code }}/admin/base-data/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth {% if '/admin/base-data/' in current_path %}active{% endif %}">
         <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
         <span>اطلاعات پایه</span>
     </a>

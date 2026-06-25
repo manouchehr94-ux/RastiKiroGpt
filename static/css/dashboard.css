@@ -310,9 +310,9 @@ input, select, textarea { font-family: inherit; }
 .hover\:shadow-md:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); }
 
 /* --- Focus states --- */
-.focus\:ring-2:focus { box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
-.focus\:ring-brand-500:focus { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
-.focus\:ring-brand-500\/20:focus { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+.focus\:ring-2:focus { box-shadow: 0 0 0 2px rgba(22,163,74,0.20); }
+.focus\:ring-brand-500:focus { box-shadow: 0 0 0 3px rgba(22,163,74,0.20); }
+.focus\:ring-brand-500\/20:focus { box-shadow: 0 0 0 3px rgba(22,163,74,0.20); }
 .focus\:border-brand-500:focus { border-color: var(--color-brand-500); }
 
 /* --- Group hover --- */
@@ -369,8 +369,8 @@ input, select, textarea { font-family: inherit; }
    COMPONENT CLASSES (nav-item, data-table, safe-area)
    ============================================================================= */
 
-/* Active nav indicator */
-.nav-item.active { background: rgba(59,130,246,0.1); color: var(--color-brand-500); border-right: 3px solid #3b82f6; }
+/* Active nav indicator — green brand */
+.nav-item.active { background: rgba(22,163,74,0.12); color: var(--color-brand-500); border-right: 3px solid var(--color-brand-600); }
 .nav-item.active .nav-icon { color: var(--color-brand-500); }
 
 /* Data table hover */
@@ -415,7 +415,7 @@ tr:hover td { background: #fafbfc; }
 .form-group { margin-bottom: 0.75rem; }
 .form-group label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--color-slate-600); margin-bottom: 0.35rem; }
 .form-control { width: 100%; padding: 0.6rem 0.85rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; transition: border-color 0.2s; }
-.form-control:focus { outline: none; border-color: var(--color-brand-500); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.form-control:focus { outline: none; border-color: var(--color-brand-500); box-shadow: 0 0 0 3px rgba(22,163,74,0.12); }
 select.form-control { appearance: auto; }
 textarea.form-control { resize: vertical; }
 
@@ -428,7 +428,7 @@ textarea.form-control { resize: vertical; }
 .stat-card { background: var(--color-surface-0); border-radius: 0.75rem; border: 1px solid #f1f5f9; padding: 1rem; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
 .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--color-slate-800); }
 .stat-label { font-size: 0.8rem; color: var(--color-slate-500); margin-top: 0.25rem; }
-.stat-card.accent { border-top: 3px solid #2563eb; }
+.stat-card.accent { border-top: 3px solid var(--color-brand-600); }
 .stat-card.success { border-top: 3px solid #16a34a; }
 .stat-card.warning { border-top: 3px solid #f59e0b; }
 .stat-card.danger { border-top: 3px solid #dc2626; }
@@ -445,7 +445,7 @@ textarea.form-control { resize: vertical; }
 .public-hero h1 { font-size: 1.75rem; margin-bottom: 0.75rem; }
 .public-hero p { font-size: 1rem; color: var(--color-slate-300); }
 .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-.service-card { background: var(--color-surface-0); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-right: 3px solid #2563eb; }
+.service-card { background: var(--color-surface-0); border-radius: 0.5rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-right: 3px solid var(--color-brand-600); }
 .service-card h3 { font-size: 1rem; color: var(--color-slate-800); margin-bottom: 0.5rem; }
 .service-card p { font-size: 0.85rem; color: var(--color-slate-500); }
 .service-card .price { font-weight: 700; color: var(--color-brand-600); margin-top: 0.5rem; }
@@ -465,8 +465,8 @@ textarea.form-control { resize: vertical; }
 }
 #app aside nav li a:hover { background: rgba(51,65,85,0.7); color: var(--color-surface-0); }
 #app aside nav li a.active {
-    background: rgba(59,130,246,0.1); color: var(--color-brand-500);
-    border-right: 3px solid #3b82f6;
+    background: rgba(22,163,74,0.12); color: var(--color-brand-500);
+    border-right: 3px solid var(--color-brand-600);
 }
 
 /* =============================================================================
@@ -1121,7 +1121,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
   margin: .75rem 0 .65rem;
   font-weight: 800;
   color: var(--color-slate-900);
-  border-right: 3px solid #2563eb;
+  border-right: 3px solid var(--color-brand-600);
   padding-right: .6rem;
 }
 .operator-check-row { display:flex; align-items:end; }
@@ -1211,9 +1211,9 @@ html, body { max-width: 100%; overflow-x: hidden; }
 }
 #sidebar nav li a:hover { background: var(--color-slate-800); color: var(--color-surface-0); }
 #sidebar nav li a.active, #sidebar nav li a[aria-current="page"] {
-    background: rgba(37,99,235,.18);
+    background: rgba(22,163,74,0.14);
     color: var(--color-brand-400);
-    box-shadow: inset -3px 0 0 #3b82f6;
+    box-shadow: inset -3px 0 0 var(--color-brand-600);
 }
 
 /* ADMIN_MOBILE_SIDEBAR_PATCH_6C_START
@@ -1389,4 +1389,185 @@ html, body { max-width: 100%; overflow-x: hidden; }
     font-size: .74rem;
     font-weight: 800;
     white-space: nowrap;
+}
+
+
+/* =============================================================================
+   DARK MODE — DASHBOARD UTILITIES
+   Overrides for utility classes that use hardcoded colors or light-only logic.
+   ============================================================================= */
+
+[data-theme="dark"] body {
+  background: var(--color-surface-1);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .page-header h1 {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .card {
+  background: var(--color-surface-0);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .card-header {
+  color: var(--color-text-muted);
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] th {
+  background: var(--color-surface-2);
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] th,
+[data-theme="dark"] td {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] tr:hover td {
+  background: var(--color-surface-2);
+}
+
+[data-theme="dark"] .data-table tbody tr:hover {
+  background: var(--color-surface-2);
+}
+
+/* Dark nav active state */
+[data-theme="dark"] .nav-item.active {
+  background: rgba(74, 222, 128, 0.10);
+  color: var(--color-brand-400);
+  border-right-color: var(--color-brand-400);
+}
+
+[data-theme="dark"] .nav-item.active .nav-icon {
+  color: var(--color-brand-400);
+}
+
+/* Status badges — slightly adjusted for dark backgrounds */
+[data-theme="dark"] .status-success,
+[data-theme="dark"] .badge-success,
+[data-theme="dark"] .badge-active,
+[data-theme="dark"] .status-done,
+[data-theme="dark"] .status-completed,
+[data-theme="dark"] .status-paid,
+[data-theme="dark"] .status-sent,
+[data-theme="dark"] .status-delivered,
+[data-theme="dark"] .status-accepted,
+[data-theme="dark"] .status-approved {
+  background: rgba(22, 163, 74, 0.15) !important;
+  color: #86efac !important;
+}
+
+[data-theme="dark"] .status-danger,
+[data-theme="dark"] .badge-danger,
+[data-theme="dark"] .badge-inactive,
+[data-theme="dark"] .status-cancelled,
+[data-theme="dark"] .status-canceled,
+[data-theme="dark"] .status-failed,
+[data-theme="dark"] .status-rejected,
+[data-theme="dark"] .status-expired {
+  background: rgba(220, 38, 38, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+[data-theme="dark"] .status-warning,
+[data-theme="dark"] .badge-warning,
+[data-theme="dark"] .status-pending,
+[data-theme="dark"] .status-waiting,
+[data-theme="dark"] .status-draft,
+[data-theme="dark"] .status-issued,
+[data-theme="dark"] .status-unpaid,
+[data-theme="dark"] .status-queued,
+[data-theme="dark"] .status-sending,
+[data-theme="dark"] .status-cancel_requested,
+[data-theme="dark"] .status-trial {
+  background: rgba(217, 119, 6, 0.15) !important;
+  color: #fcd34d !important;
+}
+
+[data-theme="dark"] .status-info,
+[data-theme="dark"] .badge-info,
+[data-theme="dark"] .status-new,
+[data-theme="dark"] .status-assigned,
+[data-theme="dark"] .status-in_progress,
+[data-theme="dark"] .status-started,
+[data-theme="dark"] .status-rescheduled,
+[data-theme="dark"] .status-recorded,
+[data-theme="dark"] .status-partially_paid {
+  background: rgba(37, 99, 235, 0.15) !important;
+  color: #93c5fd !important;
+}
+
+[data-theme="dark"] .status-neutral,
+[data-theme="dark"] .badge-neutral,
+[data-theme="dark"] .status-skipped,
+[data-theme="dark"] .status-refunded,
+[data-theme="dark"] .status-closed {
+  background: rgba(71, 85, 105, 0.25) !important;
+  color: #94a3b8 !important;
+}
+
+/* Filter pill */
+[data-theme="dark"] .filter-pill {
+  background: var(--color-surface-2);
+  border-color: var(--border-color);
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .filter-pill:hover {
+  border-color: var(--border-color-strong);
+  background: var(--color-surface-3);
+}
+
+/* =============================================================================
+   DARK MODE — STAT CARDS & BASE DATA PAGE FIXES
+   ============================================================================= */
+
+[data-theme="dark"] .stat-card {
+  background: var(--color-surface-0);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .stat-value {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .stat-label {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .card-header-title,
+[data-theme="dark"] h1, [data-theme="dark"] h2,
+[data-theme="dark"] h3, [data-theme="dark"] h4 {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] .muted-text,
+[data-theme="dark"] .text-muted {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .page-subtitle,
+[data-theme="dark"] .page-header p {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .service-card {
+  background: var(--color-surface-0);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .service-card h3,
+[data-theme="dark"] .service-card p {
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .admin-compact,
+[data-theme="dark"] .admin-compact p,
+[data-theme="dark"] .admin-compact span:not(.badge):not(.status-badge) {
+  color: var(--color-text);
 }

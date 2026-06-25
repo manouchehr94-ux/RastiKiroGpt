@@ -26,15 +26,27 @@ class InvoiceSelector:
         """Get a single invoice by ID, company-scoped."""
         return Invoice.objects.filter(id=invoice_id, company=company).first()
 
+    # Statuses that are visible to customers. DRAFT is internal-only and
+    # must never be shown to the customer before the invoice is issued.
+    CUSTOMER_VISIBLE_STATUSES = [
+        Invoice.Status.ISSUED,
+        Invoice.Status.PAID,
+        Invoice.Status.CANCELLED,
+    ]
+
     @staticmethod
     def get_for_customer(*, customer: Customer) -> QuerySet[Invoice]:
         """
-        Get invoices for a specific customer.
-        Customer can ONLY see their own invoices.
+        Get invoices visible to a specific customer.
+
+        DRAFT invoices are excluded — they are internal working documents
+        until the technician issues them. Customers see ISSUED, PAID, and
+        CANCELLED invoices only.
         """
         return Invoice.objects.filter(
             company=customer.company,
             customer=customer,
+            status__in=InvoiceSelector.CUSTOMER_VISIBLE_STATUSES,
         )
 
     @staticmethod

@@ -1,27 +1,35 @@
 ﻿/* =============================================================================
-   Rasti Service — Central Theme Entrypoint (P24)
-   
-   This is the SINGLE source of truth for the site's visual design.
-   All pages load this file through base.html.
-   
-   Load order matters:
-   1. tokens.css    — Design tokens (colors, spacing, radius, shadows, fonts)
-   2. base.css      — Reset, font-face, body defaults
-   3. components.css — Reusable UI components (btn, card, badge, table, alert)
-   4. layouts.css   — Grid, sidebar, shell layouts
-   5. pages.css     — Page-specific classes + financial report utilities
-   6. dashboard.css — Legacy dashboard styles (to be gradually removed)
-   7. responsive.css — Media queries for mobile/tablet
+   Rasti Service — Central Theme Entrypoint
 
-   RULES:
-   - New CSS must use tokens from tokens.css.
-   - New components go in components.css.
-   - Page-specific utilities go in pages.css.
-   - Do NOT add inline styles to templates.
-   - Do NOT add hardcoded hex colors.
-   - Do NOT add one-off CSS files per page.
-   
-   See: docs/UI_TOKENS_GUIDE.md, docs/UI_CORE_COMPONENT_USAGE.md
+   ✅ این فایل تنها نقطه ورود CSS برای کل سایت است.
+   ✅ تمام صفحات از طریق base.html این فایل را بارگذاری می‌کنند.
+
+   ════════════════════════════════════════════════════════
+   برای سفارشی‌کردن ظاهر سایت:
+     1. tokens.css  ← رنگ، فونت، radius، فاصله (شروع اینجا)
+     2. components.css ← کامپوننت‌های مشترک (btn, card, form, badge)
+     3. layouts.css ← ساختار صفحه (sidebar, topbar, shell)
+   ════════════════════════════════════════════════════════
+
+   ترتیب بارگذاری (تغییر ندهید):
+   1. tokens.css     — متغیرهای طراحی (رنگ، فاصله، radius، سایه، فونت)
+   2. base.css       — Reset، @font-face، body، RTL
+   3. components.css — کامپوننت‌های مشترک (btn, card, badge, form, table, modal)
+   4. layouts.css    — Shell، sidebar، topbar، public، auth، tech
+   5. pages.css      — کلاس‌های اختصاصی صفحات + financial
+   6. dashboard.css  — Utility classes (Tailwind-equivalent) + legacy
+   7. responsive.css — Media queries (mobile/tablet/desktop)
+   8. rasti_fixes.css — Sidebar fixes و layout patches
+
+   قانون‌ها:
+   - CSS جدید باید از متغیرهای tokens.css استفاده کند
+   - کامپوننت جدید → components.css
+   - Layout جدید → layouts.css
+   - Utility class جدید → dashboard.css
+   - هرگز inline style در template نگذارید
+   - هرگز hex رنگ مستقیم ننویسید
+
+   📌 بعد از تغییر: ?v= در base.html را عوض کنید یا Ctrl+Shift+R بزنید
    ============================================================================= */
 
 @import url('tokens.css');

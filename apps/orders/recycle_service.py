@@ -50,21 +50,28 @@ class OrderRecycleService:
         if now is None:
             now = timezone.now()
 
-        company = order.company
+        # Lock the order row to prevent concurrent recycles from creating duplicate replacements.
+        locked = Order.objects.select_for_update().get(pk=order.pk)
+
+        # P0-C: Terminal orders must not be recycled.
+        if locked.status in {Order.Status.DONE, Order.Status.CANCELLED}:
+            raise ValueError("سفارش‌های تکمیل‌شده یا لغوشده قابل بازیافت نیستند.")
+
+        company = locked.company
         priority2_visible_at, priority3_visible_at = calculate_priority_visibility_times(
             company=company,
             base_time=now,
         )
 
         # Step 1: Cancel the old order
-        old_status = order.status
-        order.status = Order.Status.CANCELLED
-        order.technician = None
-        order.save(update_fields=["status", "technician", "updated_at"])
+        old_status = locked.status
+        locked.status = Order.Status.CANCELLED
+        locked.technician = None
+        locked.save(update_fields=["status", "technician", "updated_at"])
 
         OrderStatusLog.objects.create(
             company=company,
-            order=order,
+            order=locked,
             old_status=old_status,
             new_status=Order.Status.CANCELLED,
             changed_by=recycled_by,
@@ -74,20 +81,20 @@ class OrderRecycleService:
         # Step 2: Create replacement order
         new_order = Order(
             company=company,
-            customer=order.customer,
-            title=order.title,
-            description=order.description,
-            address=order.address,
-            scheduled_for=order.scheduled_for,
+            customer=locked.customer,
+            title=locked.title,
+            description=locked.description,
+            address=locked.address,
+            scheduled_for=locked.scheduled_for,
             status=Order.Status.NEW,
-            priority=order.priority,
-            price_estimate=order.price_estimate,
+            priority=locked.priority,
+            price_estimate=locked.price_estimate,
             final_price=0,
-            required_skill=order.required_skill,
-            service_category=order.service_category,
-            service_subcategory=order.service_subcategory,
-            notes=order.notes,
-            internal_note=order.internal_note,
+            required_skill=locked.required_skill,
+            service_category=locked.service_category,
+            service_subcategory=locked.service_subcategory,
+            notes=locked.notes,
+            internal_note=locked.internal_note,
             # Reset assignment fields
             technician=None,
             accepted_at=None,
@@ -106,12 +113,12 @@ class OrderRecycleService:
             old_status="",
             new_status=Order.Status.NEW,
             changed_by=recycled_by,
-            note=f"Replacement order created from cancelled order #{order.id}.",
+            note=f"Replacement order created from cancelled order #{locked.id}.",
         )
 
         # Step 4: Copy OrderItemValues
         OrderRecycleService._copy_item_values(
-            source_order=order, target_order=new_order,
+            source_order=locked, target_order=new_order,
         )
 
         return new_order
@@ -183,8 +190,11 @@ class OrderReturnToCycleService:
         if now is None:
             now = timezone.now()
 
-        # Guard: do not cycle orders with active invoices
-        if OrderReturnToCycleService._has_active_or_paid_invoice(order=order):
+        # Lock the order row to prevent concurrent calls from creating duplicate replacements.
+        locked = Order.objects.select_for_update().get(pk=order.pk)
+
+        # Guard: do not cycle orders with active invoices (re-checked on locked row)
+        if OrderReturnToCycleService._has_active_or_paid_invoice(order=locked):
             raise ValueError(
                 "این سفارش دارای فاکتور فعال یا پرداخت‌شده است. "
                 "برای بازگشت به چرخه ابتدا فاکتور را لغو کنید."
@@ -197,42 +207,42 @@ class OrderReturnToCycleService:
             Order.Status.WAITING,
             Order.Status.IN_PROGRESS,
         ]
-        if order.status not in allowed_statuses:
+        if locked.status not in allowed_statuses:
             raise ValueError("این سفارش در وضعیتی نیست که امکان بازگشت به چرخه داشته باشد.")
 
-        company = order.company
+        company = locked.company
         priority2_visible_at, priority3_visible_at = calculate_priority_visibility_times(
             company=company,
             base_time=now,
         )
 
         # Step 1: Cancel old order (keep technician for audit)
-        old_status = order.status
-        order.status = Order.Status.CANCELLED
-        order.save(update_fields=["status", "updated_at"])
+        old_status = locked.status
+        locked.status = Order.Status.CANCELLED
+        locked.save(update_fields=["status", "updated_at"])
 
         # Step 2: Create new replacement order
         new_order = Order(
             company=company,
-            customer=order.customer,
-            customer_name=order.customer_name,
-            customer_phone=order.customer_phone,
-            title=order.title,
-            description=order.description,
-            address=order.address,
-            service_date=order.service_date,
-            scheduled_for=order.scheduled_for,
+            customer=locked.customer,
+            customer_name=locked.customer_name,
+            customer_phone=locked.customer_phone,
+            title=locked.title,
+            description=locked.description,
+            address=locked.address,
+            service_date=locked.service_date,
+            scheduled_for=locked.scheduled_for,
             status=Order.Status.NEW,
-            priority=order.priority,
-            price_estimate=order.price_estimate,
+            priority=locked.priority,
+            price_estimate=locked.price_estimate,
             final_price=0,
-            extra_payment=order.extra_payment or 0,
-            wage_deduction=order.wage_deduction or 0,
-            required_skill=order.required_skill,
-            service_category=order.service_category,
-            service_subcategory=order.service_subcategory,
-            notes=order.notes,
-            internal_note=order.internal_note,
+            extra_payment=locked.extra_payment or 0,
+            wage_deduction=locked.wage_deduction or 0,
+            required_skill=locked.required_skill,
+            service_category=locked.service_category,
+            service_subcategory=locked.service_subcategory,
+            notes=locked.notes,
+            internal_note=locked.internal_note,
             # Reset assignment fields
             technician=None,
             accepted_at=None,
@@ -247,7 +257,7 @@ class OrderReturnToCycleService:
         # Step 3: Audit logs
         OrderStatusLog.objects.create(
             company=company,
-            order=order,
+            order=locked,
             old_status=old_status,
             new_status=Order.Status.CANCELLED,
             changed_by=performed_by,
@@ -260,12 +270,12 @@ class OrderReturnToCycleService:
             old_status="",
             new_status=Order.Status.NEW,
             changed_by=performed_by,
-            note=f"این سفارش از بازگشت به چرخه سفارش #{order.id} ساخته شد.",
+            note=f"این سفارش از بازگشت به چرخه سفارش #{locked.id} ساخته شد.",
         )
 
         # Step 4: Copy OrderItemValues
         OrderRecycleService._copy_item_values(
-            source_order=order, target_order=new_order,
+            source_order=locked, target_order=new_order,
         )
 
         # Step 5: Dispatch order_available_technician event for new order

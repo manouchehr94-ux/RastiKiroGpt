@@ -145,6 +145,8 @@ class ServiceRequestCreateService:
             service_category = CompanyServiceCategory.objects.filter(
                 id=service_category_id, company=company, is_active=True,
             ).first()
+        if not service_category:
+            raise ValueError("دسته‌بندی خدمات الزامی است.")
 
         # Step 3: Create Order (pending admin review — NOT visible to technicians)
         order_title = service.title if service else "Service Request"

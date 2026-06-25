@@ -101,6 +101,23 @@
   </div>
 </div>
 
+{# اطلاعات تکمیلی (فیلدهای سفارشی) #}
+{% with cfv=order.custom_field_values.select_related %}
+{% if order.custom_field_values.exists %}
+<div class="card card-flush">
+  <div class="card-header"><span class="card-header-title">اطلاعات تکمیلی</span></div>
+  <div class="card-body">
+    {% for cfval in order.custom_field_values.all %}
+    <div class="detail-row">
+      <span class="detail-label">{{ cfval.field.name }}</span>
+      <span class="detail-value">{{ cfval.display_value }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endwith %}
+
 {# آیتم‌های سفارش #}
 {% if item_values %}
 <div class="card card-flush">
@@ -223,17 +240,10 @@
 <div class="card card-compact">
   <div class="card-header"><span class="card-header-title">عملیات</span></div>
   <div class="actions-row">
-    {% if order.status == "pending_review" %}
-    <form method="post" style="display:inline;">
-      {% csrf_token %}
-      <input type="hidden" name="approve_order" value="1">
-      <button type="submit" class="btn btn-success btn-sm">تأیید و ورود به چرخه</button>
-    </form>
-    {% endif %}
     {% if can_edit_order %}
     <a href="/{{ company.code }}/admin/orders/{{ order.id }}/edit/" class="btn btn-outline btn-sm">ویرایش سفارش</a>
     {% endif %}
-    {% if can_assign_order and order.status == "new" and technicians %}
+    {% if can_assign_order and technicians and order.status == "new" or can_assign_order and technicians and order.status == "pending_review" %}
     <form method="post" style="display:flex;gap:var(--space-2);align-items:center;">
       {% csrf_token %}
       <input type="hidden" name="assign_technician" value="1">
@@ -241,6 +251,13 @@
         {% for t in technicians %}<option value="{{ t.id }}">{{ t.user.get_full_name|default:t.user.username }}</option>{% endfor %}
       </select>
       <button type="submit" class="btn btn-primary btn-sm">تخصیص</button>
+    </form>
+    {% endif %}
+    {% if can_assign_order and order.status == "waiting" and order.technician %}
+    <form method="post" onsubmit="return confirm('آیا از حذف تخصیص تکنسین مطمئن هستید؟')">
+      {% csrf_token %}
+      <input type="hidden" name="unassign_technician" value="1">
+      <button type="submit" class="btn btn-outline btn-sm">حذف تخصیص</button>
     </form>
     {% endif %}
     {% if can_force_cancel and order.status != "done" and order.status != "cancelled" and order.status != "cancel_requested" %}

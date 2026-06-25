@@ -24,6 +24,7 @@ from apps.invoices.selectors import InvoiceSelector
 from apps.invoices.services import (
     InvoiceCancelService,
     InvoiceCreateService,
+    InvoiceDuplicateGuard,
     InvoiceIssueService,
     InvoiceMarkPaidService,
     InvoiceUpdateService,
@@ -669,8 +670,15 @@ def admin_order_detail(request: HttpRequest, order_id: int, **kwargs) -> HttpRes
     technicians = Technician.objects.filter(company=company, is_available=True)
     error = ""
 
+    # Permission helpers — used for server-side gates below and template flags at the end.
+    from apps.accounts.operator_access import is_company_admin as _is_admin, operator_has_permission, permission_denied_response
+    user = request.user
+    user_is_admin = _is_admin(user)
+
     # Handle assign technician
     if request.method == "POST" and "assign_technician" in request.POST:
+        if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_order_assign")):
+            return permission_denied_response(request, permission_key="admin_order_assign")
         tech_id = request.POST.get("technician_id")
         if tech_id:
             from apps.orders.services import OrderAssignService
@@ -686,6 +694,8 @@ def admin_order_detail(request: HttpRequest, order_id: int, **kwargs) -> HttpRes
 
     # Handle force cancel
     if request.method == "POST" and "force_cancel" in request.POST:
+        if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_cancel_request_approve")):
+            return permission_denied_response(request, permission_key="admin_cancel_request_approve")
         reason = request.POST.get("cancel_reason", "")
         try:
             OrderCancelService.force_cancel(
@@ -695,35 +705,10 @@ def admin_order_detail(request: HttpRequest, order_id: int, **kwargs) -> HttpRes
         except ValueError as e:
             error = str(e)
 
-    # Handle approve (PENDING_REVIEW → NEW, then dispatch to technicians)
-    if request.method == "POST" and "approve_order" in request.POST:
-        if order.status == Order.Status.PENDING_REVIEW:
-            from django.utils import timezone as tz
-            from apps.orders.models import OrderStatusLog
-            from apps.orders.eligibility import set_missing_priority_visibility_times
-            old_status = order.status
-            order.status = Order.Status.NEW
-            # Calculate priority visibility timestamps relative to approval time
-            set_missing_priority_visibility_times(order=order, base_time=tz.now())
-            order.save(update_fields=[
-                "status", "priority2_visible_at", "priority3_visible_at", "updated_at",
-            ])
-            OrderStatusLog.objects.create(
-                company=order.company,
-                order=order,
-                old_status=old_status,
-                new_status=Order.Status.NEW,
-                changed_by=request.user,
-                note="Admin approved customer request.",
-            )
-            from apps.orders.order_events import dispatch_order_available_events
-            dispatch_order_available_events(order=order)
-            return redirect(f"/{company.code}/admin/orders/{order.id}/")
-        else:
-            error = "این سفارش در وضعیت «در انتظار بررسی» نیست."
-
     # Handle confirm cancel (CANCEL_REQUESTED → CANCELLED)
     if request.method == "POST" and "confirm_cancel" in request.POST:
+        if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_cancel_request_approve")):
+            return permission_denied_response(request, permission_key="admin_cancel_request_approve")
         if order.status == Order.Status.CANCEL_REQUESTED:
             try:
                 OrderCancelService.force_cancel(
@@ -736,30 +721,41 @@ def admin_order_detail(request: HttpRequest, order_id: int, **kwargs) -> HttpRes
 
     # Handle recycle/reopen (cancel old + create replacement NEW)
     if request.method == "POST" and "recycle_order" in request.POST:
-        from apps.orders.recycle_service import OrderRecycleService
-        if order.status in [Order.Status.CANCEL_REQUESTED, Order.Status.CANCELLED]:
-            # Already cancelled — just recycle
-            pass
+        if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_order_return_to_cycle")):
+            return permission_denied_response(request, permission_key="admin_order_return_to_cycle")
+        from apps.orders.recycle_service import OrderReturnToCycleService
         try:
-            new_order = OrderRecycleService.recycle(
-                order=order, recycled_by=request.user,
+            new_order = OrderReturnToCycleService.return_to_cycle(
+                order=order, performed_by=request.user,
             )
             return redirect(f"/{company.code}/admin/orders/{new_order.id}/")
         except ValueError as e:
             error = str(e)
 
+    # Handle unassign technician (WAITING → NEW)
+    if request.method == "POST" and "unassign_technician" in request.POST:
+        if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_order_assign")):
+            return permission_denied_response(request, permission_key="admin_order_assign")
+        from apps.orders.services import OrderUnassignService
+        try:
+            OrderUnassignService.unassign(order=order, unassigned_by=request.user)
+            return redirect(f"/{company.code}/admin/orders/{order.id}/")
+        except ValueError as e:
+            error = str(e)
+
     # Permission flags for template action visibility
-    from apps.accounts.operator_access import is_company_admin as _is_admin, operator_has_permission
-    user = request.user
-    user_is_admin = _is_admin(user)
     can_edit_order = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_order_edit")
     can_assign_order = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_order_assign")
     can_force_cancel = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_cancel_request_approve")
     can_create_invoice = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_create_from_order")
     can_return_to_cycle = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_order_return_to_cycle")
 
-    # Check if active (non-cancelled) invoice already exists for this order
-    has_active_invoice = Invoice.objects.filter(company=company, order=order).exclude(status=Invoice.Status.CANCELLED).exists()
+    # Active = DRAFT or ISSUED only. PAID and CANCELLED are closed and must not
+    # block the "Create Invoice" button (Business Rules 4 and 5).
+    _closed_invoice_statuses = [Invoice.Status.CANCELLED, Invoice.Status.PAID]
+    has_active_invoice = Invoice.objects.filter(
+        company=company, order=order,
+    ).exclude(status__in=_closed_invoice_statuses).exists()
 
     return render(request, "tenants/admin_order_detail.html", {
         "company": company, "order": order, "technicians": technicians, "error": error,
@@ -823,9 +819,19 @@ def admin_invoice_list(request: HttpRequest, **kwargs) -> HttpResponse:
 def admin_invoice_create_from_order(request: HttpRequest, order_id: int, **kwargs) -> HttpResponse:
     """Create a draft invoice from an order and redirect to edit page."""
     company = request.company
+
+    from apps.accounts.operator_access import is_company_admin as _is_admin, operator_has_permission, permission_denied_response
+    user = request.user
+    if not (_is_admin(user) or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_create_from_order")):
+        return permission_denied_response(request, permission_key="admin_invoice_create_from_order")
+
     order = OrderSelector.get_by_id_for_company(order_id=order_id, company=company)
     if not order:
         raise Http404("سفارش یافت نشد.")
+
+    existing = InvoiceDuplicateGuard.get_active_for_order(company=company, order=order)
+    if existing is not None:
+        return redirect(f"/{company.code}/admin/invoices/{existing.id}/edit/")
 
     invoice = InvoiceCreateService.create_from_order(order=order, created_by=request.user)
     return redirect(f"/{company.code}/admin/invoices/{invoice.id}/edit/")
@@ -841,7 +847,13 @@ def admin_invoice_detail(request: HttpRequest, invoice_id: int, **kwargs) -> Htt
 
     error = ""
 
+    from apps.accounts.operator_access import is_company_admin as _is_admin, operator_has_permission, permission_denied_response
+    user = request.user
+    user_is_admin = _is_admin(user)
+
     if request.method == "POST" and "issue_invoice" in request.POST:
+        if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_edit")):
+            return permission_denied_response(request, permission_key="admin_invoice_edit")
         try:
             InvoiceIssueService.issue(invoice=invoice)
             return redirect(f"/{company.code}/admin/invoices/{invoice.id}/")
@@ -849,6 +861,8 @@ def admin_invoice_detail(request: HttpRequest, invoice_id: int, **kwargs) -> Htt
             error = str(e)
 
     if request.method == "POST" and "mark_paid_company_cash" in request.POST:
+        if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_edit")):
+            return permission_denied_response(request, permission_key="admin_invoice_edit")
         try:
             if not invoice.is_payable:
                 raise ValueError("این فاکتور قابل پرداخت نیست. فقط فاکتورهای صادرشده قابل ثبت پرداخت هستند.")
@@ -866,6 +880,8 @@ def admin_invoice_detail(request: HttpRequest, invoice_id: int, **kwargs) -> Htt
             error = str(e)
 
     if request.method == "POST" and "mark_paid_technician_cash" in request.POST:
+        if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_edit")):
+            return permission_denied_response(request, permission_key="admin_invoice_edit")
         try:
             if not invoice.is_payable:
                 raise ValueError("این فاکتور قابل پرداخت نیست. فقط فاکتورهای صادرشده قابل ثبت پرداخت هستند.")
@@ -889,6 +905,8 @@ def admin_invoice_detail(request: HttpRequest, invoice_id: int, **kwargs) -> Htt
             error = str(e)
 
     if request.method == "POST" and "cancel_invoice" in request.POST:
+        if not (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_cancel")):
+            return permission_denied_response(request, permission_key="admin_invoice_cancel")
         reason = request.POST.get("cancel_reason", "")
         try:
             InvoiceCancelService.cancel(invoice=invoice, reason=reason)
@@ -911,6 +929,12 @@ def admin_invoice_detail(request: HttpRequest, invoice_id: int, **kwargs) -> Htt
     from apps.invoices.services_preview import InvoiceFinancialPreviewService
     financial_preview = InvoiceFinancialPreviewService.compute(invoice)
 
+    from apps.invoices.models import InvoiceCancellationRequest
+    pending_cancel_request = InvoiceCancellationRequest.objects.filter(
+        invoice=invoice,
+        status=InvoiceCancellationRequest.Status.PENDING,
+    ).select_related("requested_by").first()
+
     return render(request, "tenants/admin_invoice_detail.html", {
         "company": company, "invoice": invoice, "error": error,
         "public_url": public_url,
@@ -918,6 +942,7 @@ def admin_invoice_detail(request: HttpRequest, invoice_id: int, **kwargs) -> Htt
         "paid_payment": paid_payment,
         "payment_info": payment_info,
         "financial_preview": financial_preview,
+        "pending_cancel_request": pending_cancel_request,
     })
 
 
@@ -968,6 +993,75 @@ def admin_invoice_print(request: HttpRequest, public_code: str, **kwargs) -> Htt
     })
 
 
+@require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
+def admin_invoice_cancel_request_review(
+    request: HttpRequest, invoice_id: int, request_id: int, **kwargs
+) -> HttpResponse:
+    """
+    Admin/operator approves or rejects a technician's invoice cancellation request.
+
+    POST action=approve → InvoiceCancellationRequestService.approve()
+                          → InvoiceCancelService.cancel() called internally
+    POST action=reject  → InvoiceCancellationRequestService.reject()
+                          → invoice status unchanged
+
+    Permission: admin_invoice_cancel (same gate as direct cancel).
+    Always redirects back to the invoice detail page.
+    """
+    from django.contrib import messages as _messages
+    from django.shortcuts import get_object_or_404 as _get_or_404
+    from apps.accounts.operator_access import (
+        is_company_admin as _is_admin,
+        operator_has_permission,
+        permission_denied_response,
+    )
+    from apps.invoices.models import InvoiceCancellationRequest
+    from apps.invoices.services_cancel_request import InvoiceCancellationRequestService
+
+    company = request.company
+    user = request.user
+
+    if not (_is_admin(user) or operator_has_permission(
+        company=company, operator=user, permission_key="admin_invoice_cancel"
+    )):
+        return permission_denied_response(request, permission_key="admin_invoice_cancel")
+
+    if request.method != "POST":
+        return redirect(f"/{company.code}/admin/invoices/{invoice_id}/")
+
+    cancel_request = _get_or_404(
+        InvoiceCancellationRequest,
+        pk=request_id,
+        invoice_id=invoice_id,
+        company=company,
+    )
+
+    action = request.POST.get("action", "")
+    review_note = request.POST.get("review_note", "").strip()
+
+    try:
+        if action == "approve":
+            InvoiceCancellationRequestService.approve(
+                cancel_request=cancel_request,
+                reviewed_by=user,
+                review_note=review_note,
+            )
+            _messages.success(request, "درخواست لغو تأیید شد. فاکتور لغو گردید.")
+        elif action == "reject":
+            InvoiceCancellationRequestService.reject(
+                cancel_request=cancel_request,
+                reviewed_by=user,
+                review_note=review_note,
+            )
+            _messages.success(request, "درخواست لغو رد شد. فاکتور بدون تغییر باقی می‌ماند.")
+        else:
+            _messages.error(request, "عملیات نامعتبر.")
+    except ValueError as e:
+        _messages.error(request, str(e))
+
+    return redirect(f"/{company.code}/admin/invoices/{invoice_id}/")
+
+
 # =============================================================================
 # REQUESTS (existing)
 # =============================================================================
@@ -987,6 +1081,24 @@ def admin_request_list(request: HttpRequest, **kwargs) -> HttpResponse:
 # =============================================================================
 # ORDER EDIT + ASSIGN + CREATE
 # =============================================================================
+
+
+
+
+def _save_custom_field_values(*, order, company, post_data) -> None:
+    """Save OrderCustomFieldValue records from POST data."""
+    from apps.tenants.models import OrderCustomField, OrderCustomFieldValue
+    from apps.tenants.selectors import OrderCustomFieldSelector
+    fields = OrderCustomFieldSelector.get_active_for_company(company=company)
+    for field in fields:
+        key = f"custom_field_{field.id}"
+        if field.field_type == OrderCustomField.FieldType.CHECKBOX:
+            value = "true" if key in post_data else "false"
+        else:
+            value = post_data.get(key, "").strip()
+        OrderCustomFieldValue.objects.update_or_create(
+            order=order, field=field, defaults={"value": value}
+        )
 
 
 def _parse_money_from_post(request: HttpRequest, field_name: str) -> int:
@@ -1104,11 +1216,79 @@ def admin_customer_lookup(request: HttpRequest, **kwargs) -> HttpResponse:
     })
 
 
+
+@require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
+def admin_custom_fields(request: HttpRequest, **kwargs) -> HttpResponse:
+    """Manage custom order fields for this company (CRUD)."""
+    from apps.tenants.models import OrderCustomField, OrderCustomFieldValue
+    from apps.tenants.selectors import OrderCustomFieldSelector
+
+    company = request.company
+    error = ""
+    success = ""
+
+    if request.method == "POST":
+        action = request.POST.get("action", "")
+
+        if action == "add":
+            name = request.POST.get("name", "").strip()
+            field_type = request.POST.get("field_type", OrderCustomField.FieldType.TEXT)
+            select_options = request.POST.get("select_options", "").strip()
+            is_required = request.POST.get("is_required") == "on"
+            order_index = int(request.POST.get("order_index") or 0)
+            if not name:
+                error = "نام فیلد الزامی است."
+            else:
+                OrderCustomField.objects.create(
+                    company=company,
+                    name=name,
+                    field_type=field_type,
+                    select_options=select_options,
+                    is_required=is_required,
+                    order_index=order_index,
+                    is_active=True,
+                )
+                success = f"فیلد «{name}» با موفقیت اضافه شد."
+
+        elif action == "toggle":
+            field_id = request.POST.get("field_id")
+            field = OrderCustomField.objects.filter(id=field_id, company=company).first()
+            if field:
+                field.is_active = not field.is_active
+                field.save(update_fields=["is_active", "updated_at"])
+                status_fa = "فعال" if field.is_active else "غیرفعال"
+                success = f"فیلد «{field.name}» {status_fa} شد."
+
+        elif action == "delete":
+            field_id = request.POST.get("field_id")
+            field = OrderCustomField.objects.filter(id=field_id, company=company).first()
+            if field:
+                has_values = OrderCustomFieldValue.objects.filter(field=field).exists()
+                if has_values:
+                    field.is_active = False
+                    field.save(update_fields=["is_active", "updated_at"])
+                    success = f"فیلد «{field.name}» دارای داده است و غیرفعال شد (حذف نشد)."
+                else:
+                    name = field.name
+                    field.delete()
+                    success = f"فیلد «{name}» حذف شد."
+
+    all_fields = OrderCustomField.objects.filter(company=company).order_by("order_index", "id")
+    return render(request, "tenants/admin_custom_fields.html", {
+        "company": company,
+        "fields": all_fields,
+        "field_types": OrderCustomField.FieldType.choices,
+        "error": error,
+        "success": success,
+    })
+
+
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def admin_order_create(request: HttpRequest, **kwargs) -> HttpResponse:
     """Create a new order from admin panel."""
     import json
     from apps.orders.services import OrderCreateByAdminService
+    from apps.tenants.selectors import OrderCustomFieldSelector
     from apps.orders.item_services import OrderItemService
     from apps.tenants.selectors import CompanyServiceCategorySelector
 
@@ -1180,6 +1360,10 @@ def admin_order_create(request: HttpRequest, **kwargs) -> HttpResponse:
             OrderItemService.save_items_from_post(
                 order=order, post_data=request.POST, company=company,
             )
+            # Save custom field values
+            from apps.tenants.models import OrderCustomField, OrderCustomFieldValue
+            from apps.tenants.selectors import OrderCustomFieldSelector
+            _save_custom_field_values(order=order, company=company, post_data=request.POST)
             return redirect(f"/{company.code}/admin/orders/")
         except ValueError as e:
             error = str(e)
@@ -1271,6 +1455,8 @@ def admin_order_create(request: HttpRequest, **kwargs) -> HttpResponse:
         "prefill_customer_name": prefill_customer_name,
         "prefill_customer_address": prefill_customer_address,
         "error": error, "statuses": Order.Status.choices,
+        "custom_fields": OrderCustomFieldSelector.get_active_for_company(company=company),
+        "custom_field_values": {},
     })
 
 
@@ -1280,7 +1466,7 @@ def admin_order_edit(request: HttpRequest, order_id: int, **kwargs) -> HttpRespo
     import json
     from apps.orders.services import OrderUpdateService
     from apps.orders.item_services import OrderItemService
-    from apps.tenants.selectors import CompanyServiceCategorySelector
+    from apps.tenants.selectors import CompanyServiceCategorySelector, OrderCustomFieldSelector
 
     company = request.company
     order = OrderSelector.get_by_id_for_company(order_id=order_id, company=company)
@@ -1339,6 +1525,7 @@ def admin_order_edit(request: HttpRequest, order_id: int, **kwargs) -> HttpRespo
             OrderItemService.save_items_from_post(
                 order=order, post_data=request.POST, company=company,
             )
+            _save_custom_field_values(order=order, company=company, post_data=request.POST)
             technician_id = int(request.POST.get("technician_id") or 0) or None
             from apps.orders.services import OrderEditAssignService
             OrderEditAssignService.handle_assignment(
@@ -1378,6 +1565,8 @@ def admin_order_edit(request: HttpRequest, order_id: int, **kwargs) -> HttpRespo
         "service_date_jalali": format_jalali_date(order.service_date),
         "statuses": Order.Status.choices,
         "error": error,
+        "custom_fields": OrderCustomFieldSelector.get_active_for_company(company=company),
+        "custom_field_values": {v.field_id: v.value for v in order.custom_field_values.all()},
     })
 
 
@@ -3013,9 +3202,6 @@ def admin_orders(request, **kwargs):
     # Track which column indices are status type for badge rendering in template
     status_col_indices = [i for i, col in enumerate(selected_columns) if col["type"] == "status"]
 
-    # Count pending-review orders for the quick-filter banner
-    pending_review_count = base_qs.filter(status="pending_review").count()
-
     context = {
         "company": company,
         "orders": orders,
@@ -3036,7 +3222,6 @@ def admin_orders(request, **kwargs):
         "can_edit": can_edit,
         "can_create": can_create,
         "can_assign": can_assign,
-        "pending_review_count": pending_review_count,
     }
 
     return render(request, "tenants/admin_orders.html", context)

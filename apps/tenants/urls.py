@@ -60,6 +60,7 @@ urlpatterns = [
     # Admin: Company page and settings
     path("admin/page/", views_admin.admin_page_edit, name="admin_page"),
     path("admin/settings/", views_admin.admin_company_settings, name="admin_company_settings"),
+    path("admin/custom-fields/", views_admin.admin_custom_fields, name="admin_custom_fields"),
     path("admin/settings/notifications/", views_admin.admin_notification_settings, name="admin_notification_settings"),
     path("admin/settings/operators/", views_admin.admin_operator_list, name="admin_operator_list"),
     path("admin/settings/operators/create/", views_admin.admin_operator_create, name="admin_operator_create"),
@@ -133,6 +134,7 @@ urlpatterns = [
     path("admin/invoices/<int:invoice_id>/", views_admin.admin_invoice_detail, name="admin_invoice_detail"),
     path("admin/invoices/<int:invoice_id>/edit/", views_admin.admin_invoice_edit, name="admin_invoice_edit"),
     path("admin/invoices/<str:public_code>/print/", views_admin.admin_invoice_print, name="admin_invoice_print"),
+    path("admin/invoices/<int:invoice_id>/cancel-request/<int:request_id>/review/", views_admin.admin_invoice_cancel_request_review, name="admin_invoice_cancel_request_review"),
 
     # Admin: Branding
     path("admin/branding/", views_branding.admin_branding, name="admin_branding"),

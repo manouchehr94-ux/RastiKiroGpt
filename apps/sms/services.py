@@ -400,7 +400,7 @@ class SMSTimeWindowService:
         except Exception:
             pass
 
-        if template is None or not template.send_start_time or not template.send_end_time:
+        if template is None or not getattr(template, "send_start_time", None) or not getattr(template, "send_end_time", None):
             return None
 
         now = timezone.localtime()

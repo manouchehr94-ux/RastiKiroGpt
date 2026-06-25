@@ -1,0 +1,112 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers fa_labels %}
+{% block title %}درخواست لغو فاکتور — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>درخواست لغو فاکتور</h1>
+    <p class="page-header-subtitle">فاکتور {{ invoice.invoice_number }} — {{ company.name }}</p>
+  </div>
+  <a href="/{{ company.code }}/tech/invoices/{{ invoice.id }}/" class="btn btn-ghost btn-sm">← بازگشت</a>
+</div>
+
+{% if error %}
+<div class="alert alert-error" dir="rtl">{{ error }}</div>
+{% endif %}
+
+{# ── وضعیت فعلی فاکتور ── #}
+<div class="card" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">اطلاعات فاکتور</span>
+    <span class="badge badge-{{ invoice.status|status_css }}">{{ invoice.status|status_fa }}</span>
+  </div>
+  <dl class="detail-list">
+    <div class="detail-row">
+      <dt class="detail-label">شماره فاکتور</dt>
+      <dd class="detail-value detail-value-strong">{{ invoice.invoice_number }}</dd>
+    </div>
+    <div class="detail-row">
+      <dt class="detail-label">مبلغ کل</dt>
+      <dd class="detail-value">{{ invoice.total_amount|smart_number }} ریال</dd>
+    </div>
+    <div class="detail-row">
+      <dt class="detail-label">مشتری</dt>
+      <dd class="detail-value">{{ invoice.display_customer_name|default:"—" }}</dd>
+    </div>
+    <div class="detail-row">
+      <dt class="detail-label">وضعیت</dt>
+      <dd class="detail-value">{{ invoice.status|status_fa }}</dd>
+    </div>
+  </dl>
+</div>
+
+{# ── درخواست در حال بررسی ── #}
+{% if existing_request %}
+<div class="card card-warning-border" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title stat-value-warning">⏳ درخواست لغو در حال بررسی</span>
+    <span class="badge badge-warning">در انتظار</span>
+  </div>
+  <p class="page-header-subtitle">
+    یک درخواست لغو برای این فاکتور ثبت شده و در انتظار بررسی مدیر است.
+    پس از بررسی، نتیجه به شما اطلاع داده می‌شود.
+  </p>
+  {% if existing_request.reason %}
+  <dl class="detail-list">
+    <div class="detail-row">
+      <dt class="detail-label">دلیل ثبت‌شده</dt>
+      <dd class="detail-value">{{ existing_request.reason }}</dd>
+    </div>
+  </dl>
+  {% endif %}
+</div>
+
+{% elif invoice.status == "paid" %}
+<div class="card card-error-border" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title stat-value-error">فاکتور پرداخت‌شده</span>
+  </div>
+  <p class="page-header-subtitle">فاکتورهای پرداخت‌شده قابل درخواست لغو نیستند.</p>
+</div>
+
+{% elif invoice.status == "cancelled" %}
+<div class="card" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">فاکتور لغوشده</span>
+  </div>
+  <p class="page-header-subtitle">این فاکتور قبلاً لغو شده است.</p>
+</div>
+
+{% else %}
+{# ── فرم درخواست ── #}
+<div class="card" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">ثبت درخواست لغو</span>
+  </div>
+  <p class="page-header-subtitle" style="margin-bottom: 1rem;">
+    با ارسال این درخواست، مدیر شرکت اطلاع‌رسانی می‌شود. لغو نهایی پس از تأیید مدیر انجام می‌گیرد.
+  </p>
+  <form method="post" dir="rtl">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label" for="reason">دلیل درخواست لغو <span class="text-muted">(اختیاری)</span></label>
+      <textarea id="reason" name="reason" rows="3" class="form-control"
+                placeholder="توضیح مختصری از دلیل لغو فاکتور..."></textarea>
+    </div>
+    <div class="actions-row" style="margin-top: 1rem;">
+      <button type="submit" class="btn btn-danger"
+              onclick="return confirm('آیا از ارسال درخواست لغو این فاکتور مطمئنید؟')">
+        ثبت درخواست لغو
+      </button>
+      <a href="/{{ company.code }}/tech/invoices/{{ invoice.id }}/" class="btn btn-ghost">انصراف</a>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

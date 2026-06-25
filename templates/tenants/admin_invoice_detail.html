@@ -312,6 +312,51 @@
 </div>
 {% endif %}
 
+{# ── درخواست لغو نیروی خدماتی ── #}
+{% if pending_cancel_request %}
+<div class="card card-warning-border" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title stat-value-warning">⚠ درخواست لغو نیروی خدماتی</span>
+    <span class="badge badge-warning">در انتظار بررسی</span>
+  </div>
+  <dl class="detail-list">
+    <div class="detail-row">
+      <dt class="detail-label">درخواست‌دهنده</dt>
+      <dd class="detail-value">{{ pending_cancel_request.requested_by.get_full_name|default:pending_cancel_request.requested_by.username|default:"—" }}</dd>
+    </div>
+    <div class="detail-row">
+      <dt class="detail-label">تاریخ ثبت</dt>
+      <dd class="detail-value">{{ pending_cancel_request.created_at|date:"Y/m/d H:i" }}</dd>
+    </div>
+    {% if pending_cancel_request.reason %}
+    <div class="detail-row">
+      <dt class="detail-label">دلیل</dt>
+      <dd class="detail-value">{{ pending_cancel_request.reason }}</dd>
+    </div>
+    {% endif %}
+  </dl>
+  <div class="actions-row" style="margin-top: 1rem; padding: 0 1rem 1rem;">
+    <form method="post"
+          action="/{{ company.code }}/admin/invoices/{{ invoice.id }}/cancel-request/{{ pending_cancel_request.id }}/review/"
+          class="actions-row">
+      {% csrf_token %}
+      <input type="text" name="review_note" class="form-control" placeholder="یادداشت بررسی (اختیاری)">
+      <input type="hidden" name="action" value="approve">
+      <button type="submit" class="btn btn-danger"
+              onclick="return confirm('تأیید این درخواست فاکتور را لغو می‌کند. آیا مطمئنید؟')">
+        تأیید و لغو فاکتور
+      </button>
+    </form>
+    <form method="post"
+          action="/{{ company.code }}/admin/invoices/{{ invoice.id }}/cancel-request/{{ pending_cancel_request.id }}/review/">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reject">
+      <button type="submit" class="btn btn-ghost">رد درخواست</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
 {# ── اقدامات ویرایش / لغو ── #}
 <div class="actions-row" dir="rtl">
   {% if invoice.status == "draft" %}

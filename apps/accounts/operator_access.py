@@ -162,6 +162,7 @@ TITLE_MAP = {
     "invoice_detail": "مشاهده جزئیات فاکتور",
     "admin_invoice_cancel": "لغو فاکتور",
     "invoice_cancel": "لغو فاکتور",
+    "admin_invoice_cancel_request_review": "بررسی درخواست لغو فاکتور (نیروی خدماتی)",
     "admin_invoice_create": "ساخت فاکتور",
     "invoice_create": "ساخت فاکتور",
     "admin_invoice_edit": "ویرایش یا تغییر وضعیت فاکتور",
@@ -629,6 +630,12 @@ def get_effective_permission_key_for_request(request) -> str:
                 or "invoice" in posted
             ):
                 return "admin_invoice_edit"
+
+            # URL-name-exact override: some invoice-adjacent URLs carry their own key.
+            if resolved_key and resolved_key != "admin_invoice_edit":
+                known_overrides = {"admin_invoice_create_from_order"}
+                if resolved_key in known_overrides:
+                    return resolved_key
 
             # Any invoice POST is considered a modification unless explicitly mapped otherwise.
             return "admin_invoice_edit"

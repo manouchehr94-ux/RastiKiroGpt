@@ -444,7 +444,14 @@ class OrderUpdateService:
 
         Returns:
             Updated Order instance.
+
+        Raises:
+            ValueError: If order is in a terminal status (DONE or CANCELLED).
         """
+        terminal_statuses = {Order.Status.DONE, Order.Status.CANCELLED}
+        if order.status in terminal_statuses:
+            raise ValueError("سفارش‌های تکمیل‌شده یا لغوشده قابل ویرایش نیستند.")
+
         editable_fields = [
             "title", "description", "address", "service_date", "scheduled_for",
             "customer_name", "customer_phone",
@@ -502,6 +509,11 @@ class OrderUpdateService:
             valid_statuses = {choice[0] for choice in Order.Status.choices}
             if data["status"] not in valid_statuses:
                 raise ValueError("وضعیت سفارش معتبر نیست.")
+            _terminal_write_blocked = {Order.Status.DONE, Order.Status.CANCELLED}
+            if data["status"] in _terminal_write_blocked:
+                raise ValueError(
+                    "تغییر وضعیت به تکمیل‌شده یا لغو از طریق ویرایش مجاز نیست."
+                )
             order.status = data["status"]
             update_fields.append("status")
 
@@ -518,6 +530,12 @@ class OrderUpdateService:
             changed_by=updated_by,
             note="Order details edited by admin.",
         )
+
+        # P0-B: When admin approves a public request (PENDING_REVIEW → NEW),
+        # notify eligible technicians that a new order is available.
+        if old_status == Order.Status.PENDING_REVIEW and order.status == Order.Status.NEW:
+            from .order_events import dispatch_order_available_events
+            dispatch_order_available_events(order=order)
 
         return order
 
@@ -557,21 +575,34 @@ class OrderAssignService:
         if order.company_id != technician.company_id:
             raise ValueError("Technician does not belong to this company.")
 
-        if order.status != Order.Status.NEW:
-            raise ValueError("Only NEW orders can be assigned.")
-
         if not technician.is_available:
             raise ValueError("Technician is not active/available.")
 
-        old_status = order.status
-        order.technician = technician
-        order.status = Order.Status.WAITING
-        order.accepted_at = timezone.now()
-        order.save(update_fields=["technician", "status", "accepted_at", "updated_at"])
+        # Lock the order row to prevent concurrent assignment races.
+        locked = Order.objects.select_for_update().get(pk=order.pk)
+
+        if locked.status not in (Order.Status.NEW, Order.Status.PENDING_REVIEW):
+            raise ValueError("Only NEW or PENDING_REVIEW orders can be assigned.")
+
+        # Idempotency: same technician already assigned — nothing to do.
+        if locked.technician_id == technician.id:
+            return order
+
+        from apps.invoices.models import Invoice as _Invoice
+        if _Invoice.objects.filter(
+            company=locked.company, order=locked
+        ).exclude(status=_Invoice.Status.CANCELLED).exists():
+            raise ValueError("سفارش دارای فاکتور فعال است. تغییر نیروی خدماتی مجاز نیست.")
+
+        old_status = locked.status
+        locked.technician = technician
+        locked.status = Order.Status.WAITING
+        locked.accepted_at = timezone.now()
+        locked.save(update_fields=["technician", "status", "accepted_at", "updated_at"])
 
         OrderStatusLog.objects.create(
-            company=order.company,
-            order=order,
+            company=locked.company,
+            order=locked,
             old_status=old_status,
             new_status=Order.Status.WAITING,
             changed_by=assigned_by,
@@ -579,10 +610,54 @@ class OrderAssignService:
         )
 
         from .assignment_events import dispatch_order_assigned_events
-        dispatch_order_assigned_events(order=order, technician=technician)
+        dispatch_order_assigned_events(order=locked, technician=technician)
+
+        # Sync the caller's object with committed values.
+        order.technician = locked.technician
+        order.status = locked.status
+        order.accepted_at = locked.accepted_at
 
         return order
 
+
+class OrderUnassignService:
+    """
+    Remove technician assignment from a WAITING order, reverting it to NEW.
+
+    Only WAITING orders can be unassigned. Orders with any non-CANCELLED
+    invoice are blocked — cancel the invoice first.
+    """
+
+    @staticmethod
+    @transaction.atomic
+    def unassign(*, order: Order, unassigned_by: CompanyUser) -> Order:
+        if order.status != Order.Status.WAITING:
+            raise ValueError("فقط سفارش‌های در انتظار (WAITING) قابل بازگشت به حالت جدید هستند.")
+
+        from apps.invoices.models import Invoice as _Invoice
+        if _Invoice.objects.filter(
+            company=order.company, order=order
+        ).exclude(status=_Invoice.Status.CANCELLED).exists():
+            raise ValueError("سفارش دارای فاکتور فعال است. ابتدا فاکتور را لغو کنید.")
+
+        order.technician = None
+        order.status = Order.Status.NEW
+        order.accepted_at = None
+        order.save(update_fields=["technician", "status", "accepted_at", "updated_at"])
+
+        OrderStatusLog.objects.create(
+            company=order.company,
+            order=order,
+            old_status=Order.Status.WAITING,
+            new_status=Order.Status.NEW,
+            changed_by=unassigned_by,
+            note="Technician unassigned by admin. Order returned to NEW.",
+        )
+
+        from .order_events import dispatch_order_available_events
+        dispatch_order_available_events(order=order)
+
+        return order
 
 
 class OrderCreateByAdminService:
@@ -690,8 +765,10 @@ class OrderCreateByAdminService:
         if service_category_id:
             from apps.tenants.models import CompanyServiceCategory
             service_category = CompanyServiceCategory.objects.filter(
-                id=service_category_id, company=company
+                id=service_category_id, company=company, is_active=True
             ).first()
+        if not service_category:
+            raise ValueError("دسته‌بندی خدمات الزامی است.")
 
         if service_subcategory_id:
             from apps.tenants.models import CompanyServiceSubCategory
@@ -951,9 +1028,9 @@ class OrderEditAssignService:
     """
 
     ASSIGNABLE_STATUSES = [
+        Order.Status.PENDING_REVIEW,
         Order.Status.NEW,
         Order.Status.WAITING,
-        Order.Status.IN_PROGRESS,
     ]
 
     @staticmethod
@@ -976,46 +1053,62 @@ class OrderEditAssignService:
 
         Returns:
             The order (possibly updated).
+
+        Raises:
+            ValueError: If technician_id is provided but the technician cannot
+                be found, is inactive, or belongs to a different company.
         """
         if not technician_id:
             return order
 
-        # Same technician already assigned → no change needed
-        if order.technician_id == technician_id:
+        # Lock the order row to prevent concurrent assignment races.
+        locked = Order.objects.select_for_update().get(pk=order.pk)
+
+        # Re-check current state from the locked row.
+        if locked.technician_id == technician_id:
             return order
 
-        # Order must be in an assignable status
-        if order.status not in OrderEditAssignService.ASSIGNABLE_STATUSES:
+        if locked.status not in OrderEditAssignService.ASSIGNABLE_STATUSES:
             return order
 
-        # Resolve technician
+        # Resolve technician — raise loudly on invalid/inactive/wrong-company.
         technician = Technician.objects.filter(
             id=technician_id, company=company, is_available=True,
         ).first()
         if not technician:
-            return order
+            raise ValueError("نیروی خدماتی انتخابی معتبر نیست یا در این شرکت فعال نیست.")
 
-        # Perform assignment
-        old_status = order.status
-        order.technician = technician
-        if not order.accepted_at:
-            order.accepted_at = timezone.now()
-        if order.status == Order.Status.NEW:
-            order.status = Order.Status.WAITING
-        order.save(update_fields=["technician", "accepted_at", "status", "updated_at"])
+        from apps.invoices.models import Invoice as _Invoice
+        if _Invoice.objects.filter(
+            company=locked.company, order=locked
+        ).exclude(status=_Invoice.Status.CANCELLED).exists():
+            raise ValueError("سفارش دارای فاکتور فعال است. تغییر نیروی خدماتی مجاز نیست.")
 
-        # Log only if status changed or technician changed
+        # Perform assignment on the locked instance.
+        old_status = locked.status
+        locked.technician = technician
+        if not locked.accepted_at:
+            locked.accepted_at = timezone.now()
+        if locked.status in (Order.Status.NEW, Order.Status.PENDING_REVIEW):
+            locked.status = Order.Status.WAITING
+        locked.save(update_fields=["technician", "accepted_at", "status", "updated_at"])
+
         OrderStatusLog.objects.create(
-            company=order.company,
-            order=order,
+            company=locked.company,
+            order=locked,
             old_status=old_status,
-            new_status=order.status,
+            new_status=locked.status,
             changed_by=assigned_by,
             note=f"Assigned to {technician.user.get_full_name()} from edit page.",
         )
 
         from .assignment_events import dispatch_order_assigned_events
-        dispatch_order_assigned_events(order=order, technician=technician)
+        dispatch_order_assigned_events(order=locked, technician=technician)
+
+        # Sync the caller's object with the committed values.
+        order.technician = locked.technician
+        order.accepted_at = locked.accepted_at
+        order.status = locked.status
 
         return order
 
@@ -1099,19 +1192,17 @@ class TechnicianStatusUpdateService:
                 )
                 return order  # Return the now-cancelled original
 
+        # Delegate DONE to OrderCompleteService — single source of truth for
+        # order completion: invoice placeholder, final_price, notifications, log.
+        if new_status == Order.Status.DONE:
+            return OrderCompleteService.complete(
+                order=order,
+                completed_by=updated_by,
+            )
+
         old_status = order.status
         order.status = new_status
-
-        update_fields = ["status", "updated_at"]
-
-        # DONE sets completed_at
-        if new_status == Order.Status.DONE:
-            order.completed_at = timezone.now()
-            if order.final_price == 0:
-                order.final_price = order.price_estimate
-            update_fields.extend(["completed_at", "final_price"])
-
-        order.save(update_fields=update_fields)
+        order.save(update_fields=["status", "updated_at"])
 
         # Create status log
         status_note = f"Status updated by technician: {technician.user.get_full_name()}"
@@ -1134,13 +1225,6 @@ class TechnicianStatusUpdateService:
 
         if new_status == Order.Status.IN_PROGRESS:
             _emit_order_notification_event("order_started", order, updated_by)
-
-        if new_status == Order.Status.DONE:
-            _emit_order_notification_event("order_completed_customer", order, updated_by)
-            _emit_order_notification_event(
-                "survey_request_customer", order, updated_by,
-                dedup_extra="survey",
-            )
 
         return order
 

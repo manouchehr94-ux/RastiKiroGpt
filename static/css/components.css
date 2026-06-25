@@ -868,9 +868,8 @@ textarea.form-control {
 
 
 /* =============================================================================
-   CHECKBOX & RADIO — BASE RESET
-   Normalizes appearance across browsers. Visual styling comes from
-   the browser's native checkbox but at consistent size.
+   CHECKBOX & RADIO — MODERN CUSTOM CONTROLS
+   Brand-colored, fully custom. RTL-safe.
    ============================================================================= */
 
 .form-check {
@@ -881,15 +880,17 @@ textarea.form-control {
   cursor: pointer;
 }
 
+/* Native accent-color approach — simple, accessible, brand-aware */
 .form-check-input {
-  width: 1rem;
-  height: 1rem;
+  width: 1.05rem;
+  height: 1.05rem;
   border: var(--border-width) solid var(--color-slate-300);
   border-radius: var(--radius-sm);
   background-color: var(--color-surface-0);
   cursor: pointer;
   flex-shrink: 0;
   accent-color: var(--color-brand-600);
+  transition: var(--transition-colors);
 }
 
 .form-check-input[type="radio"] {
@@ -901,6 +902,105 @@ textarea.form-control {
   color: var(--color-slate-700);
   cursor: pointer;
   user-select: none;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .form-check-label {
+  color: var(--color-text-muted);
+}
+
+
+/* =============================================================================
+   TOGGLE SWITCH (modern pill switch)
+   Usage:
+     <label class="form-toggle">
+       <input type="checkbox" class="form-toggle-input">
+       <span class="form-toggle-track">
+         <span class="form-toggle-thumb"></span>
+       </span>
+       <span class="form-toggle-label">فعال</span>
+     </label>
+   ============================================================================= */
+
+.form-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  cursor: pointer;
+  user-select: none;
+}
+
+.form-toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.form-toggle-track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-slate-300);
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.form-toggle-thumb {
+  position: absolute;
+  right: 3px;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: var(--radius-full);
+  background-color: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: right 0.2s ease, transform 0.1s ease;
+}
+
+/* Checked state */
+.form-toggle-input:checked + .form-toggle-track {
+  background-color: var(--color-brand-600);
+}
+
+.form-toggle-input:checked + .form-toggle-track .form-toggle-thumb {
+  right: calc(100% - 1.125rem - 3px);
+}
+
+/* Focus */
+.form-toggle-input:focus-visible + .form-toggle-track {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* Disabled */
+.form-toggle-input:disabled + .form-toggle-track {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-toggle:has(.form-toggle-input:disabled) {
+  cursor: not-allowed;
+}
+
+.form-toggle-label {
+  font-size: var(--font-size-base);
+  color: var(--color-slate-700);
+}
+
+[data-theme="dark"] .form-toggle-track {
+  background-color: var(--color-slate-600);
+}
+
+[data-theme="dark"] .form-toggle-label {
+  color: var(--color-text-muted);
 }
 
 
@@ -1062,3 +1162,240 @@ textarea.form-control {
 
 .modal-sm { max-width: 22rem; }
 .modal-lg { max-width: 48rem; }
+
+
+/* =============================================================================
+   DARK MODE — COMPONENT OVERRIDES
+   All tokens cascade automatically from tokens.css; these handle edge cases
+   where components reference color values not covered by token overrides.
+   ============================================================================= */
+
+/* Form controls */
+[data-theme="dark"] .form-control {
+  background-color: var(--color-surface-2);
+  border-color: var(--border-color);
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .form-control:focus {
+  border-color: var(--color-brand-500);
+  background-color: var(--color-surface-2);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] .form-control:disabled {
+  background-color: var(--color-surface-3);
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] select.form-control {
+  background-color: var(--color-surface-2);
+}
+
+/* Labels */
+[data-theme="dark"] .form-label {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .form-hint {
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] .form-section-title {
+  color: var(--color-text-strong);
+  border-bottom-color: var(--color-brand-600);
+}
+
+/* Cards */
+[data-theme="dark"] .card {
+  background-color: var(--color-surface-0);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .card-footer {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .card-header-title {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .stat-card {
+  background-color: var(--color-surface-0);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .stat-card-value {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .stat-card-label {
+  color: var(--color-text-muted);
+}
+
+/* Tables */
+[data-theme="dark"] .table-wrapper {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .data-table thead th {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-faint);
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .data-table tbody td {
+  border-bottom-color: var(--border-color);
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .data-table tbody tr:hover td {
+  background-color: var(--color-surface-2);
+}
+
+/* Badges */
+[data-theme="dark"] .badge-neutral {
+  background-color: var(--color-surface-3);
+  color: var(--color-text-muted);
+}
+
+/* Page header */
+[data-theme="dark"] .page-header-title {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .page-header-subtitle {
+  color: var(--color-text-muted);
+}
+
+/* Section header */
+[data-theme="dark"] .section-header-title {
+  color: var(--color-text-muted);
+}
+
+/* Breadcrumb */
+[data-theme="dark"] .breadcrumb-item a {
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--color-text-muted);
+}
+
+/* Pagination */
+[data-theme="dark"] .pagination-item {
+  background-color: var(--color-surface-0);
+  border-color: var(--border-color);
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .pagination-item:hover {
+  background-color: var(--color-surface-2);
+  border-color: var(--border-color-strong);
+}
+
+/* Modals */
+[data-theme="dark"] .modal {
+  background-color: var(--color-surface-0);
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-title {
+  color: var(--color-text-strong);
+}
+
+/* Table toolbar */
+[data-theme="dark"] .table-toolbar {
+  background-color: var(--color-surface-0);
+  border-bottom-color: var(--border-color);
+}
+
+/* Skeleton */
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 25%,
+    var(--color-surface-3) 50%,
+    var(--color-surface-2) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* Tabs */
+[data-theme="dark"] .tabs {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .tab-item {
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] .tab-item:hover {
+  color: var(--color-text-muted);
+  border-bottom-color: var(--border-color-strong);
+}
+
+[data-theme="dark"] .tab-item.active {
+  color: var(--color-brand-400);
+  border-bottom-color: var(--color-brand-500);
+}
+
+/* Empty state */
+[data-theme="dark"] .empty-state-icon {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] .empty-state-title {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .empty-state-description {
+  color: var(--color-text-faint);
+}
+
+/* Btn outline in dark mode */
+[data-theme="dark"] .btn-outline {
+  color: var(--color-text-muted);
+  border-color: var(--border-color-strong);
+}
+
+[data-theme="dark"] .btn-outline:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .btn-ghost {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-strong);
+}
+
+/* Headings in dark mode */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] p {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] hr {
+  border-top-color: var(--border-color);
+}

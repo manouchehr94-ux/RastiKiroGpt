@@ -83,9 +83,7 @@ class ServiceRequestSelector:
     @staticmethod
     def get_for_company(*, company) -> QuerySet[ServiceRequest]:
         """Get all service requests for a company (admin view)."""
-        return ServiceRequest.objects.filter(company=company).select_related(
-            "order", "order__service_category",
-        )
+        return ServiceRequest.objects.filter(company=company)
 
     @staticmethod
     def get_by_id_for_company(*, request_id: int, company) -> Optional[ServiceRequest]:
@@ -159,3 +157,12 @@ def get_company_settings(company: Company) -> CompanySettings:
     """
     settings, _ = CompanySettings.objects.get_or_create(company=company)
     return settings
+
+
+class OrderCustomFieldSelector:
+    @staticmethod
+    def get_active_for_company(*, company):
+        from apps.tenants.models import OrderCustomField
+        return OrderCustomField.objects.filter(
+            company=company, is_active=True
+        ).order_by("order_index", "id")

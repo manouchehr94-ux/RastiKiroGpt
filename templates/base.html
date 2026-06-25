@@ -6,7 +6,16 @@
     <title>{% block title %}رستی سرویس{% endblock %}</title>
     {% load static %}
     {# Central UI theme — single entrypoint for all visual styling (P24) #}
-    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    {# FOUC prevention — apply saved theme before CSS loads to avoid flash #}
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('rasti-theme') || 'light';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=green-dark-v1">
     {# RASTI_UI_HOTFIX_20260607: global Jalali datepicker styles #}
     <link rel="stylesheet" href="{% static 'css/jalali_datepicker.css' %}">
         <link rel="stylesheet" href="{% static 'css/tech_bottom_nav_fix.css' %}">
@@ -15,6 +24,8 @@
     <script src="{% static 'js/jalali_datepicker.js' %}" defer></script>
     <script src="{% static 'js/phase_c2_datetime_local_v2.js' %}?v=phase-c2-v2" defer></script>
     <script src="{% static 'js/rasti_ui_formatters.js' %}" defer></script>
+    {# Alpine.js — lightweight interactivity (no build step) #}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
     {% block body %}

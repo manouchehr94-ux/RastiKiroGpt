@@ -92,6 +92,37 @@ class CompanyDashboardSelector:
         """Get recent orders for the company."""
         return Order.objects.filter(company=company).order_by("-created_at")[:limit]
 
+    @staticmethod
+    def get_chart_data(*, company) -> dict:
+        """Get data for dashboard charts: last 7 days orders + status distribution."""
+        import json
+        from datetime import timedelta
+        today = timezone.now().date()
+
+        # Last 7 days — orders per day
+        days = []
+        counts = []
+        for i in range(6, -1, -1):
+            day = today - timedelta(days=i)
+            count = Order.objects.filter(company=company, created_at__date=day).count()
+            days.append(str(day.day))  # just day number for RTL display
+            counts.append(count)
+
+        # Status distribution for donut chart
+        orders_qs = Order.objects.filter(company=company)
+        waiting = orders_qs.filter(status=Order.Status.WAITING).count()
+        in_progress = orders_qs.filter(status=Order.Status.IN_PROGRESS).count()
+        done = orders_qs.filter(status=Order.Status.DONE).count()
+        new_orders = orders_qs.filter(status=Order.Status.NEW).count()
+        cancelled = orders_qs.filter(status=Order.Status.CANCELLED).count()
+
+        return {
+            "line_labels": json.dumps(days),
+            "line_data": json.dumps(counts),
+            "donut_data": json.dumps([new_orders, waiting, in_progress, done, cancelled]),
+            "donut_labels": json.dumps(["جدید", "در انتظار", "در حال انجام", "انجام شده", "لغو شده"]),
+        }
+
 
 class TechnicianDashboardSelector:
     """

@@ -128,7 +128,7 @@
 }
 
 .sidebar-nav-item.active {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(22, 163, 74, 0.12);
   color: var(--color-brand-400);
   border-left: 3px solid var(--color-brand-500);
 }
@@ -682,4 +682,141 @@
     pointer-events: none !important;
     visibility: hidden !important;
   }
+}
+
+
+/* =============================================================================
+   DARK MODE — LAYOUT OVERRIDES
+   ============================================================================= */
+
+[data-theme="dark"] .dashboard-shell {
+  background-color: var(--color-surface-1);
+}
+
+[data-theme="dark"] .topbar {
+  background-color: var(--color-surface-0);
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .topbar-title {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .topbar-subtitle {
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] .topbar-toggle {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .topbar-toggle:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .dashboard-footer {
+  border-top-color: var(--border-color);
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] .dashboard-content {
+  background-color: var(--color-surface-1);
+}
+
+/* Error page dark */
+[data-theme="dark"] .error-card {
+  background-color: var(--color-surface-0);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .error-title {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .error-description {
+  color: var(--color-text-muted);
+}
+
+/* Public pages dark */
+[data-theme="dark"] .public-nav {
+  background-color: rgba(15, 23, 42, 0.95);
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .public-nav-brand-name {
+  color: var(--color-text-strong);
+}
+
+[data-theme="dark"] .public-nav-link {
+  color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .public-nav-link:hover {
+  color: var(--color-text-strong);
+  background-color: var(--color-surface-2);
+}
+
+/* Dark mode toggle button — defined here for topbar use */
+.dark-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-slate-500);
+  transition: var(--transition-base);
+  flex-shrink: 0;
+}
+
+.dark-mode-toggle:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-slate-700);
+}
+
+[data-theme="dark"] .dark-mode-toggle {
+  color: var(--color-slate-400);
+}
+
+[data-theme="dark"] .dark-mode-toggle:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-brand-400);
+}
+
+/* Topbar collapse toggle for desktop */
+.topbar-collapse-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--color-slate-500);
+  cursor: pointer;
+  transition: var(--transition-base);
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .topbar-collapse-toggle {
+    display: inline-flex;
+  }
+}
+
+.topbar-collapse-toggle:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-slate-700);
+}
+
+[data-theme="dark"] .topbar-collapse-toggle {
+  color: var(--color-text-faint);
+}
+
+[data-theme="dark"] .topbar-collapse-toggle:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-strong);
 }

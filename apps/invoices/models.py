@@ -329,6 +329,66 @@ class InvoiceItem(CompanyOwnedModel):
         super().save(*args, **kwargs)
 
 
+class InvoiceCancellationRequest(CompanyOwnedModel):
+    """
+    Technician-initiated request to cancel a DRAFT or ISSUED invoice.
+
+    State machine:
+        PENDING → APPROVED (admin approves → InvoiceCancelService.cancel() called)
+        PENDING → REJECTED (admin rejects → invoice unchanged)
+
+    Only one PENDING request may exist per invoice at a time (DB partial unique index).
+    PAID invoices cannot be approved for cancellation.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "در انتظار بررسی"
+        APPROVED = "approved", "تأیید شده"
+        REJECTED = "rejected", "رد شده"
+
+    invoice = models.ForeignKey(
+        Invoice,
+        on_delete=models.CASCADE,
+        related_name="cancellation_requests",
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="invoice_cancellation_requests",
+    )
+    reason = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_invoice_cancellation_requests",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["invoice"],
+                condition=models.Q(status="pending"),
+                name="unique_pending_cancel_request_per_invoice",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        inv_num = getattr(self.invoice, "invoice_number", self.invoice_id)
+        return f"CancelRequest #{self.id} for Invoice #{inv_num} [{self.status}]"
+
+
 def generate_invoice_number(company) -> str:
     """
     Generate a unique invoice number for a company.

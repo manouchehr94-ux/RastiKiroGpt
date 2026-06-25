@@ -1,4 +1,4 @@
-﻿{% extends "layouts/dashboard.html" %}
+{% extends "layouts/dashboard.html" %}
 {% load fa_labels jalali_tags %}
 
 {% block title %}داشبورد - {{ company.name }}{% endblock %}
@@ -12,124 +12,318 @@
 
 {% block navbar_actions %}
 <a href="/{{ company.code }}/admin/orders/create/" class="btn btn-primary btn-sm">
-  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
   </svg>
   سفارش جدید
 </a>
 {% endblock %}
 
 {% block content %}
-<div class="admin-compact">
+<div class="db-shell">
 
-  {# ردیف اول آمار #}
-  <div class="stat-grid stat-grid-4">
-    {% include "includes/components/stat_card.html" with value=stats.today_orders label="سفارش امروز" icon="orders" color="blue" %}
-    {% include "includes/components/stat_card.html" with value=stats.new_orders label="جدید" icon="clock" color="amber" %}
-    {% include "includes/components/stat_card.html" with value=stats.in_progress_orders label="در حال انجام" icon="orders" color="purple" %}
-    {% include "includes/components/stat_card.html" with value=stats.done_orders label="تکمیل شده" icon="check" color="green" %}
+  {# ── خوشامدگویی ── #}
+  <div class="db-welcome">
+    <div>
+      <h2 class="db-welcome-name">سلام، {{ request.user.get_full_name|default:request.user.username }} 👋</h2>
+      <p class="db-welcome-sub">امروز — وضعیت کلی شرکت در یک نگاه</p>
+    </div>
+    <a href="/{{ company.code }}/admin/orders/create/" class="db-cta">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+      </svg>
+      ثبت سفارش جدید
+    </a>
   </div>
 
-  {# ردیف دوم آمار #}
-  <div class="stat-grid stat-grid-4">
-    {% include "includes/components/stat_card.html" with value=stats.unpaid_invoices label="فاکتور پرداخت نشده" icon="invoice" color="red" %}
-    {% include "includes/components/stat_card.html" with value=stats.paid_invoices label="فاکتور پرداخت شده" icon="money" color="green" %}
-    {% include "includes/components/stat_card.html" with value=stats.total_revenue|default:"0" label="درآمد کل (ریال)" icon="money" color="indigo" %}
-    {% include "includes/components/stat_card.html" with value=stats.active_technicians label="تکنسین فعال" icon="technician" color="blue" %}
+  {# ── KPI ۴ کارت ── #}
+  <div class="db-kpi-row">
+    <div class="db-kpi-card db-kpi-primary">
+      <div class="db-kpi-top">
+        <span class="db-kpi-label">سفارش امروز</span>
+        <span class="db-kpi-icon db-kpi-icon--brand">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </span>
+      </div>
+      <div class="db-kpi-value">{{ stats.today_orders|default:"0" }}</div>
+      <a href="/{{ company.code }}/admin/orders/" class="db-kpi-link">همه سفارش‌ها ←</a>
+    </div>
+    <div class="db-kpi-card">
+      <div class="db-kpi-top">
+        <span class="db-kpi-label">در انتظار</span>
+        <span class="db-kpi-icon db-kpi-icon--amber">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </span>
+      </div>
+      <div class="db-kpi-value">{{ stats.new_orders|default:"0" }}</div>
+      <a href="/{{ company.code }}/admin/orders/?status=new" class="db-kpi-link">فیلتر جدید ←</a>
+    </div>
+    <div class="db-kpi-card">
+      <div class="db-kpi-top">
+        <span class="db-kpi-label">در حال انجام</span>
+        <span class="db-kpi-icon db-kpi-icon--purple">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </span>
+      </div>
+      <div class="db-kpi-value">{{ stats.in_progress_orders|default:"0" }}</div>
+      <a href="/{{ company.code }}/admin/orders/?status=in_progress" class="db-kpi-link">فیلتر فعال ←</a>
+    </div>
+    <div class="db-kpi-card db-kpi-success">
+      <div class="db-kpi-top">
+        <span class="db-kpi-label">تکمیل شده</span>
+        <span class="db-kpi-icon db-kpi-icon--green">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </span>
+      </div>
+      <div class="db-kpi-value">{{ stats.done_orders|default:"0" }}</div>
+      <a href="/{{ company.code }}/admin/orders/?status=done" class="db-kpi-link">مشاهده ←</a>
+    </div>
   </div>
 
-  {# دسترسی سریع #}
-  <div class="quick-actions-grid">
+  {# ── نمودارها ── #}
+  <div class="db-charts-row">
 
-    <a href="/{{ company.code }}/admin/orders/create/" class="quick-action-card">
-      <div class="quick-action-icon">
-        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
+    {# نمودار خطی — ۷ روز اخیر #}
+    <div class="db-chart-card db-chart-line-wrap">
+      <div class="db-chart-header">
+        <div>
+          <h3 class="db-chart-title">سفارش‌های ۷ روز اخیر</h3>
+          <p class="db-chart-sub">روند ثبت سفارش روزانه</p>
+        </div>
       </div>
-      <div class="quick-action-title">سفارش جدید</div>
-    </a>
-
-    <a href="/{{ company.code }}/admin/customers/" class="quick-action-card">
-      <div class="quick-action-icon" style="background:var(--color-success-bg);color:var(--color-success);">
-        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-      </div>
-      <div class="quick-action-title">مشتریان</div>
-    </a>
-
-    <a href="/{{ company.code }}/admin/invoices/" class="quick-action-card">
-      <div class="quick-action-icon" style="background:var(--color-warning-bg);color:var(--color-warning);">
-        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
-        </svg>
-      </div>
-      <div class="quick-action-title">فاکتورها</div>
-    </a>
-
-    <a href="/{{ company.code }}/admin/reports/" class="quick-action-card">
-      <div class="quick-action-icon" style="background:var(--color-purple-bg);color:var(--color-purple);">
-        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-        </svg>
-      </div>
-      <div class="quick-action-title">گزارش‌ها</div>
-    </a>
-
-    <a href="/{{ company.code }}/admin/payments/operations/" class="quick-action-card">
-      <div class="quick-action-icon" style="background:var(--color-slate-100);color:var(--color-slate-600);">
-        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-        </svg>
-      </div>
-      <div class="quick-action-title">عملیات پرداخت</div>
-    </a>
-
-  </div>
-
-  {# جدول سفارش‌های اخیر #}
-  <div class="card card-flush">
-    <div class="card-header">
-      <span class="card-header-title">سفارش‌های اخیر</span>
-      <a href="/{{ company.code }}/admin/orders/" class="section-header-action">مشاهده همه</a>
+      <div id="chart-line" style="min-height:200px;"></div>
     </div>
 
+    {# نمودار دایره‌ای — توزیع وضعیت #}
+    <div class="db-chart-card db-chart-donut-wrap">
+      <div class="db-chart-header">
+        <div>
+          <h3 class="db-chart-title">توزیع وضعیت سفارش‌ها</h3>
+          <p class="db-chart-sub">نسبت هر وضعیت</p>
+        </div>
+      </div>
+      <div id="chart-donut" style="min-height:200px;"></div>
+    </div>
+
+  </div>
+
+  {# ── سطر مالی + تیم + دسترسی سریع ── #}
+  <div class="db-mid-row">
+
+    <div class="db-revenue-card">
+      <div class="db-revenue-header">
+        <span class="db-section-label">مالی</span>
+      </div>
+      <div class="db-revenue-main">
+        <span class="db-revenue-amount">{{ stats.total_revenue|default:"0" }}</span>
+        <span class="db-revenue-unit">ریال</span>
+      </div>
+      <p class="db-revenue-caption">درآمد کل</p>
+      <div class="db-revenue-pills">
+        <div class="db-pill db-pill--green">
+          <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          {{ stats.paid_invoices|default:"0" }} پرداخت شده
+        </div>
+        <div class="db-pill db-pill--red">
+          <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          {{ stats.unpaid_invoices|default:"0" }} پرداخت نشده
+        </div>
+      </div>
+      <a href="/{{ company.code }}/admin/invoices/" class="db-revenue-action">مدیریت فاکتورها ←</a>
+    </div>
+
+    <div class="db-team-card">
+      <div class="db-team-header">
+        <span class="db-section-label">تیم</span>
+        <a href="/{{ company.code }}/admin/technicians/" class="db-team-link">مدیریت ←</a>
+      </div>
+      <div class="db-team-stat">
+        <div class="db-team-avatar-stack">
+          <div class="db-team-avatar db-team-avatar--1">ت</div>
+          <div class="db-team-avatar db-team-avatar--2">ن</div>
+          <div class="db-team-avatar db-team-avatar--3">+</div>
+        </div>
+        <div class="db-team-info">
+          <span class="db-team-count">{{ stats.active_technicians|default:"0" }}</span>
+          <span class="db-team-label">نیروی فعال</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="db-shortcuts">
+      <div class="db-section-label" style="margin-bottom:var(--space-3);">دسترسی سریع</div>
+      <div class="db-shortcut-list">
+        <a href="/{{ company.code }}/admin/orders/create/" class="db-shortcut"><span class="db-shortcut-dot db-shortcut-dot--brand"></span>ثبت سفارش</a>
+        <a href="/{{ company.code }}/admin/customers/" class="db-shortcut"><span class="db-shortcut-dot db-shortcut-dot--blue"></span>مشتریان</a>
+        <a href="/{{ company.code }}/admin/invoices/" class="db-shortcut"><span class="db-shortcut-dot db-shortcut-dot--amber"></span>فاکتورها</a>
+        <a href="/{{ company.code }}/admin/reports/" class="db-shortcut"><span class="db-shortcut-dot db-shortcut-dot--purple"></span>گزارش‌ها</a>
+        <a href="/{{ company.code }}/admin/payments/operations/" class="db-shortcut"><span class="db-shortcut-dot db-shortcut-dot--slate"></span>عملیات پرداخت</a>
+        <a href="/{{ company.code }}/admin/requests/" class="db-shortcut"><span class="db-shortcut-dot db-shortcut-dot--red"></span>درخواست‌ها</a>
+      </div>
+    </div>
+
+  </div>
+
+  {# ── جدول سفارش‌های اخیر ── #}
+  <div class="db-table-card">
+    <div class="db-table-header">
+      <div>
+        <h3 class="db-table-title">آخرین سفارش‌ها</h3>
+        <p class="db-table-sub">جدیدترین فعالیت‌های ثبت‌شده</p>
+      </div>
+      <a href="/{{ company.code }}/admin/orders/" class="db-table-action">مشاهده همه</a>
+    </div>
     {% if recent_orders %}
-    <div class="table-wrapper" style="border:none;border-radius:0;">
-      <table class="data-table">
+    <div class="db-table-wrap">
+      <table class="db-table">
         <thead>
-          <tr>
-            <th>#</th>
-            <th>عنوان</th>
-            <th>وضعیت</th>
-            <th>تاریخ</th>
-          </tr>
+          <tr><th>#</th><th>عنوان سفارش</th><th>وضعیت</th><th>تاریخ</th></tr>
         </thead>
         <tbody>
           {% for order in recent_orders %}
           <tr>
-            <td>
-              <a href="/{{ company.code }}/admin/orders/{{ order.id }}/" class="section-header-action">#{{ order.id }}</a>
-            </td>
-            <td>{{ order.title }}</td>
+            <td><a href="/{{ company.code }}/admin/orders/{{ order.id }}/" class="db-order-id">#{{ order.id }}</a></td>
+            <td class="db-order-title">{{ order.title }}</td>
             <td><span class="{{ order.status|status_badge_classes }}">{{ order.status|status_fa }}</span></td>
-            <td class="ltr-cell">{{ order.created_at|jalali_date }}</td>
+            <td class="db-order-date ltr-cell">{{ order.created_at|jalali_date }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
     {% else %}
-    {% include "includes/components/empty_state.html" with title="سفارشی ثبت نشده" description="اولین سفارش خود را ایجاد کنید." icon="orders" action_label="ایجاد سفارش" %}
+    <div class="db-empty">
+      <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--color-text-faint);margin-bottom:var(--space-3);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <p>هنوز سفارشی ثبت نشده</p>
+      <a href="/{{ company.code }}/admin/orders/create/" class="btn btn-primary btn-sm" style="margin-top:var(--space-3);">ثبت اولین سفارش</a>
+    </div>
     {% endif %}
   </div>
 
 </div>
+
+{# ApexCharts #}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js"></script>
+<script>
+(function() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  var textColor = isDark ? '#94a3b8' : '#64748b';
+  var gridColor = isDark ? '#1e293b' : '#f1f5f9';
+  var surfaceColor = isDark ? '#1e293b' : '#ffffff';
+  var brandColor = '#16a34a';
+
+  // داده‌های واقعی از backend
+  var lineLabels = {{ chart_data.line_labels|safe }};
+  var lineData = {{ chart_data.line_data|safe }};
+  var donutData = {{ chart_data.donut_data|safe }};
+  var donutLabels = {{ chart_data.donut_labels|safe }};
+
+  // نمودار خطی
+  var lineOptions = {
+    series: [{ name: 'سفارش', data: lineData }],
+    chart: {
+      type: 'area',
+      height: 200,
+      background: 'transparent',
+      toolbar: { show: false },
+      sparkline: { enabled: false },
+      fontFamily: 'Vazirmatn, sans-serif',
+    },
+    theme: { mode: isDark ? 'dark' : 'light' },
+    colors: [brandColor],
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.3,
+        opacityTo: 0.02,
+        stops: [0, 90, 100]
+      }
+    },
+    stroke: { curve: 'smooth', width: 2.5 },
+    dataLabels: { enabled: false },
+    xaxis: {
+      categories: lineLabels,
+      labels: { style: { colors: textColor, fontSize: '11px' } },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+    },
+    yaxis: {
+      labels: {
+        style: { colors: textColor, fontSize: '11px' },
+        formatter: function(v) { return Math.round(v); }
+      },
+      min: 0,
+    },
+    grid: {
+      borderColor: gridColor,
+      strokeDashArray: 4,
+      xaxis: { lines: { show: false } },
+    },
+    tooltip: {
+      theme: isDark ? 'dark' : 'light',
+      rtl: true,
+      y: { formatter: function(v) { return v + ' سفارش'; } }
+    },
+    markers: { size: 0, hover: { size: 5 } },
+  };
+  new ApexCharts(document.getElementById('chart-line'), lineOptions).render();
+
+  // نمودار دایره‌ای
+  var donutOptions = {
+    series: donutData,
+    labels: donutLabels,
+    chart: {
+      type: 'donut',
+      height: 200,
+      background: 'transparent',
+      fontFamily: 'Vazirmatn, sans-serif',
+    },
+    theme: { mode: isDark ? 'dark' : 'light' },
+    colors: ['#22c55e', '#f59e0b', '#7c3aed', '#16a34a', '#ef4444'],
+    stroke: { width: 0 },
+    dataLabels: { enabled: false },
+    legend: {
+      position: 'bottom',
+      fontSize: '11px',
+      fontFamily: 'Vazirmatn, sans-serif',
+      labels: { colors: textColor },
+      markers: { width: 8, height: 8, radius: 4 },
+      itemMargin: { horizontal: 6 },
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '65%',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'کل',
+              color: textColor,
+              fontSize: '12px',
+              fontFamily: 'Vazirmatn, sans-serif',
+            }
+          }
+        }
+      }
+    },
+    tooltip: {
+      theme: isDark ? 'dark' : 'light',
+      y: { formatter: function(v) { return v + ' سفارش'; } }
+    },
+  };
+  new ApexCharts(document.getElementById('chart-donut'), donutOptions).render();
+
+  // اگر تم عوض شد، نمودارها را دوباره بارگذاری کن
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.attributeName === 'data-theme') {
+        setTimeout(function() { window.location.reload(); }, 300);
+      }
+    });
+  });
+  observer.observe(document.documentElement, { attributes: true });
+})();
+</script>
 {% endblock %}
-
-
-
-
-
-

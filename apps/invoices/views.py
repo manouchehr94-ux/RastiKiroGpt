@@ -57,13 +57,23 @@ def invoice_detail(request: HttpRequest, invoice_id: int, **kwargs) -> HttpRespo
         customer = getattr(user, "customer_profile", None)
         if not customer or invoice.customer_id != customer.id:
             return HttpResponseForbidden("Access denied.")
+        # DRAFT invoices are internal working documents — not visible to customers.
+        if invoice.status == Invoice.Status.DRAFT:
+            raise Http404("Invoice not found.")
 
     from apps.invoices.services_wage import calculate_technician_wage
+    from apps.payments.selectors import PaymentSelector
+
+    paid_payment = PaymentSelector.get_latest_paid_for_invoice(
+        company=company, invoice_id=invoice.id
+    )
+    payment_info = PaymentSelector.build_display_info(paid_payment)
 
     return render(request, "invoices/detail.html", {
         "invoice": invoice,
         "company": company,
         "wage_data": calculate_technician_wage(invoice),
+        "payment_info": payment_info,
     })
 
 
@@ -75,7 +85,7 @@ def public_invoice_detail(request: HttpRequest, public_code: str, **kwargs) -> H
     )
     if invoice is None:
         raise Http404("Invoice not found.")
-    if invoice.status == Invoice.Status.CANCELLED:
+    if invoice.status in (Invoice.Status.CANCELLED, Invoice.Status.DRAFT):
         raise Http404("Invoice not found.")
     return render(request, "invoices/public_detail.html", {
         "invoice": invoice,
@@ -105,8 +115,8 @@ def invoice_print(request: HttpRequest, public_code: str, **kwargs) -> HttpRespo
     if invoice is None:
         raise Http404("Invoice not found.")
 
-    # Block CANCELLED invoices only (consistent with public_invoice_detail)
-    if invoice.status == Invoice.Status.CANCELLED:
+    # Block DRAFT and CANCELLED — matches public_invoice_detail access rules.
+    if invoice.status in (Invoice.Status.DRAFT, Invoice.Status.CANCELLED):
         raise Http404("Invoice not found.")
 
     return render(request, "invoices/print.html", {

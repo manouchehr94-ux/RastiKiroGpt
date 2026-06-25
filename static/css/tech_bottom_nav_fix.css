@@ -43,8 +43,8 @@ body.rasti-tech-page {
 
 .rasti-tech-bottom-nav a:hover,
 .rasti-tech-bottom-nav a.is-active {
-  color: #2563eb !important;
-  background: #eff6ff !important;
+  color: var(--color-brand-600) !important;
+  background: var(--color-brand-50) !important;
 }
 
 .rasti-tech-bottom-nav .rasti-tech-nav-icon {

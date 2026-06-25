@@ -42,35 +42,40 @@ class InvoiceDuplicateGuard:
     """
     Prevents duplicate invoices for the same order.
 
-    An "active" invoice is any invoice for the same company and order
-    where status is NOT cancelled.
+    An "active" invoice is one that is still open: DRAFT or ISSUED.
+    PAID and CANCELLED invoices are closed — they do not block a new invoice.
+    This allows an order to accumulate multiple invoices over time while
+    ensuring only one open invoice exists at any moment.
     """
+
+    # Statuses that are considered closed and do not block new invoice creation.
+    _CLOSED_STATUSES = [Invoice.Status.CANCELLED, Invoice.Status.PAID]
 
     @staticmethod
     def get_active_for_order(*, company, order) -> Optional[Invoice]:
         """
-        Return the existing active (non-cancelled) invoice for an order,
-        or None if no active invoice exists.
+        Return the existing open (DRAFT or ISSUED) invoice for an order,
+        or None if no open invoice exists.
         """
         if order is None:
             return None
         return (
             Invoice.objects
             .filter(company=company, order=order)
-            .exclude(status=Invoice.Status.CANCELLED)
+            .exclude(status__in=InvoiceDuplicateGuard._CLOSED_STATUSES)
             .order_by("-created_at")
             .first()
         )
 
     @staticmethod
     def has_active_for_order(*, company, order) -> bool:
-        """Check if an active invoice already exists for the order."""
+        """Check if an open (DRAFT or ISSUED) invoice already exists for the order."""
         if order is None:
             return False
         return (
             Invoice.objects
             .filter(company=company, order=order)
-            .exclude(status=Invoice.Status.CANCELLED)
+            .exclude(status__in=InvoiceDuplicateGuard._CLOSED_STATUSES)
             .exists()
         )
 
@@ -128,8 +133,24 @@ class InvoiceCreateService:
     def create_from_order(*, order, created_by=None) -> Invoice:
         """
         Create a draft invoice from an order.
-        The order is operational; prices are entered on the invoice afterwards.
+
+        Acquires a row-level lock on the Order before creating to prevent two
+        concurrent requests from both passing InvoiceDuplicateGuard and creating
+        duplicate active invoices. If an active invoice already exists under the
+        lock (race condition), it is returned instead of creating a duplicate.
         """
+        from apps.orders.models import Order as _Order
+        # Lock the order row so concurrent create_from_order calls are serialized.
+        _Order.objects.select_for_update().get(pk=order.pk)
+
+        # Re-check under the lock — a concurrent request may have committed an
+        # active invoice between the caller's pre-check and this point.
+        existing = InvoiceDuplicateGuard.get_active_for_order(
+            company=order.company, order=order
+        )
+        if existing is not None:
+            return existing
+
         snapshots = build_invoice_snapshot_from_order(order)
         invoice = InvoiceCreateService.create(
             company=order.company,
@@ -147,15 +168,24 @@ class InvoiceCreateService:
         """
         Return existing active invoice for the order, or create a new DRAFT.
 
+        Acquires a row-level lock on the Order before the check so that the
+        check and create are atomic with respect to concurrent callers, ensuring
+        the created boolean is accurate even under concurrent access.
+
         Returns:
             (invoice, created) — created is True if a new invoice was made.
         """
+        from apps.orders.models import Order as _Order
+        # Lock order row before checking to serialise concurrent get-or-create calls.
+        _Order.objects.select_for_update().get(pk=order.pk)
+
         existing = InvoiceDuplicateGuard.get_active_for_order(
             company=order.company, order=order
         )
         if existing is not None:
             return existing, False
 
+        # create_from_order re-acquires the same lock (idempotent in same tx).
         invoice = InvoiceCreateService.create_from_order(
             order=order, created_by=created_by
         )
@@ -245,6 +275,9 @@ class InvoiceIssueService:
         invoice.status = Invoice.Status.ISSUED
         invoice.issued_at = timezone.now()
         invoice.save(update_fields=["status", "issued_at", "updated_at"])
+        # Customer notification is dispatched by apps/notifications/signals.py
+        # emit_invoice_status_events (post_save on Invoice) — no view-layer call
+        # needed. The signal covers every path: admin, technician, and system.
         return invoice
 
 

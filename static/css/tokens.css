@@ -4,22 +4,57 @@
    Referenced by base.css, components.css, layouts.css, pages.css, responsive.css.
    ============================================================================= */
 
+/*
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  ⚡ QUICK CUSTOMIZATION GUIDE                                            │
+  │  این فایل هسته مرکزی طراحی سایت است.                                   │
+  │  برای تغییر ظاهر کل سایت، فقط این فایل را ویرایش کنید.                 │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  🎨 تغییر رنگ برند:                                                      │
+  │     بلوک --color-brand-50 تا --color-brand-900 را عوض کنید (۱۰ خط)     │
+  │     رنگ فعلی: سبز (Green / Emerald)                                     │
+  │     رنگ‌های جایگزین:                                                     │
+  │       آبی   → #eff6ff … #1e3a8a (Tailwind Blue)                        │
+  │       بنفش  → #faf5ff … #3b0764 (Tailwind Purple)                      │
+  │       ایندیگو → #eef2ff … #1e1b4b (Tailwind Indigo)                    │
+  │                                                                         │
+  │  🔠 تغییر فونت:                                                          │
+  │     --font-family-base را در این فایل تغییر دهید.                       │
+  │     @font-face را هم در base.css به‌روز کنید.                           │
+  │                                                                         │
+  │  📐 تغییر گردی کنج‌ها (radius):                                          │
+  │     --radius-sm/md/lg/xl را بزرگتر کنید برای گردتر                      │
+  │     یا کوچکتر کنید برای ظاهر تیزتر / corporate                         │
+  │                                                                         │
+  │  🌙 حالت Dark Mode:                                                      │
+  │     متغیرها در بلوک [data-theme="dark"] در انتهای همین فایل تنظیم شده.  │
+  │     رنگ surface‌ها و text را در آن بلوک تغییر دهید.                     │
+  │                                                                         │
+  │  📏 تغییر فاصله‌گذاری (spacing):                                         │
+  │     --space-* را تنظیم کنید. پایه: 14px (html { font-size: 14px })     │
+  │                                                                         │
+  │  💡 بعد از هر تغییر: در مرورگر Ctrl+Shift+R بزنید (hard refresh)        │
+  │     یا ?v= در base.html را عدد جدیدی کنید تا cache پاک شود.            │
+  └─────────────────────────────────────────────────────────────────────────┘
+*/
+
 :root {
 
   /* ---------------------------------------------------------------------------
      Brand Palette
-     Primary blue used throughout the product.
+     Primary green — professional trust palette for B2B SaaS.
   --------------------------------------------------------------------------- */
-  --color-brand-50 : #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-300: #93c5fd;
-  --color-brand-400: #60a5fa;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
-  --color-brand-900: #1e3a8a;
+  --color-brand-50 : #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-300: #86efac;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+  --color-brand-900: #14532d;
 
   /* ---------------------------------------------------------------------------
      Neutral / Gray Palette
@@ -87,7 +122,7 @@
   --color-indigo    : #4338ca;
 
   /* Focus ring shadows — used by form-control:focus states */
-  --color-focus-ring       : rgba(59, 130, 246, 0.12);
+  --color-focus-ring       : rgba(22, 163, 74, 0.15);
   --color-danger-focus-ring: rgba(220, 38, 38, 0.12);
   --color-success-focus-ring: rgba(22, 163, 74, 0.12);
 
@@ -177,7 +212,7 @@
   --shadow-2xl : 0 25px 50px rgba(0, 0, 0, 0.15);
   --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
 
-  --shadow-brand: 0 4px 14px rgba(37, 99, 235, 0.25);
+  --shadow-brand: 0 4px 14px rgba(22, 163, 74, 0.25);
 
   /* ---------------------------------------------------------------------------
      Layout Dimensions
@@ -258,5 +293,56 @@
      They are mapped here so nothing breaks. Do not use in new code. */
   --primary-color       : var(--color-primary);
   --bg-color            : var(--color-bg);
+
+}
+
+/* =============================================================================
+   DARK MODE OVERRIDES
+   Applied when <html data-theme="dark"> is set.
+   All component styles automatically inherit these via CSS custom properties.
+   ============================================================================= */
+
+[data-theme="dark"] {
+
+  /* --- Surfaces --- */
+  --color-surface-0  : #1e293b;   /* cards, modals — slate-800 */
+  --color-surface-1  : #0f172a;   /* page background — slate-900 */
+  --color-surface-2  : #1e293b;   /* nested sections */
+  --color-surface-3  : #334155;   /* borders, dividers — slate-700 */
+
+  /* --- Text hierarchy --- */
+  --color-text        : #cbd5e1;  /* slate-300 */
+  --color-text-strong : #f1f5f9;  /* slate-100 */
+  --color-text-muted  : #94a3b8;  /* slate-400 */
+  --color-text-faint  : #64748b;  /* slate-500 */
+
+  /* --- Borders --- */
+  --border-color       : #334155; /* slate-700 */
+  --border-color-strong: #475569; /* slate-600 */
+
+  /* --- Surface semantic aliases --- */
+  --color-bg          : #0f172a;
+  --color-surface     : #1e293b;
+  --color-surface-soft: #1a2840;
+
+  /* --- Body text override (maps gray-800 body color to dark-friendly) --- */
+  --color-gray-800    : #e2e8f0;
+  --color-gray-700    : #cbd5e1;
+
+  /* --- Semantic light backgrounds adjust for dark context --- */
+  --color-success-light : rgba(22, 163, 74, 0.12);
+  --color-warning-light : rgba(217, 119, 6, 0.12);
+  --color-danger-light  : rgba(220, 38, 38, 0.12);
+  --color-info-light    : rgba(22, 163, 74, 0.10);
+
+  /* --- Focus ring stronger in dark mode --- */
+  --color-focus-ring: rgba(74, 222, 128, 0.20);
+
+  /* --- Shadows — lighter on dark backgrounds --- */
+  --shadow-xs  : 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-sm  : 0 1px 3px rgba(0, 0, 0, 0.40), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md  : 0 4px 6px rgba(0, 0, 0, 0.30), 0 2px 4px rgba(0, 0, 0, 0.22);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.40);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.40);
 
 }

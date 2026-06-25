@@ -107,6 +107,43 @@
 
     <div class="form-group"><label class="form-label">یادداشت داخلی</label><textarea name="internal_note" class="form-control" rows="2" placeholder="فقط برای مدیر/کارمند"></textarea></div>
 
+
+    {% if custom_fields %}
+    <div class="card" style="margin-top:var(--space-4);">
+      <div class="card-header"><h3 class="card-title">اطلاعات تکمیلی</h3></div>
+      <div class="card-body">
+        {% for field in custom_fields %}
+        <div class="form-group" style="margin-bottom:var(--space-4);">
+          <label class="form-label">
+            {{ field.name }}
+            {% if field.is_required %}<span style="color:var(--color-error);">*</span>{% endif %}
+          </label>
+          {% if field.field_type == "text" %}
+            <input type="text" name="custom_field_{{ field.id }}" class="form-input"
+              {% if field.is_required %}required{% endif %}>
+          {% elif field.field_type == "number" %}
+            <input type="number" name="custom_field_{{ field.id }}" class="form-input"
+              {% if field.is_required %}required{% endif %}>
+          {% elif field.field_type == "checkbox" %}
+            <label style="display:flex;align-items:center;gap:var(--space-2);cursor:pointer;">
+              <input type="checkbox" name="custom_field_{{ field.id }}" style="width:1rem;height:1rem;">
+              <span>بله</span>
+            </label>
+          {% elif field.field_type == "select" %}
+            <select name="custom_field_{{ field.id }}" class="form-input"
+              {% if field.is_required %}required{% endif %}>
+              <option value="">-- انتخاب کنید --</option>
+              {% for opt in field.get_select_options_list %}
+              <option value="{{ opt }}">{{ opt }}</option>
+              {% endfor %}
+            </select>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <div class="form-actions">
       <a href="/{{ company.code }}/admin/orders/" class="btn btn-outline">انصراف</a>
       <button type="submit" class="btn btn-primary">ذخیره و خروج</button>

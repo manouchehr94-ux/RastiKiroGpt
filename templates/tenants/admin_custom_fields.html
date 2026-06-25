@@ -1,0 +1,131 @@
+{% extends "layouts/dashboard.html" %}
+{% block title %}فیلدهای سفارشی - {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+
+<div class="page-header" style="margin-bottom:var(--space-6);">
+  <h1 class="page-title">فیلدهای سفارشی</h1>
+  <p class="page-subtitle">فیلدهای اضافی مخصوص شرکت شما که در فرم ثبت و ویرایش سفارش نمایش داده می‌شوند.</p>
+</div>
+
+{% if error %}
+<div class="alert alert-danger" style="margin-bottom:var(--space-4);">{{ error }}</div>
+{% endif %}
+{% if success %}
+<div class="alert alert-success" style="margin-bottom:var(--space-4);">{{ success }}</div>
+{% endif %}
+
+{# فرم افزودن فیلد جدید #}
+<div class="card" style="margin-bottom:var(--space-6);">
+  <div class="card-header"><h2 class="card-title">افزودن فیلد جدید</h2></div>
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+      <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-4);">
+        <div class="form-group">
+          <label class="form-label">نام فیلد <span style="color:var(--color-error);">*</span></label>
+          <input type="text" name="name" class="form-input" placeholder="مثال: وضعیت گارانتی" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">نوع فیلد</label>
+          <select name="field_type" class="form-input" id="field-type-select">
+            {% for value, label in field_types %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ترتیب نمایش</label>
+          <input type="number" name="order_index" class="form-input" value="0" min="0">
+        </div>
+      </div>
+      <div class="form-group" id="select-options-group" style="display:none;margin-bottom:var(--space-4);">
+        <label class="form-label">گزینه‌های لیست انتخابی</label>
+        <input type="text" name="select_options" class="form-input" placeholder="گزینه۱، گزینه۲، گزینه۳">
+        <small class="form-hint">گزینه‌ها را با کاما (,) یا ویرگول (،) یا خط جدید از هم جدا کنید.</small>
+      </div>
+      <div class="form-group" style="margin-bottom:var(--space-4);">
+        <label style="display:flex;align-items:center;gap:var(--space-2);cursor:pointer;">
+          <input type="checkbox" name="is_required" style="width:1rem;height:1rem;">
+          <span class="form-label" style="margin:0;">فیلد اجباری باشد</span>
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary">افزودن فیلد</button>
+    </form>
+  </div>
+</div>
+
+{# لیست فیلدهای موجود #}
+<div class="card">
+  <div class="card-header"><h2 class="card-title">فیلدهای تعریف‌شده</h2></div>
+  <div class="card-body" style="padding:0;">
+    {% if fields %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ترتیب</th>
+          <th>نام فیلد</th>
+          <th>نوع</th>
+          <th>گزینه‌ها</th>
+          <th>اجباری</th>
+          <th>وضعیت</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for field in fields %}
+        <tr {% if not field.is_active %}style="opacity:0.5;"{% endif %}>
+          <td>{{ field.order_index }}</td>
+          <td><strong>{{ field.name }}</strong></td>
+          <td>{{ field.get_field_type_display }}</td>
+          <td>{% if field.select_options %}{{ field.select_options }}{% else %}—{% endif %}</td>
+          <td>{% if field.is_required %}<span class="badge badge-warning">اجباری</span>{% else %}اختیاری{% endif %}</td>
+          <td>
+            {% if field.is_active %}
+            <span class="badge badge-success">فعال</span>
+            {% else %}
+            <span class="badge badge-secondary">غیرفعال</span>
+            {% endif %}
+          </td>
+          <td style="display:flex;gap:var(--space-2);">
+            <form method="post" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="toggle">
+              <input type="hidden" name="field_id" value="{{ field.id }}">
+              <button type="submit" class="btn btn-outline btn-sm">
+                {% if field.is_active %}غیرفعال{% else %}فعال{% endif %}
+              </button>
+            </form>
+            <form method="post" style="display:inline;" onsubmit="return confirm('آیا مطمئن هستید؟');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="field_id" value="{{ field.id }}">
+              <button type="submit" class="btn btn-danger btn-sm">حذف</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:var(--space-8);text-align:center;color:var(--color-text-muted);">
+      هنوز فیلد سفارشی تعریف نشده است.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+</div>
+
+<script>
+document.getElementById('field-type-select').addEventListener('change', function() {
+  document.getElementById('select-options-group').style.display =
+    this.value === 'select' ? 'block' : 'none';
+});
+</script>
+{% endblock %}

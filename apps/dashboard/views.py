@@ -23,11 +23,13 @@ def dashboard_home(request: HttpRequest, **kwargs) -> HttpResponse:
     company = request.company
     stats = CompanyDashboardSelector.get_stats(company=company)
     recent_orders = CompanyDashboardSelector.get_recent_orders(company=company)
+    chart_data = CompanyDashboardSelector.get_chart_data(company=company)
 
     return render(request, "dashboard/home.html", {
         "company": company,
         "stats": stats,
         "recent_orders": recent_orders,
+        "chart_data": chart_data,
     })
 
 
@@ -49,6 +51,7 @@ def technician_home(request: HttpRequest, **kwargs) -> HttpResponse:
         "company": company,
         "stats": stats,
         "recent_orders": recent_orders,
+        "chart_data": chart_data,
     })
 
 
@@ -68,4 +71,5 @@ def customer_home(request: HttpRequest, **kwargs) -> HttpResponse:
         "company": company,
         "stats": stats,
         "recent_orders": recent_orders,
+        "chart_data": chart_data,
     })

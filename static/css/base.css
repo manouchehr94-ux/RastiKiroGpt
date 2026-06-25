@@ -68,7 +68,11 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
+  color-scheme: light dark;
 }
+
+[data-theme="light"] { color-scheme: light; }
+[data-theme="dark"]  { color-scheme: dark; }
 
 body {
   font-family: var(--font-family-base);
@@ -276,6 +280,19 @@ table {
 ::selection {
   background-color: var(--color-brand-100);
   color: var(--color-brand-900);
+}
+
+[data-theme="dark"] ::selection {
+  background-color: var(--color-brand-800);
+  color: var(--color-brand-100);
+}
+
+/* Dark mode scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--color-slate-600);
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-slate-500);
 }
 
 /* ---------------------------------------------------------------------------

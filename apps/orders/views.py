@@ -20,7 +20,6 @@ from .forms import OrderCreateForm
 from .models import Order
 from .selectors import OrderSelector
 from .services import (
-    OrderAcceptService,
     OrderCancelService,
     OrderCompleteService,
     OrderCreateService,
@@ -168,20 +167,13 @@ def order_accept(request: HttpRequest, order_id: int, **kwargs) -> HttpResponse:
             return HttpResponseForbidden("Technician profile not found.")
 
         try:
-            # Use new category-based accept if order has service_category
-            if order.service_category_id is not None:
-                TechnicianAcceptService.accept(
-                    order=order,
-                    technician=technician,
-                    accepted_by=request.user,
-                )
-            else:
-                # Fallback to legacy skill-based accept
-                OrderAcceptService.accept(
-                    order=order,
-                    technician=technician,
-                    accepted_by=request.user,
-                )
+            if order.service_category_id is None:
+                raise ValueError("این سفارش دسته‌بندی خدمات ندارد و قابل پذیرش نیست.")
+            TechnicianAcceptService.accept(
+                order=order,
+                technician=technician,
+                accepted_by=request.user,
+            )
             return redirect(f"/{company.code}/tech/orders/{order.id}/")
         except ValueError as e:
             return render(request, "orders/detail.html", {
@@ -414,79 +406,14 @@ def technician_status_update(request: HttpRequest, order_id: int, **kwargs) -> H
 @require_tenant_role("TECHNICIAN")
 def technician_invoice_create(request: HttpRequest, order_id: int, **kwargs) -> HttpResponse:
     """
-    Create a draft invoice from one of the logged-in technician's assigned orders.
+    Redirect to the canonical technician invoice creation form.
 
-    If an active (non-cancelled) invoice already exists for this order,
-    redirect to it instead of creating a duplicate.
-
-    This is the quick-create action from the order detail page. It creates a
-    DRAFT invoice and redirects to the technician invoice detail page.
-    Access is limited to the assigned technician only.
+    Previously this view created a DRAFT invoice directly (Path C), leaving it
+    un-issued and invisible to the customer via the public link, with no
+    notification. All technician invoice creation now goes through the full form
+    at apps/invoices/views_technician.py (Path D), which issues immediately when
+    total_amount > 0 and fires the customer notification.
     """
     company = request.company
-    technician = getattr(request.user, "technician_profile", None)
-    if technician is None:
-        return HttpResponseForbidden("Technician profile not found.")
-
-    order = OrderSelector.get_by_id_for_company(order_id=order_id, company=company)
-    if order is None:
-        raise Http404("سفارش یافت نشد.")
-
-    if order.technician_id != technician.id:
-        return HttpResponseForbidden("شما اجازه صدور فاکتور برای این سفارش را ندارید.")
-
-    if request.method != "POST":
-        return redirect(f"/{company.code}/tech/orders/my/")
-
-    from apps.invoices.services import InvoiceCreateService, InvoiceItemBulkService, InvoiceDuplicateGuard
-    from apps.orders.item_services import OrderItemService
-
-    # Duplicate guard: reuse existing active invoice instead of creating another
-    existing = InvoiceDuplicateGuard.get_active_for_order(company=company, order=order)
-    if existing is not None:
-        return redirect(f"/{company.code}/tech/invoices/{existing.id}/")
-
-    invoice = InvoiceCreateService.create_from_order(order=order, created_by=request.user)
-
-    # Best-effort: create initial invoice rows from the order's dynamic item values.
-    # Money items become invoice rows with amount. Non-money items are shown with zero price
-    # so the technician/customer can still see what was ordered.
-    invoice_items = []
-    for entry in OrderItemService.get_values_display(order=order):
-        definition = entry.get("definition")
-        value = entry.get("value")
-        if not definition:
-            continue
-
-        description = str(getattr(definition, "title", "")).strip()
-        if not description:
-            continue
-
-        unit_price = 0
-        quantity = 1
-        try:
-            kind = getattr(definition, "kind", "")
-            if kind == "money" and value not in (None, ""):
-                unit_price = int(float(value))
-            elif kind == "number" and value not in (None, ""):
-                quantity = max(1, int(float(value)))
-            elif kind == "bool":
-                description = f"{description}: {'بله' if value else 'خیر'}"
-            elif value not in (None, ""):
-                description = f"{description}: {value}"
-        except Exception:
-            pass
-
-        invoice_items.append({
-            "description": description,
-            "quantity": quantity,
-            "unit_price": unit_price,
-            "discount_amount": 0,
-        })
-
-    if invoice_items:
-        InvoiceItemBulkService.replace_items(invoice=invoice, items=invoice_items)
-        invoice.recalculate_totals(save=True)
-
-    return redirect(f"/{company.code}/tech/invoices/{invoice.id}/")
+    return redirect(f"/{company.code}/tech/invoices/order/{order_id}/create/")
 
