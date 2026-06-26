@@ -16,10 +16,15 @@ class OrderCreatedNoDuplicateSMSTest(TestCase):
     """Verify that order creation queues exactly one SMS event."""
 
     def setUp(self):
-        from apps.tenants.models import Company
+        from apps.tenants.models import Company, CompanyServiceCategory
 
         self.company = Company.objects.create(
             name="NoDup Co", code="nodup", slug="nodup", is_active=True
+        )
+        self.category = CompanyServiceCategory.objects.create(
+            company=self.company,
+            title="General",
+            is_active=True,
         )
 
     @patch("apps.notifications.services_events.NotificationEventService.emit")
@@ -40,6 +45,7 @@ class OrderCreatedNoDuplicateSMSTest(TestCase):
             customer_name="Test Customer",
             customer_phone="09171234567",
             description="Test order for SMS dedup test",
+            service_category_id=self.category.id,
         )
 
         self.assertIsNotNone(sr)
@@ -106,6 +112,7 @@ class OrderCreatedNoDuplicateSMSTest(TestCase):
             customer_name="Direct SMS Test",
             customer_phone="09179876543",
             description="Testing no direct outbox creation",
+            service_category_id=self.category.id,
         )
 
         # No new SMSOutbox records should be created directly
@@ -130,6 +137,7 @@ class OrderCreatedNoDuplicateSMSTest(TestCase):
             customer_name="Dedup Test",
             customer_phone="09170000001",
             description="Dedup test",
+            service_category_id=self.category.id,
         )
 
         # The emit call from dispatch_order_available_events uses dedup_key

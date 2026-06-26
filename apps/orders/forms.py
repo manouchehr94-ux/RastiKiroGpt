@@ -59,3 +59,7 @@ class OrderCreateForm(forms.Form):
         widget=forms.HiddenInput(),
         required=True,
     )
+    service_category_id = forms.IntegerField(
+        widget=forms.HiddenInput(),
+        required=True,
+    )

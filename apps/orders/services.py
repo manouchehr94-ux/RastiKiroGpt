@@ -123,96 +123,26 @@ class OrderCreateService:
 
 class OrderAcceptService:
     """
-    Service for technician accepting an order.
+    Backward-compatible wrapper around TechnicianAcceptService.
 
-    Rules:
-    - Technician must belong to the same company
-    - Technician must be active/available
-    - Technician must have matching skill (if required)
-    - Technician active order count must be below limit
-    - Order must be in NEW status
-    - Accepting locks the order from other technicians
+    apps/api/views.py imports this class — it must be retained.
+    All business logic lives in TechnicianAcceptService.
+    Transitions: NEW → WAITING (not IN_PROGRESS).
     """
 
     @staticmethod
-    @transaction.atomic
     def accept(
         *,
         order: Order,
         technician: Technician,
         accepted_by: CompanyUser,
     ) -> Order:
-        """
-        Technician accepts an order.
-
-        Transitions: NEW → IN_PROGRESS
-        Assigns technician and creates audit log.
-
-        Args:
-            order: The order to accept.
-            technician: The technician accepting.
-            accepted_by: The user performing the action.
-
-        Returns:
-            Updated Order instance.
-
-        Raises:
-            ValueError: If business rules are violated.
-        """
-        # Rule: same company
-        if order.company_id != technician.company_id:
-            raise ValueError("Technician does not belong to this company.")
-
-        # Rule: order must be NEW
-        if order.status != Order.Status.NEW:
-            raise ValueError("Order is not available for acceptance.")
-
-        # Re-fetch with lock to prevent race conditions
-        locked_order = Order.objects.select_for_update().get(pk=order.pk)
-        if locked_order.status != Order.Status.NEW:
-            raise ValueError("Order is not available for acceptance.")
-
-        # Use the locked instance for updates
-        order = locked_order
-
-        # Rule: technician must be available
-        if not technician.is_available:
-            raise ValueError("Technician is not available.")
-
-        # Rule: workload limit
-        active_count = OrderSelector.get_active_order_count(technician=technician)
-        if active_count >= TECHNICIAN_MAX_ACTIVE_ORDERS:
-            raise ValueError("Technician has reached maximum active orders.")
-
-        # Rule: skill matching (if required_skill is set)
-        if order.required_skill:
-            from apps.accounts.models import TechnicianSkill
-            has_skill = TechnicianSkill.objects.filter(
-                technician=technician,
-                name=order.required_skill,
-            ).exists()
-            if not has_skill:
-                raise ValueError("Technician does not have the required skill.")
-
-        # Perform the transition
-        old_status = order.status
-        order.technician = technician
-        order.status = Order.Status.IN_PROGRESS
-        order.save(update_fields=["technician", "status", "updated_at"])
-
-        # Create audit log
-        OrderStatusLog.objects.create(
-            company=order.company,
+        """Delegates to TechnicianAcceptService.accept(). Transitions: NEW → WAITING."""
+        return TechnicianAcceptService.accept(
             order=order,
-            old_status=old_status,
-            new_status=Order.Status.IN_PROGRESS,
-            changed_by=accepted_by,
-            note=f"Accepted by technician: {technician.user.get_full_name()}",
+            technician=technician,
+            accepted_by=accepted_by,
         )
-
-        _emit_order_notification_event("order_accepted_customer", order, accepted_by)
-
-        return order
 
 
 class OrderCompleteService:
@@ -324,7 +254,7 @@ class OrderCancelService:
         """
         Request order cancellation.
 
-        Transitions: NEW/IN_PROGRESS → CANCEL_REQUESTED
+        Transitions: NEW/WAITING/IN_PROGRESS → CANCEL_REQUESTED
 
         Args:
             order: The order to cancel.
@@ -337,7 +267,7 @@ class OrderCancelService:
         Raises:
             ValueError: If order cannot be cancelled.
         """
-        allowed_statuses = [Order.Status.NEW, Order.Status.IN_PROGRESS]
+        allowed_statuses = [Order.Status.NEW, Order.Status.WAITING, Order.Status.IN_PROGRESS]
         if order.status not in allowed_statuses:
             raise ValueError("Order cannot be cancelled in its current status.")
 

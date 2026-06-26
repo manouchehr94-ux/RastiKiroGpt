@@ -22,7 +22,7 @@ from .selectors import OrderSelector
 from .services import (
     OrderCancelService,
     OrderCompleteService,
-    OrderCreateService,
+    OrderCreateByAdminService,
     TechnicianAcceptService,
 )
 
@@ -120,8 +120,9 @@ def order_create(request: HttpRequest, **kwargs) -> HttpResponse:
                 error = "Customer not found."
             else:
                 try:
-                    order = OrderCreateService.create(
+                    order = OrderCreateByAdminService.create(
                         company=company,
+                        created_by=request.user,
                         customer=customer,
                         title=form.cleaned_data["title"],
                         description=form.cleaned_data.get("description", ""),
@@ -129,7 +130,7 @@ def order_create(request: HttpRequest, **kwargs) -> HttpResponse:
                         priority=form.cleaned_data["priority"],
                         price_estimate=form.cleaned_data.get("price_estimate") or 0,
                         required_skill=form.cleaned_data.get("required_skill", ""),
-                        created_by=request.user,
+                        service_category_id=form.cleaned_data["service_category_id"],
                     )
                     return redirect(f"/{company.code}/admin/orders/{order.id}/")
                 except ValueError as e:
