@@ -29,6 +29,9 @@ staticfiles/
 .DS_Store
 Thumbs.db
 
+# Claude Code
+.claude/
+
 # Test / cache
 .pytest_cache/
 .coverage
