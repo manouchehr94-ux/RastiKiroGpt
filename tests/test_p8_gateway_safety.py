@@ -117,6 +117,23 @@ class GatewayTestMixin:
         gateway.save(update_fields=["is_active", "is_default"])
         return gateway
 
+    def create_active_payment_settings(self, company):
+        """
+        Create CompanyPaymentSettings with all three conditions satisfied.
+
+        Required for tests that need to reach guards AFTER the mode guard
+        (e.g. inactive-gateway check, KYC check). TASK-004 added the mode guard
+        first; test setups that were written before TASK-004 must call this helper
+        to opt the company in to online payment so the intended guard fires.
+        """
+        from apps.tenants.models import CompanyPaymentSettings
+        ps, _ = CompanyPaymentSettings.objects.get_or_create(company=company)
+        ps.payment_mode = CompanyPaymentSettings.PaymentMode.COMPANY_GATEWAY
+        ps.gateway_activation_status = CompanyPaymentSettings.ActivationStatus.ACTIVE
+        ps.is_online_payment_enabled = True
+        ps.save(update_fields=["payment_mode", "gateway_activation_status", "is_online_payment_enabled"])
+        return ps
+
     def create_pending_payment(self, company, invoice, gateway, reference_id="SUCCESS-test123"):
         """Create a Payment in PENDING state simulating post-initiation."""
         return Payment.objects.create(
@@ -227,7 +244,7 @@ class AmountTamperingTest(TestCase, GatewayTestMixin):
         self.assertFalse(success)
         self.assertIn("mismatch", msg.lower())
         payment.refresh_from_db()
-        self.assertEqual(payment.status, Payment.Status.FAILED)
+        self.assertEqual(payment.status, Payment.Status.NEEDS_RECONCILIATION)
         self.invoice.refresh_from_db()
         self.assertEqual(self.invoice.status, Invoice.Status.ISSUED)
 
@@ -319,6 +336,12 @@ class DuplicateCallbackTest(TestCase, GatewayTestMixin):
         """Duplicate callback does not create duplicate platform fee entries."""
         from apps.payments.services import PaymentCallbackService
 
+        # Gateway must be platform-owned for fee to be triggered.
+        PaymentGateway.objects.filter(pk=self.gateway.pk).update(
+            owner_type=PaymentGateway.OwnerType.PLATFORM
+        )
+        self.gateway.refresh_from_db()
+
         payment = self.create_pending_payment(
             self.company, self.invoice, self.gateway,
             reference_id="SUCCESS-dup3",
@@ -373,7 +396,7 @@ class PaymentExpirationTest(TestCase, GatewayTestMixin):
         self.assertIn("expired", msg.lower())
 
         payment.refresh_from_db()
-        self.assertEqual(payment.status, Payment.Status.FAILED)
+        self.assertEqual(payment.status, Payment.Status.NEEDS_RECONCILIATION)
         self.invoice.refresh_from_db()
         self.assertEqual(self.invoice.status, Invoice.Status.ISSUED)
 
@@ -409,6 +432,9 @@ class InactiveGatewayTest(TestCase, GatewayTestMixin):
         self.tech = self.create_technician(self.company)
         self.policy = self.create_financial_policy(self.company)
         self.invoice = self.create_issued_invoice(self.company, technician=self.tech)
+        # TASK-004: mode guard fires before gateway check; opt company in so the gateway
+        # check (the guard this class is testing) can be reached.
+        self.create_active_payment_settings(self.company)
 
     def test_inactive_gateway_cannot_initiate_payment(self):
         """PaymentStartService rejects inactive gateway."""
@@ -450,6 +476,9 @@ class KYCGuardPaymentTest(TestCase, GatewayTestMixin):
         self.policy = self.create_financial_policy(self.company)
         self.gateway = self.create_fake_gateway(self.company, active=True)
         self.invoice = self.create_issued_invoice(self.company, technician=self.tech)
+        # TASK-004: mode guard fires before KYC check; opt company in so the KYC
+        # check (the guard this class is testing) can be reached.
+        self.create_active_payment_settings(self.company)
 
     def test_no_kyc_profile_blocks_payment_initiation(self):
         """Company without merchant profile cannot start gateway payment."""
@@ -565,8 +594,8 @@ class CashFlowRegressionTest(TestCase, GatewayTestMixin):
         self.assertEqual(invoice.status, Invoice.Status.PAID)
         self.assertIsNotNone(invoice.settled_at)
 
-    def test_platform_fee_recorded_for_cash_payment(self):
-        """Platform fee is correctly recorded for cash payments."""
+    def test_cash_payment_does_not_create_platform_fee(self):
+        """Cash payments (no gateway) must NOT create platform fee entries."""
         from apps.invoices.services import InvoiceMarkPaidService
 
         invoice = self.create_issued_invoice(self.company, technician=self.tech, total=10000000)
@@ -576,6 +605,4 @@ class CashFlowRegressionTest(TestCase, GatewayTestMixin):
             company=self.company,
             entry_type=CompanyPlatformFeeEntry.EntryType.DEBIT,
         )
-        self.assertEqual(fee_entries.count(), 1)
-        # 1% of 10,000,000 = 100,000
-        self.assertEqual(fee_entries.first().amount_rial, 100000)
+        self.assertEqual(fee_entries.count(), 0)

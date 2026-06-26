@@ -368,15 +368,24 @@ class InvoiceMarkPaidService:
                 getattr(invoice, "id", None),
             )
 
-        # Record platform fee receivable for cash/manual payments (P6).
-        try:
-            from apps.payouts.services_platform_fee import PlatformFeeService
-            PlatformFeeService.record_invoice_fee(invoice, payment=payment)
-        except Exception:
-            import logging
-            logging.getLogger(__name__).exception(
-                "Failed to record platform fee for invoice %s — ledger will need backfill.",
-                getattr(invoice, "id", None),
-            )
+        # Record platform fee only for payments through a platform-owned gateway.
+        # PlatformFeeService enforces the same gate internally; this outer check
+        # is defence-in-depth that avoids the call entirely for cash/manual paths.
+        _gw = getattr(payment, "gateway", None) if payment is not None else None
+        if (
+            payment is not None
+            and _gw is not None
+            and getattr(_gw, "owner_type", "company") == "platform"
+            and getattr(payment, "status", "") == "paid"
+        ):
+            try:
+                from apps.payouts.services_platform_fee import PlatformFeeService
+                PlatformFeeService.record_invoice_fee(invoice, payment=payment)
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception(
+                    "Failed to record platform fee for invoice %s — ledger will need backfill.",
+                    getattr(invoice, "id", None),
+                )
 
         return invoice

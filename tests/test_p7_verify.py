@@ -18,7 +18,7 @@ from apps.accounts.models import CompanyUser, Technician, UserRole
 from apps.tenants.models import Company, CompanyFinancialPolicy
 from apps.invoices.models import Invoice, InvoiceItem
 from apps.orders.models import Order
-from apps.payments.models import Payment
+from apps.payments.models import Payment, PaymentGateway
 from apps.payouts.models import TechnicianLedgerEntry, CompanyPlatformFeeEntry
 
 
@@ -105,6 +105,25 @@ class FinancialTestMixin:
         policy.platform_fee_percent = Decimal(str(fee_percent))
         policy.save(update_fields=["platform_fee_percent"])
         return policy
+
+    def create_platform_gateway(self, company):
+        return PaymentGateway.objects.create(
+            company=company,
+            name="Platform Test Gateway",
+            gateway_type=PaymentGateway.GatewayType.FAKE,
+            owner_type=PaymentGateway.OwnerType.PLATFORM,
+            is_active=True,
+            is_default=True,
+        )
+
+    def create_company_gateway(self, company):
+        return PaymentGateway.objects.create(
+            company=company,
+            name="Company Test Gateway",
+            gateway_type=PaymentGateway.GatewayType.MANUAL,
+            owner_type=PaymentGateway.OwnerType.COMPANY,
+            is_active=True,
+        )
 
 
 # =============================================================================
@@ -559,13 +578,24 @@ class PlatformFeeLedgerRegressionTest(TestCase, FinancialTestMixin):
         self.company = self.create_company("fee_co", "Fee Test Co")
         self.tech = self.create_technician(self.company)
         self.policy = self.create_financial_policy(self.company, fee_percent=1)
+        self.platform_gateway = self.create_platform_gateway(self.company)
+
+    def _platform_payment(self, invoice):
+        return Payment.objects.create(
+            company=self.company,
+            invoice=invoice,
+            gateway=self.platform_gateway,
+            amount=invoice.total_amount,
+            status=Payment.Status.PAID,
+        )
 
     def test_paid_invoice_creates_platform_fee_debit(self):
-        """Paying an invoice creates one platform fee DEBIT entry."""
+        """Paying via platform-owned gateway creates one platform fee DEBIT entry."""
         from apps.invoices.services import InvoiceMarkPaidService
 
         invoice = self.create_issued_invoice(self.company, technician=self.tech, total=10000000)
-        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment_method="cash")
+        payment = self._platform_payment(invoice)
+        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment)
 
         fee_entries = CompanyPlatformFeeEntry.objects.filter(
             company=self.company,
@@ -573,20 +603,20 @@ class PlatformFeeLedgerRegressionTest(TestCase, FinancialTestMixin):
         )
         self.assertEqual(fee_entries.count(), 1)
 
-        # fee = total * 1% = 100,000
         entry = fee_entries.first()
         expected_fee = int(Decimal("10000000") * Decimal("1") / Decimal("100"))
         self.assertEqual(entry.amount_rial, expected_fee)
 
     def test_zero_fee_percent_no_entry(self):
-        """If platform_fee_percent=0, no fee entry is created."""
+        """If platform_fee_percent=0, no fee entry is created even for platform-owned gateway."""
         from apps.invoices.services import InvoiceMarkPaidService
 
         self.policy.platform_fee_percent = Decimal("0")
         self.policy.save(update_fields=["platform_fee_percent"])
 
         invoice = self.create_issued_invoice(self.company, technician=self.tech, total=10000000)
-        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment_method="cash")
+        payment = self._platform_payment(invoice)
+        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment)
 
         fee_entries = CompanyPlatformFeeEntry.objects.filter(company=self.company)
         self.assertEqual(fee_entries.count(), 0)
@@ -597,39 +627,39 @@ class PlatformFeeLedgerRegressionTest(TestCase, FinancialTestMixin):
         from apps.payouts.services_platform_fee import PlatformFeeService
 
         invoice = self.create_issued_invoice(self.company, technician=self.tech, total=10000000)
-        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment_method="cash")
+        payment = self._platform_payment(invoice)
+        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment)
         invoice.refresh_from_db()
 
-        # Try recording again
         entries_before = CompanyPlatformFeeEntry.objects.filter(company=self.company).count()
-        PlatformFeeService.record_invoice_fee(invoice)
+        PlatformFeeService.record_invoice_fee(invoice, payment=payment)
         entries_after = CompanyPlatformFeeEntry.objects.filter(company=self.company).count()
 
         self.assertEqual(entries_before, entries_after, "Idempotency must prevent duplicate fee entries")
 
     def test_platform_fee_balance_correct(self):
-        """After paying invoices, balance should equal sum of fees owed."""
+        """After paying invoices via platform gateway, balance equals sum of fees owed."""
         from apps.invoices.services import InvoiceMarkPaidService
         from apps.payouts.services_platform_fee import PlatformFeeService
 
-        # Pay two invoices
         for amount in [10000000, 5000000]:
             invoice = self.create_issued_invoice(self.company, technician=self.tech, total=amount)
-            InvoiceMarkPaidService.mark_paid(invoice=invoice, payment_method="cash")
+            payment = self._platform_payment(invoice)
+            InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment)
 
         balance = PlatformFeeService.get_balance(self.company)
         # 1% of 10M + 1% of 5M = 100,000 + 50,000 = 150,000
         self.assertEqual(balance, 150000)
 
     def test_fee_balance_after_credit(self):
-        """After manual credit, balance decreases."""
+        """After manual credit, balance decreases by the credited amount."""
         from apps.invoices.services import InvoiceMarkPaidService
         from apps.payouts.services_platform_fee import PlatformFeeService
 
         invoice = self.create_issued_invoice(self.company, technician=self.tech, total=10000000)
-        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment_method="cash")
+        payment = self._platform_payment(invoice)
+        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment)
 
-        # Record manual credit (company paid platform fee)
         PlatformFeeService.record_manual_credit(
             company=self.company,
             amount_rial=50000,
@@ -640,3 +670,116 @@ class PlatformFeeLedgerRegressionTest(TestCase, FinancialTestMixin):
         balance = PlatformFeeService.get_balance(self.company)
         # 100,000 (debit) - 50,000 (credit) = 50,000
         self.assertEqual(balance, 50000)
+
+
+# =============================================================================
+# 7. TASK-001 — GATEWAY OWNERSHIP GUARD TESTS
+# =============================================================================
+
+class PlatformFeeGatewayOwnershipTest(TestCase, FinancialTestMixin):
+    """
+    TASK-001: Platform fee is created only for platform-owned gateway payments.
+
+    Five required cases:
+    1. Cash (payment=None) → no fee
+    2. Manual (payment=None) → no fee
+    3. Company-owned gateway payment → no fee
+    4. Platform-owned gateway payment → fee created
+    5. Duplicate call with same invoice → idempotency prevents double entry
+    """
+
+    def setUp(self):
+        self.company = self.create_company("gw_own_co", "GW Ownership Co")
+        self.tech = self.create_technician(self.company)
+        self.create_financial_policy(self.company, fee_percent=1)
+
+    def test_cash_payment_creates_no_platform_fee(self):
+        """Cash paid invoice (payment=None) must not create a platform fee entry."""
+        from apps.invoices.services import InvoiceMarkPaidService
+
+        invoice = self.create_issued_invoice(self.company, technician=self.tech, total=1000000)
+        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment_method="cash")
+
+        self.assertEqual(
+            CompanyPlatformFeeEntry.objects.filter(company=self.company).count(), 0,
+        )
+
+    def test_manual_payment_creates_no_platform_fee(self):
+        """Manual admin mark-paid (payment_method=manual, no payment object) must not create a platform fee."""
+        from apps.invoices.services import InvoiceMarkPaidService
+
+        invoice = self.create_issued_invoice(self.company, technician=self.tech, total=1000000)
+        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment_method="manual")
+
+        self.assertEqual(
+            CompanyPlatformFeeEntry.objects.filter(company=self.company).count(), 0,
+        )
+
+    def test_company_owned_gateway_payment_creates_no_platform_fee(self):
+        """Payment through company-owned gateway must not create a platform fee entry."""
+        from apps.invoices.services import InvoiceMarkPaidService
+
+        company_gateway = self.create_company_gateway(self.company)
+        invoice = self.create_issued_invoice(self.company, technician=self.tech, total=1000000)
+        payment = Payment.objects.create(
+            company=self.company,
+            invoice=invoice,
+            gateway=company_gateway,
+            amount=invoice.total_amount,
+            status=Payment.Status.PAID,
+        )
+        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment)
+
+        self.assertEqual(
+            CompanyPlatformFeeEntry.objects.filter(company=self.company).count(), 0,
+        )
+
+    def test_platform_owned_gateway_payment_creates_platform_fee(self):
+        """Payment through platform-owned gateway creates exactly one DEBIT with source=online_gateway."""
+        from apps.invoices.services import InvoiceMarkPaidService
+
+        platform_gateway = self.create_platform_gateway(self.company)
+        invoice = self.create_issued_invoice(self.company, technician=self.tech, total=1000000)
+        payment = Payment.objects.create(
+            company=self.company,
+            invoice=invoice,
+            gateway=platform_gateway,
+            amount=invoice.total_amount,
+            status=Payment.Status.PAID,
+        )
+        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment)
+
+        entries = CompanyPlatformFeeEntry.objects.filter(
+            company=self.company,
+            entry_type=CompanyPlatformFeeEntry.EntryType.DEBIT,
+        )
+        self.assertEqual(entries.count(), 1)
+        entry = entries.first()
+        expected_fee = int(Decimal("1000000") * Decimal("1") / Decimal("100"))
+        self.assertEqual(entry.amount_rial, expected_fee)
+        self.assertEqual(entry.source, CompanyPlatformFeeEntry.Source.ONLINE_GATEWAY)
+
+    def test_duplicate_platform_fee_record_does_not_create_duplicate(self):
+        """Calling record_invoice_fee twice for the same invoice creates only one entry."""
+        from apps.invoices.services import InvoiceMarkPaidService
+        from apps.payouts.services_platform_fee import PlatformFeeService
+
+        platform_gateway = self.create_platform_gateway(self.company)
+        invoice = self.create_issued_invoice(self.company, technician=self.tech, total=1000000)
+        payment = Payment.objects.create(
+            company=self.company,
+            invoice=invoice,
+            gateway=platform_gateway,
+            amount=invoice.total_amount,
+            status=Payment.Status.PAID,
+        )
+        InvoiceMarkPaidService.mark_paid(invoice=invoice, payment=payment)
+        invoice.refresh_from_db()
+
+        # Second direct call — idempotency key must prevent duplicate.
+        PlatformFeeService.record_invoice_fee(invoice, payment=payment)
+
+        self.assertEqual(
+            CompanyPlatformFeeEntry.objects.filter(company=self.company).count(), 1,
+            "Idempotency key must prevent duplicate fee entries",
+        )

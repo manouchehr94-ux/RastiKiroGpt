@@ -146,10 +146,22 @@ class PlatformFeeService:
         """
         Record a DEBIT platform fee entry for a paid invoice.
 
+        Only creates an entry when payment went through a platform-owned gateway.
         Idempotent — calling twice for the same invoice produces no duplicate.
-        Returns the created entry, or None if fee=0 or already recorded.
+        Returns the created entry, or None if conditions are not met or already recorded.
         """
         from .models import CompanyPlatformFeeEntry
+        from apps.payments.models import PaymentGateway
+
+        # All four conditions must be satisfied (ADR-003, PAYMENT_RULES.md).
+        if payment is None:
+            return None
+        if getattr(payment, "gateway", None) is None:
+            return None
+        if getattr(payment.gateway, "owner_type", PaymentGateway.OwnerType.COMPANY) != PaymentGateway.OwnerType.PLATFORM:
+            return None
+        if getattr(payment, "status", None) != "paid":
+            return None
 
         fee_pct = _get_policy_fee_percent(invoice.company)
         if not fee_pct:
@@ -160,7 +172,7 @@ class PlatformFeeService:
             return None
 
         idempotency_key = f"platform_fee:invoice:{invoice.id}"
-        resolved_source = source or CompanyPlatformFeeEntry.Source.CASH_INVOICE
+        resolved_source = source or CompanyPlatformFeeEntry.Source.ONLINE_GATEWAY
 
         try:
             return PlatformFeeService._write_entry(

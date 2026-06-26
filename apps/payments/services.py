@@ -32,6 +32,8 @@ from django.utils import timezone
 
 from apps.invoices.models import Invoice
 from apps.invoices.services import InvoiceMarkPaidService
+from apps.tenants.models import CompanyPaymentSettings
+from apps.tenants.selectors import get_company_payment_settings
 
 from .models import Payment, PaymentAttempt, PaymentGateway
 from .providers import get_provider
@@ -107,6 +109,26 @@ class PaymentStartService:
         """
         if not invoice.is_payable:
             raise ValueError("Invoice is not payable. Must be in ISSUED status.")
+
+        # Payment mode guard (ADR-002): online payment requires explicit platform activation.
+        # Missing settings row falls back to safe defaults (disabled/inactive) — also blocked.
+        ps = get_company_payment_settings(invoice.company)
+        if ps.payment_mode == CompanyPaymentSettings.PaymentMode.DISABLED:
+            raise ValueError(
+                "Online payment is disabled for this company. "
+                "Payment mode must be activated by the platform owner."
+            )
+        if ps.gateway_activation_status != CompanyPaymentSettings.ActivationStatus.ACTIVE:
+            raise ValueError(
+                f"Company payment gateway is not active "
+                f"(current status: {ps.gateway_activation_status}). "
+                "Contact the platform owner to activate."
+            )
+        if not ps.is_online_payment_enabled:
+            raise ValueError(
+                "Online payment is not enabled for this company. "
+                "Contact the platform owner."
+            )
 
         # Get the company's payment gateway
         if gateway is None:
@@ -220,9 +242,9 @@ class PaymentVerifyService:
         if payment.status != Payment.Status.PENDING:
             return False, "Payment is not in pending status."
 
-        # Expiration check (P8)
+        # Expiration check (P8): outcome is ambiguous — move to NEEDS_RECONCILIATION.
         if _is_payment_expired(payment):
-            payment.status = Payment.Status.FAILED
+            payment.status = Payment.Status.NEEDS_RECONCILIATION
             payment.save(update_fields=["status", "updated_at"])
             logger.warning(
                 "Payment %s expired (created_at=%s, timeout=%d min). Rejecting callback.",
@@ -261,10 +283,10 @@ class PaymentVerifyService:
         )
 
         if response.success:
-            # Amount tampering protection (P8)
+            # Amount tampering protection (P8): outcome is ambiguous — NEEDS_RECONCILIATION.
             if response.verified_amount is not None:
                 if int(response.verified_amount) != int(payment.amount):
-                    payment.status = Payment.Status.FAILED
+                    payment.status = Payment.Status.NEEDS_RECONCILIATION
                     payment.save(update_fields=["status", "updated_at"])
                     logger.error(
                         "AMOUNT TAMPERING DETECTED: payment_id=%s expected=%s verified=%s",
@@ -319,7 +341,7 @@ class PaymentCallbackService:
     SECURITY (P8):
     - Rejects callbacks with empty/missing reference_id.
     - Locks Payment row before verification to prevent duplicates.
-    - Expired payments are auto-failed.
+    - Expired payments move to NEEDS_RECONCILIATION.
     - Amount match is enforced by PaymentVerifyService.
     """
 
