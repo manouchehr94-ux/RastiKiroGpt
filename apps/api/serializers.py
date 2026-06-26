@@ -44,7 +44,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.Serializer):
-    """Serializer for creating orders via API."""
+    """Serializer for creating orders via API (admin/staff only)."""
     title = serializers.CharField(max_length=200)
     description = serializers.CharField(required=False, default="")
     address = serializers.CharField(required=False, default="")
@@ -52,6 +52,8 @@ class OrderCreateSerializer(serializers.Serializer):
     price_estimate = serializers.IntegerField(required=False, default=0)
     required_skill = serializers.CharField(required=False, default="", max_length=100)
     customer_id = serializers.IntegerField()
+    service_category_id = serializers.IntegerField()
+    technician_id = serializers.IntegerField(required=False, allow_null=True, default=None)
 
 
 class OrderStatusLogSerializer(serializers.ModelSerializer):
@@ -121,6 +123,7 @@ class ServiceRequestCreateSerializer(serializers.Serializer):
     service_id = serializers.IntegerField(required=False, allow_null=True)
     description = serializers.CharField(required=False, default="")
     preferred_time = serializers.CharField(required=False, default="", max_length=200)
+    service_category_id = serializers.IntegerField()
 
 
 # =============================================================================

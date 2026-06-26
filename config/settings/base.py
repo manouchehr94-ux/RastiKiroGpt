@@ -197,7 +197,9 @@ TENANT_EXEMPT_PREFIXES = [
     "media",
     "admin",
     "health",
-    "api",
+    # "api" is intentionally NOT exempt: /api/<company_code>/... needs tenant resolution.
+    # Sub-paths that don't need a company (/api/auth/, /api/platform/, /api/public/)
+    # are handled directly in TenantMiddleware.__call__().
 ]
 
 # =============================================================================

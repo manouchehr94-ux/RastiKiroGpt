@@ -22,7 +22,7 @@ from apps.orders.selectors import OrderSelector
 from apps.orders.services import (
     OrderAcceptService,
     OrderCompleteService,
-    OrderCreateService,
+    OrderCreateByAdminService,
 )
 from apps.reports.selectors import CompanyReportSelector, PlatformReportSelector
 from apps.tenants.models import CompanyService as CompanyServiceModel
@@ -89,8 +89,9 @@ class OrderListAPI(APIView):
             return Response({"error": "Customer not found."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            order = OrderCreateService.create(
+            order = OrderCreateByAdminService.create(
                 company=company,
+                created_by=request.user,
                 customer=customer,
                 title=serializer.validated_data["title"],
                 description=serializer.validated_data.get("description", ""),
@@ -98,7 +99,8 @@ class OrderListAPI(APIView):
                 priority=serializer.validated_data.get("priority", Order.Priority.NORMAL),
                 price_estimate=serializer.validated_data.get("price_estimate", 0),
                 required_skill=serializer.validated_data.get("required_skill", ""),
-                created_by=request.user,
+                service_category_id=serializer.validated_data["service_category_id"],
+                technician_id=serializer.validated_data.get("technician_id"),
             )
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -218,6 +220,7 @@ class ServiceRequestListAPI(APIView):
                 service=service,
                 description=serializer.validated_data.get("description", ""),
                 preferred_time=serializer.validated_data.get("preferred_time", ""),
+                service_category_id=serializer.validated_data["service_category_id"],
             )
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

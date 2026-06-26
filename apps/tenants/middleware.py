@@ -50,8 +50,8 @@ class TenantMiddleware:
         # For /<company_code>/... the company code is the FIRST segment
         if path_segments[0] == "api" and len(path_segments) >= 2:
             # API route: /api/<company_code>/...
-            # Skip if it's a platform API route
-            if path_segments[1] == "platform":
+            # Sub-paths that don't require a company (auth, platform, public checks).
+            if path_segments[1] in ("platform", "auth", "public"):
                 return self.get_response(request)
             company_code = path_segments[1]
         else:
