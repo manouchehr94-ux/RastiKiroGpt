@@ -11,6 +11,7 @@ from .models import (
     Company,
     CompanyGalleryImage,
     CompanyPage,
+    CompanyPaymentSettings,
     CompanyService,
     CompanyServiceCategory,
     CompanyServiceSubCategory,
@@ -157,6 +158,17 @@ def get_company_settings(company: Company) -> CompanySettings:
     """
     settings, _ = CompanySettings.objects.get_or_create(company=company)
     return settings
+
+
+def get_company_payment_settings(company: Company) -> CompanyPaymentSettings:
+    """
+    Get or create CompanyPaymentSettings for a company.
+
+    Always returns a valid instance. New rows default to disabled/inactive/False.
+    Normally created in the registration flow; this is the safety fallback.
+    """
+    payment_settings, _ = CompanyPaymentSettings.objects.get_or_create(company=company)
+    return payment_settings
 
 
 class OrderCustomFieldSelector:

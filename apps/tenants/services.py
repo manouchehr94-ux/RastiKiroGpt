@@ -19,9 +19,25 @@ from .models import (
     Company,
     CompanyGalleryImage,
     CompanyPage,
+    CompanyPaymentSettings,
     CompanyService,
     ServiceRequest,
 )
+
+
+def ensure_company_payment_settings(company: Company) -> CompanyPaymentSettings:
+    """
+    Ensure a CompanyPaymentSettings row exists for the given company.
+
+    Creates one with safe defaults (disabled / inactive / online disabled) if missing.
+    Returns the existing row if already present.
+    Is idempotent — safe to call multiple times.
+
+    This is the central creation path for CompanyPaymentSettings.
+    All company creation flows must call this instead of creating the row directly.
+    """
+    ps, _ = CompanyPaymentSettings.objects.get_or_create(company=company)
+    return ps
 
 
 class CompanyPageUpdateService:

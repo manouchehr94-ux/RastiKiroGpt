@@ -23,6 +23,7 @@ from apps.tenants.models import (
     CompanyServiceCategory,
     CompanySettings,
 )
+from apps.tenants.services import ensure_company_payment_settings
 
 logger = logging.getLogger(__name__)
 
@@ -244,6 +245,9 @@ class CompanyRegistrationService:
 
         # Create CompanySettings
         CompanySettings.objects.create(company=company)
+
+        # Ensure CompanyPaymentSettings exists (disabled / inactive / online disabled)
+        ensure_company_payment_settings(company)
 
         # Create CompanyPage
         CompanyPage.objects.create(

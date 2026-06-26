@@ -29,6 +29,10 @@ class PaymentGateway(CompanyOwnedModel):
         FAKE = "fake", "Fake (Testing)"
         MANUAL = "manual", "Manual"
 
+    class OwnerType(models.TextChoices):
+        COMPANY = "company", "Company"
+        PLATFORM = "platform", "Platform"
+
     name = models.CharField(max_length=100)
     gateway_type = models.CharField(max_length=20, choices=GatewayType.choices)
     merchant_id = models.CharField(max_length=200, blank=True)
@@ -38,6 +42,12 @@ class PaymentGateway(CompanyOwnedModel):
     callback_url = models.URLField(
         blank=True,
         help_text="Callback URL for payment verification.",
+    )
+    owner_type = models.CharField(
+        max_length=10,
+        choices=OwnerType.choices,
+        default=OwnerType.COMPANY,
+        db_index=True,
     )
 
     class Meta:
@@ -54,7 +64,8 @@ class Payment(CompanyOwnedModel):
 
     Statuses:
         INITIATED → PENDING → PAID
-        INITIATED → PENDING → FAILED
+        INITIATED → PENDING → FAILED                    (provider-confirmed failure)
+        INITIATED → PENDING → NEEDS_RECONCILIATION      (expired, ambiguous, amount mismatch)
         INITIATED → CANCELLED
     """
 
@@ -64,6 +75,7 @@ class Payment(CompanyOwnedModel):
         PAID = "paid", "Paid"
         FAILED = "failed", "Failed"
         CANCELLED = "cancelled", "Cancelled"
+        NEEDS_RECONCILIATION = "needs_reconciliation", "Needs Reconciliation"
 
     invoice = models.ForeignKey(
         "invoices.Invoice",

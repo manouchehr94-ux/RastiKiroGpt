@@ -532,6 +532,91 @@ class CompanyMerchantProfileChangeRequest(models.Model):
         return f"ChangeRequest [{self.status}]: {self.company.name} @ {self.created_at}"
 
 
+# ---------------------------------------------------------------------------
+# Payment P3 — Company Payment Settings (TASK-003)
+# ---------------------------------------------------------------------------
+
+class CompanyPaymentSettings(models.Model):
+    """
+    Per-company payment mode and activation state.
+
+    This is the single source of truth for payment activation.
+    CompanyFinancialPolicy remains the source of truth for fee percents and split rules.
+
+    Modes:
+      disabled       — No online payment. All payments are cash/manual.
+      company_gateway  — Company uses its own PSP gateway. No platform commission.
+      platform_gateway — Rasti Service gateway. Platform commission if conditions met.
+
+    Activation statuses:
+      inactive        — Not activated. Default for new companies.
+      pending_review  — Company requested activation; platform owner reviewing.
+      active          — Platform owner approved. Online payments may flow.
+      suspended       — Platform owner suspended. No online payments.
+
+    Business rules (ADR-002, COMPANY_RULES.md):
+    - Company admin cannot activate payment mode.
+    - Platform owner controls activation status.
+    - New companies start as disabled/inactive/online disabled.
+    """
+
+    class PaymentMode(models.TextChoices):
+        DISABLED = "disabled", "Disabled"
+        COMPANY_GATEWAY = "company_gateway", "Company Gateway"
+        PLATFORM_GATEWAY = "platform_gateway", "Platform Gateway"
+
+    class ActivationStatus(models.TextChoices):
+        INACTIVE = "inactive", "Inactive"
+        PENDING_REVIEW = "pending_review", "Pending Review"
+        ACTIVE = "active", "Active"
+        SUSPENDED = "suspended", "Suspended"
+
+    company = models.OneToOneField(
+        Company,
+        on_delete=models.CASCADE,
+        related_name="payment_settings",
+    )
+    payment_mode = models.CharField(
+        max_length=20,
+        choices=PaymentMode.choices,
+        default=PaymentMode.DISABLED,
+        db_index=True,
+        help_text="Payment mode for this company. Only platform owner may change.",
+    )
+    is_online_payment_enabled = models.BooleanField(
+        default=False,
+        help_text="True only when mode is not disabled and status is active.",
+    )
+    gateway_activation_status = models.CharField(
+        max_length=20,
+        choices=ActivationStatus.choices,
+        default=ActivationStatus.INACTIVE,
+        db_index=True,
+        help_text="Activation lifecycle. Controlled by platform owner.",
+    )
+    activated_by = models.ForeignKey(
+        "accounts.CompanyUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activated_payment_settings",
+        help_text="Platform owner who activated this company's payment mode.",
+    )
+    activated_at = models.DateTimeField(null=True, blank=True)
+    deactivated_at = models.DateTimeField(null=True, blank=True)
+    deactivation_reason = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Company Payment Settings"
+        verbose_name_plural = "Company Payment Settings"
+
+    def __str__(self) -> str:
+        return f"PaymentSettings: {self.company.name} [{self.payment_mode} / {self.gateway_activation_status}]"
+
+
 class OrderCustomField(models.Model):
     """
     A custom field definition per company (tenant).
