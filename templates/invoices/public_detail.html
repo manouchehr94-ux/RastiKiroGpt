@@ -63,14 +63,6 @@
     </div>
   </div>
 
-  {% if messages %}
-  <div class="no-print" style="margin-bottom:16px;">
-    {% for message in messages %}
-    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">{{ message }}</div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
   <table>
     <tr><th>مشتری</th><td>{{ invoice.display_customer_name|default:"-" }}{% if invoice.display_customer_phone %} — {{ invoice.display_customer_phone }}{% endif %}</td></tr>
     <tr><th>آدرس</th><td>{{ invoice.address_snapshot|default:"-" }}</td></tr>
@@ -117,6 +109,9 @@
     {% if invoice.campaign_discount_amount > 0 %}
       <div class="alert alert-success" style="font-weight:700;">تخفیف اعمال شده: {{ invoice.campaign_discount_amount|smart_number }} ریال</div>
     {% else %}
+      {% if request.GET.disc_err %}
+      <div class="alert alert-danger" style="margin-bottom:8px;">{{ request.GET.disc_err }}</div>
+      {% endif %}
       <form method="post" action="/{{ company.code }}/invoices/public/{{ invoice.public_code }}/discount/" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         {% csrf_token %}
         <input name="discount_code" placeholder="کد تخفیف">

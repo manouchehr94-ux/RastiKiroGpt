@@ -246,16 +246,22 @@ def invoice_pay(request: HttpRequest, invoice_id: int, **kwargs) -> HttpResponse
 # =============================================================================
 
 def _invoice_discount_redirect(request, invoice, *, public: bool, success: bool, message: str):
-    from django.contrib import messages
     from django.shortcuts import redirect
 
+    if public:
+        # Public pages must not render session messages — they leak admin/tech session
+        # state to anonymous visitors. Success is self-evident from the updated total.
+        # Errors are surfaced via a URL query param that only this redirect sets.
+        if success:
+            return redirect(f"/i/{invoice.public_code}/")
+        from urllib.parse import urlencode
+        return redirect(f"/i/{invoice.public_code}/?{urlencode({'disc_err': message})}")
+
+    from django.contrib import messages
     if success:
         messages.success(request, message)
     else:
         messages.error(request, message)
-
-    if public:
-        return redirect(f"/i/{invoice.public_code}/")
     return redirect(f"/{invoice.company.code}/invoices/{invoice.id}/")
 
 
