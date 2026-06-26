@@ -217,6 +217,23 @@ class PaymentReconciliationServiceTest(TestCase, ReconciliationTestMixin):
         result = PaymentReconciliationService.reconcile(provider_rows=[])
         self.assertEqual(result.missing_in_provider, 0)
 
+    def test_needs_reconciliation_payment_appears_in_missing_in_provider(self):
+        """NEEDS_RECONCILIATION gateway payments must appear in the missing_in_provider scan."""
+        inv = self.create_issued_invoice(self.company, self.tech)
+        Payment.objects.create(
+            company=self.company, invoice=inv, gateway=self.gw,
+            amount=inv.total_amount,
+            status=Payment.Status.NEEDS_RECONCILIATION,
+            reference_id="REF-NR-001",
+        )
+
+        result = PaymentReconciliationService.reconcile(provider_rows=[])
+
+        self.assertEqual(result.missing_in_provider, 1)
+        issue = [r for r in result.records if r.issue_code == "missing_in_provider"]
+        self.assertEqual(len(issue), 1)
+        self.assertEqual(issue[0].provider_reference, "REF-NR-001")
+
 
 # =============================================================================
 # CSV PARSING TESTS

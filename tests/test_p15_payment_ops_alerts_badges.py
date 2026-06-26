@@ -164,6 +164,73 @@ class AlertBadgeSeverityTest(TestCase, AlertTestMixin):
         self.assertEqual(badge["failed_recent_count"], 1)
         self.assertEqual(badge["severity"], "danger")
 
+    # ------------------------------------------------------------------
+    # TASK-002B: NEEDS_RECONCILIATION badge/severity tests
+    # ------------------------------------------------------------------
+
+    def test_needs_reconciliation_counted_in_badge(self):
+        """NEEDS_RECONCILIATION payment must appear in badge with correct count."""
+        inv = self.create_invoice(self.company)
+        Payment.objects.create(
+            company=self.company, invoice=inv, gateway=self.gw,
+            amount=inv.total_amount,
+            status=Payment.Status.NEEDS_RECONCILIATION,
+            reference_id="NR-BADGE-001",
+        )
+
+        badge = PaymentOperationsSelector.get_company_alert_badge(self.company)
+        self.assertEqual(badge["needs_reconciliation_count"], 1)
+        self.assertEqual(badge["total_problem_count"], 1)
+
+    def test_needs_reconciliation_severity_danger(self):
+        """A single NEEDS_RECONCILIATION payment must raise severity to 'danger'."""
+        inv = self.create_invoice(self.company)
+        Payment.objects.create(
+            company=self.company, invoice=inv, gateway=self.gw,
+            amount=inv.total_amount,
+            status=Payment.Status.NEEDS_RECONCILIATION,
+            reference_id="NR-SEV-001",
+        )
+
+        badge = PaymentOperationsSelector.get_company_alert_badge(self.company)
+        self.assertEqual(badge["severity"], "danger")
+
+    def test_zero_nr_count_when_none_exist(self):
+        """needs_reconciliation_count is 0 when no NR payments exist."""
+        badge = PaymentOperationsSelector.get_company_alert_badge(self.company)
+        self.assertEqual(badge["needs_reconciliation_count"], 0)
+        self.assertEqual(badge["severity"], "ok")
+
+    def test_cash_nr_payment_not_in_badge(self):
+        """Cash payments in NR status (no gateway) must not affect alert badge."""
+        inv = self.create_invoice(self.company)
+        Payment.objects.create(
+            company=self.company, invoice=inv, gateway=None,
+            amount=inv.total_amount,
+            status=Payment.Status.NEEDS_RECONCILIATION,
+            metadata={"method": "cash"},
+        )
+
+        badge = PaymentOperationsSelector.get_company_alert_badge(self.company)
+        self.assertEqual(badge["needs_reconciliation_count"], 0)
+        self.assertEqual(badge["severity"], "ok")
+
+    def test_platform_badge_includes_nr_count(self):
+        """Platform badge must include needs_reconciliation_count across all companies."""
+        other = self.create_company("nr_plat_co", "NR Plat Co")
+        other_gw = self.create_gateway(other)
+        inv = self.create_invoice(other)
+        Payment.objects.create(
+            company=other, invoice=inv, gateway=other_gw,
+            amount=inv.total_amount,
+            status=Payment.Status.NEEDS_RECONCILIATION,
+            reference_id="NR-PLAT-001",
+        )
+
+        badge = PaymentOperationsSelector.get_platform_alert_badge()
+        self.assertEqual(badge["needs_reconciliation_count"], 1)
+        self.assertEqual(badge["severity"], "danger")
+
 
 # =============================================================================
 # PAGE DISPLAY TESTS

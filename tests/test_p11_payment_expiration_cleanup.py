@@ -145,7 +145,7 @@ class PaymentExpirationServiceTest(TestCase, ExpirationTestMixin):
         self.assertEqual(payment.status, Payment.Status.PENDING, "Dry-run must not change status")
 
     def test_old_pending_gateway_payment_is_expired(self):
-        """Old pending gateway payment should be marked FAILED."""
+        """Old pending gateway payment must move to NEEDS_RECONCILIATION, not FAILED."""
         from apps.payments.services_expiration import PaymentExpirationService
 
         invoice = self.create_issued_invoice(self.company, technician=self.tech)
@@ -155,7 +155,7 @@ class PaymentExpirationServiceTest(TestCase, ExpirationTestMixin):
 
         self.assertEqual(result["expired"], 1)
         payment.refresh_from_db()
-        self.assertEqual(payment.status, Payment.Status.FAILED)
+        self.assertEqual(payment.status, Payment.Status.NEEDS_RECONCILIATION)
         self.assertTrue(payment.metadata.get("expired_by_cleanup"))
 
     def test_fresh_pending_payment_is_not_changed(self):
@@ -257,13 +257,13 @@ class PaymentExpirationServiceTest(TestCase, ExpirationTestMixin):
         result2 = PaymentExpirationService.expire_old_pending_payments()
 
         self.assertEqual(result1["expired"], 1)
-        self.assertEqual(result2["expired"], 0)  # Already failed, not pending anymore
+        self.assertEqual(result2["expired"], 0)  # Already NEEDS_RECONCILIATION, not pending
 
         payment.refresh_from_db()
-        self.assertEqual(payment.status, Payment.Status.FAILED)
+        self.assertEqual(payment.status, Payment.Status.NEEDS_RECONCILIATION)
 
     def test_initiated_payment_is_also_expired(self):
-        """INITIATED (never went to PENDING) old payments should also be expired."""
+        """INITIATED (never went to PENDING) old payments must also move to NEEDS_RECONCILIATION."""
         from apps.payments.services_expiration import PaymentExpirationService
 
         invoice = self.create_issued_invoice(self.company, technician=self.tech)
@@ -281,7 +281,7 @@ class PaymentExpirationServiceTest(TestCase, ExpirationTestMixin):
 
         self.assertEqual(result["expired"], 1)
         payment.refresh_from_db()
-        self.assertEqual(payment.status, Payment.Status.FAILED)
+        self.assertEqual(payment.status, Payment.Status.NEEDS_RECONCILIATION)
 
 
 # =============================================================================
@@ -313,7 +313,7 @@ class ExpirePendingPaymentsCommandTest(TestCase, ExpirationTestMixin):
         self.assertEqual(payment.status, Payment.Status.PENDING)
 
     def test_command_real_run(self):
-        """Management command without --dry-run should actually expire payments."""
+        """Management command without --dry-run should move expired payments to NEEDS_RECONCILIATION."""
         invoice = self.create_issued_invoice(self.company, technician=self.tech)
         payment = self.create_pending_payment(self.company, invoice, self.gateway, age_minutes=60)
 
@@ -324,7 +324,7 @@ class ExpirePendingPaymentsCommandTest(TestCase, ExpirationTestMixin):
         self.assertIn("Done", output)
 
         payment.refresh_from_db()
-        self.assertEqual(payment.status, Payment.Status.FAILED)
+        self.assertEqual(payment.status, Payment.Status.NEEDS_RECONCILIATION)
 
     def test_command_with_minutes_override(self):
         """Command --minutes flag overrides default threshold."""
@@ -341,4 +341,78 @@ class ExpirePendingPaymentsCommandTest(TestCase, ExpirationTestMixin):
         # Threshold 30 min → should expire (45 > 30)
         call_command("expire_pending_payments", "--minutes", "30", stdout=out)
         payment.refresh_from_db()
-        self.assertEqual(payment.status, Payment.Status.FAILED)
+        self.assertEqual(payment.status, Payment.Status.NEEDS_RECONCILIATION)
+
+
+# =============================================================================
+# TASK-002: NEEDS_RECONCILIATION SAFETY TESTS
+# =============================================================================
+
+@override_settings(PAYMENT_EXPIRATION_MINUTES=30)
+class NeedsReconciliationSafetyTest(TestCase, ExpirationTestMixin):
+    """
+    TASK-002: Expired or ambiguous payments must go to NEEDS_RECONCILIATION, not FAILED.
+
+    FAILED is reserved for payments the provider has definitively rejected.
+    NEEDS_RECONCILIATION requires manual operator review before resolution.
+    """
+
+    def setUp(self):
+        self.company = self.create_company("nr_co", "NR Safety Co")
+        self.tech = self.create_technician(self.company)
+        self.gateway = self.create_fake_gateway(self.company)
+        CompanyFinancialPolicy.objects.get_or_create(
+            company=self.company,
+            defaults={"platform_fee_percent": Decimal("1")},
+        )
+
+    def test_expired_payment_is_needs_reconciliation_not_failed(self):
+        """Expiration batch must not use FAILED — ambiguity requires reconciliation."""
+        from apps.payments.services_expiration import PaymentExpirationService
+
+        invoice = self.create_issued_invoice(self.company, technician=self.tech)
+        payment = self.create_pending_payment(self.company, invoice, self.gateway, age_minutes=60)
+
+        PaymentExpirationService.expire_old_pending_payments()
+
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, Payment.Status.NEEDS_RECONCILIATION)
+        self.assertNotEqual(payment.status, Payment.Status.FAILED)
+
+    def test_paid_payment_is_terminal_and_unchanged_by_expiration(self):
+        """PAID is terminal — expiration must never touch it."""
+        from apps.payments.services_expiration import PaymentExpirationService
+
+        invoice = self.create_issued_invoice(self.company, technician=self.tech)
+        payment = Payment.objects.create(
+            company=self.company,
+            invoice=invoice,
+            gateway=self.gateway,
+            amount=invoice.total_amount,
+            status=Payment.Status.PAID,
+            reference_id="SUCCESS-paid-terminal",
+            paid_at=timezone.now() - timedelta(minutes=90),
+        )
+        Payment.objects.filter(pk=payment.pk).update(
+            created_at=timezone.now() - timedelta(minutes=90)
+        )
+
+        PaymentExpirationService.expire_old_pending_payments()
+
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, Payment.Status.PAID)
+
+    def test_needs_reconciliation_not_re_expired_by_second_run(self):
+        """A payment already in NEEDS_RECONCILIATION must not be touched again."""
+        from apps.payments.services_expiration import PaymentExpirationService
+
+        invoice = self.create_issued_invoice(self.company, technician=self.tech)
+        payment = self.create_pending_payment(self.company, invoice, self.gateway, age_minutes=60)
+
+        result1 = PaymentExpirationService.expire_old_pending_payments()
+        result2 = PaymentExpirationService.expire_old_pending_payments()
+
+        self.assertEqual(result1["expired"], 1)
+        self.assertEqual(result2["expired"], 0)
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, Payment.Status.NEEDS_RECONCILIATION)

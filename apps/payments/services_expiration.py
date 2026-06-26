@@ -1,7 +1,7 @@
 """
 Payments - Expiration Cleanup Service (P11).
 
-Marks old PENDING/INITIATED gateway payments as FAILED when they exceed
+Moves old PENDING/INITIATED gateway payments to NEEDS_RECONCILIATION when they exceed
 the expiration window and never received a callback.
 
 This service:
@@ -111,10 +111,10 @@ class PaymentExpirationService:
                     continue
 
                 if locked_payment.status not in (Payment.Status.PENDING, Payment.Status.INITIATED):
-                    # Already failed/cancelled — skip
+                    # Already reconciled, failed, or cancelled — skip
                     continue
 
-                locked_payment.status = Payment.Status.FAILED
+                locked_payment.status = Payment.Status.NEEDS_RECONCILIATION
                 locked_payment.metadata = {
                     **(locked_payment.metadata or {}),
                     "expired_by_cleanup": True,

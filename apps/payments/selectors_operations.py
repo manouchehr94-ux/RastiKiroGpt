@@ -36,6 +36,7 @@ class PaymentOperationsSelector:
                 "total_problem_count": int,
                 "old_pending_count": int,
                 "failed_recent_count": int,
+                "needs_reconciliation_count": int,
                 "severity": "ok" | "warning" | "danger",
             }
         """
@@ -55,9 +56,13 @@ class PaymentOperationsSelector:
             created_at__gte=week_ago,
         ).count()
 
-        total = old_pending_count + failed_recent_count
+        needs_reconciliation_count = gw_qs.filter(
+            status=Payment.Status.NEEDS_RECONCILIATION,
+        ).count()
 
-        if failed_recent_count > 0 or old_pending_count > 2:
+        total = old_pending_count + failed_recent_count + needs_reconciliation_count
+
+        if failed_recent_count > 0 or needs_reconciliation_count > 0 or old_pending_count > 2:
             severity = "danger"
         elif old_pending_count > 0:
             severity = "warning"
@@ -68,6 +73,7 @@ class PaymentOperationsSelector:
             "total_problem_count": total,
             "old_pending_count": old_pending_count,
             "failed_recent_count": failed_recent_count,
+            "needs_reconciliation_count": needs_reconciliation_count,
             "severity": severity,
         }
 
@@ -94,9 +100,13 @@ class PaymentOperationsSelector:
             created_at__gte=week_ago,
         ).count()
 
-        total = old_pending_count + failed_recent_count
+        needs_reconciliation_count = gw_qs.filter(
+            status=Payment.Status.NEEDS_RECONCILIATION,
+        ).count()
 
-        if failed_recent_count > 0 or old_pending_count > 2:
+        total = old_pending_count + failed_recent_count + needs_reconciliation_count
+
+        if failed_recent_count > 0 or needs_reconciliation_count > 0 or old_pending_count > 2:
             severity = "danger"
         elif old_pending_count > 0:
             severity = "warning"
@@ -107,6 +117,7 @@ class PaymentOperationsSelector:
             "total_problem_count": total,
             "old_pending_count": old_pending_count,
             "failed_recent_count": failed_recent_count,
+            "needs_reconciliation_count": needs_reconciliation_count,
             "severity": severity,
         }
 
@@ -143,18 +154,18 @@ class PaymentOperationsSelector:
         failed_count = failed_recent.count()
         failed_amount = int(failed_recent.aggregate(t=Sum("amount"))["t"] or 0)
 
-        # Expired by cleanup (metadata flag)
+        # Expired by cleanup: payments moved to NEEDS_RECONCILIATION by the expiry service
         expired_by_cleanup = gw_qs.filter(
-            status=Payment.Status.FAILED,
+            status=Payment.Status.NEEDS_RECONCILIATION,
             metadata__expired_by_cleanup=True,
         ).count()
 
-        # Recent problematic payments (PENDING/INITIATED + FAILED, last 30 days)
-        month_ago = now - timedelta(days=30)
+        # Recent problematic payments: PENDING/INITIATED + FAILED + NEEDS_RECONCILIATION
         problematic = (
             gw_qs.filter(
                 Q(status__in=[Payment.Status.PENDING, Payment.Status.INITIATED])
                 | Q(status=Payment.Status.FAILED, created_at__gte=week_ago)
+                | Q(status=Payment.Status.NEEDS_RECONCILIATION)
             )
             .select_related("invoice", "gateway")
             .order_by("-created_at")[:limit]
@@ -167,6 +178,7 @@ class PaymentOperationsSelector:
                 "paid": status_counts.get(Payment.Status.PAID, 0),
                 "failed": status_counts.get(Payment.Status.FAILED, 0),
                 "cancelled": status_counts.get(Payment.Status.CANCELLED, 0),
+                "needs_reconciliation": status_counts.get(Payment.Status.NEEDS_RECONCILIATION, 0),
             },
             "old_pending_count": old_pending_count,
             "old_pending_amount": old_pending_amount,
@@ -208,9 +220,9 @@ class PaymentOperationsSelector:
         failed_recent = gw_qs.filter(status=Payment.Status.FAILED, created_at__gte=week_ago)
         failed_count = failed_recent.count()
 
-        # Expired by cleanup
+        # Expired by cleanup: payments moved to NEEDS_RECONCILIATION by the expiry service
         expired_by_cleanup = gw_qs.filter(
-            status=Payment.Status.FAILED,
+            status=Payment.Status.NEEDS_RECONCILIATION,
             metadata__expired_by_cleanup=True,
         ).count()
 
@@ -225,11 +237,12 @@ class PaymentOperationsSelector:
             .order_by("-pending_amount")[:20]
         )
 
-        # Recent problematic payments
+        # Recent problematic payments: PENDING/INITIATED + FAILED + NEEDS_RECONCILIATION
         problematic = (
             gw_qs.filter(
                 Q(status__in=[Payment.Status.PENDING, Payment.Status.INITIATED])
                 | Q(status=Payment.Status.FAILED, created_at__gte=week_ago)
+                | Q(status=Payment.Status.NEEDS_RECONCILIATION)
             )
             .select_related("company", "invoice", "gateway")
             .order_by("-created_at")[:limit]
@@ -242,6 +255,7 @@ class PaymentOperationsSelector:
                 "paid": status_counts.get(Payment.Status.PAID, 0),
                 "failed": status_counts.get(Payment.Status.FAILED, 0),
                 "cancelled": status_counts.get(Payment.Status.CANCELLED, 0),
+                "needs_reconciliation": status_counts.get(Payment.Status.NEEDS_RECONCILIATION, 0),
             },
             "old_pending_count": old_pending_count,
             "old_pending_amount": old_pending_amount,

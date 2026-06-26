@@ -215,3 +215,112 @@ class CompanyOperationsDataTest(TestCase, OperationsTestMixin):
         from apps.payments.selectors_operations import PaymentOperationsSelector
         health = PaymentOperationsSelector.get_company_payment_health(self.company)
         self.assertEqual(health["failed_recent_count"], 1)
+
+
+# =============================================================================
+# TASK-002B: NEEDS_RECONCILIATION VISIBILITY TESTS
+# =============================================================================
+
+@override_settings(ROOT_URLCONF="config.urls", PAYMENT_EXPIRATION_MINUTES=30)
+class NeedsReconciliationDashboardTest(TestCase, OperationsTestMixin):
+    """
+    TASK-002B: NEEDS_RECONCILIATION payments must be visible in operations dashboards.
+
+    After TASK-002, expired/ambiguous payments land in NEEDS_RECONCILIATION, not FAILED.
+    Selectors must surface them so operators are not blind to unresolved payments.
+    """
+
+    def setUp(self):
+        self.company = self.create_company("nr_dash_co", "NR Dash Co")
+        self.admin = self.create_user(self.company, UserRole.COMPANY_ADMIN, "nr_dash_admin")
+        self.gw = self.create_gateway(self.company)
+
+    def _make_nr_payment(self, expired_by_cleanup=False):
+        inv = self.create_invoice(self.company)
+        p = Payment.objects.create(
+            company=self.company, invoice=inv, gateway=self.gw,
+            amount=inv.total_amount,
+            status=Payment.Status.NEEDS_RECONCILIATION,
+            reference_id=f"NR-REF-{Payment.objects.count()}",
+            metadata={"expired_by_cleanup": True} if expired_by_cleanup else {},
+        )
+        return p
+
+    def test_nr_payment_appears_in_problematic_payments(self):
+        """NEEDS_RECONCILIATION payment must appear in the problematic_payments list."""
+        self._make_nr_payment()
+
+        from apps.payments.selectors_operations import PaymentOperationsSelector
+        health = PaymentOperationsSelector.get_company_payment_health(self.company)
+        statuses = [p.status for p in health["problematic_payments"]]
+        self.assertIn(Payment.Status.NEEDS_RECONCILIATION, statuses)
+
+    def test_nr_payment_counted_in_status_counts(self):
+        """status_counts must include a needs_reconciliation key with correct count."""
+        self._make_nr_payment()
+        self._make_nr_payment()
+
+        from apps.payments.selectors_operations import PaymentOperationsSelector
+        health = PaymentOperationsSelector.get_company_payment_health(self.company)
+        self.assertIn("needs_reconciliation", health["status_counts"])
+        self.assertEqual(health["status_counts"]["needs_reconciliation"], 2)
+
+    def test_status_counts_zero_when_no_nr_payments(self):
+        """status_counts[needs_reconciliation] is 0 when no NR payments exist."""
+        from apps.payments.selectors_operations import PaymentOperationsSelector
+        health = PaymentOperationsSelector.get_company_payment_health(self.company)
+        self.assertEqual(health["status_counts"].get("needs_reconciliation", 0), 0)
+
+    def test_expired_by_cleanup_count_uses_nr_status(self):
+        """expired_by_cleanup_count must count NR payments with expired_by_cleanup=True."""
+        self._make_nr_payment(expired_by_cleanup=True)
+        self._make_nr_payment(expired_by_cleanup=True)
+        self._make_nr_payment(expired_by_cleanup=False)  # NR but not from cleanup
+
+        from apps.payments.selectors_operations import PaymentOperationsSelector
+        health = PaymentOperationsSelector.get_company_payment_health(self.company)
+        self.assertEqual(health["expired_by_cleanup_count"], 2)
+
+    def test_expired_by_cleanup_count_ignores_failed_with_flag(self):
+        """A FAILED payment with expired_by_cleanup=True must NOT count (pre-TASK-002 data)."""
+        inv = self.create_invoice(self.company)
+        Payment.objects.create(
+            company=self.company, invoice=inv, gateway=self.gw,
+            amount=inv.total_amount,
+            status=Payment.Status.FAILED,
+            reference_id="OLD-FAILED-REF",
+            metadata={"expired_by_cleanup": True},
+        )
+
+        from apps.payments.selectors_operations import PaymentOperationsSelector
+        health = PaymentOperationsSelector.get_company_payment_health(self.company)
+        self.assertEqual(health["expired_by_cleanup_count"], 0)
+
+    def test_paid_nr_isolation(self):
+        """PAID payments must not appear in problematic list even when NR exists."""
+        inv_paid = self.create_invoice(self.company)
+        self.create_gateway_payment(self.company, inv_paid, self.gw, "paid")
+        self._make_nr_payment()
+
+        from apps.payments.selectors_operations import PaymentOperationsSelector
+        health = PaymentOperationsSelector.get_company_payment_health(self.company)
+        statuses = [p.status for p in health["problematic_payments"]]
+        self.assertNotIn(Payment.Status.PAID, statuses)
+        self.assertIn(Payment.Status.NEEDS_RECONCILIATION, statuses)
+
+    def test_cross_tenant_nr_not_visible(self):
+        """NR payments from another company must not appear in own company's health."""
+        other = self.create_company("other_nr_co", "Other NR")
+        other_gw = self.create_gateway(other)
+        inv_other = self.create_invoice(other)
+        Payment.objects.create(
+            company=other, invoice=inv_other, gateway=other_gw,
+            amount=inv_other.total_amount,
+            status=Payment.Status.NEEDS_RECONCILIATION,
+            reference_id="OTHER-NR-REF",
+        )
+
+        from apps.payments.selectors_operations import PaymentOperationsSelector
+        health = PaymentOperationsSelector.get_company_payment_health(self.company)
+        self.assertEqual(health["status_counts"]["needs_reconciliation"], 0)
+        self.assertEqual(len(list(health["problematic_payments"])), 0)

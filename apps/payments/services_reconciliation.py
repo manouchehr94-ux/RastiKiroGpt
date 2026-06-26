@@ -251,10 +251,14 @@ class PaymentReconciliationService:
             summary.matched += 1
 
         # 4. Find internal payments missing from provider report
-        #    (only gateway payments in PENDING/PAID status within scope)
+        #    (gateway payments in PENDING, PAID, or NEEDS_RECONCILIATION within scope)
         internal_qs = Payment.objects.filter(
             gateway__isnull=False,
-            status__in=[Payment.Status.PENDING, Payment.Status.PAID],
+            status__in=[
+                Payment.Status.PENDING,
+                Payment.Status.PAID,
+                Payment.Status.NEEDS_RECONCILIATION,
+            ],
         ).exclude(id__in=matched_payment_ids)
 
         if company_code:
