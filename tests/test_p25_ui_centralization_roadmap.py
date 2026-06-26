@@ -17,9 +17,9 @@ class UIArchitectureDocumentationTest(SimpleTestCase):
     """Verify UI centralization documentation and architecture."""
 
     def test_roadmap_document_exists(self):
-        """Final roadmap document should exist."""
-        path = os.path.join(os.path.dirname(__file__), "..", "docs", "UI_CENTRALIZATION_FINAL_ROADMAP.md")
-        self.assertTrue(os.path.exists(path), "docs/UI_CENTRALIZATION_FINAL_ROADMAP.md must exist")
+        """Roadmap document should exist under RDOS v1.0 layout."""
+        path = os.path.join(os.path.dirname(__file__), "..", "docs", "06_Phases", "ROADMAP.md")
+        self.assertTrue(os.path.exists(path), "docs/06_Phases/ROADMAP.md must exist")
 
     def test_theme_css_exists(self):
         """Central theme.css file should exist."""

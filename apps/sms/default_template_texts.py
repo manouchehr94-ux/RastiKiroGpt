@@ -79,7 +79,7 @@ SMS_DEFAULT_TEMPLATES: dict[str, dict] = {
         "recipient_type": 'admin',
         "scope": 'company',
         "template_variables": ['company_name', 'operator_name', 'operator_username'],
-        "template_text": '«{{ company_name }}»\nاپراتور جدید ثبت شد\nنام: {{ operator_name }}\nنام کاربری: {{ operator_username }}\nرمز عبور پیشفرض است. لطفا بعد از ورود تغییر دهید.',
+        "template_text": '«{{ company_name }}»\nاپراتور جدید ثبت شد\nنام: {{ operator_name }}\nنام کاربری: {{ operator_username }}\nرمز عبور پیشفرض است. لطفا بعد از ورود تغییر دهید.\nلغو 11',
         "default_sms_enabled": False,
     },
     'technician_created': {
@@ -88,7 +88,7 @@ SMS_DEFAULT_TEMPLATES: dict[str, dict] = {
         "recipient_type": 'technician',
         "scope": 'company',
         "template_variables": ['company_name', 'technician_name', 'technician_username'],
-        "template_text": '«{{ company_name }}»\nنیروی خدماتی جدید ثبت شد\nنام: {{ technician_name }}\nنام کاربری: {{ technician_username }}\nرمز عبور پیشفرض است. لطفا بعد از ورود تغییر دهید.',
+        "template_text": '«{{ company_name }}»\nنیروی خدماتی جدید ثبت شد\nنام: {{ technician_name }}\nنام کاربری: {{ technician_username }}\nرمز عبور پیشفرض است. لطفا بعد از ورود تغییر دهید.\nلغو 11',
         "default_sms_enabled": False,
     },
     'technician_login': {

@@ -103,9 +103,9 @@ class InlineStyleAuditTest(SimpleTestCase):
         self.assertLess(total, 1000, f"Total inline styles ({total}) should be decreasing toward <150")
 
     def test_audit_document_exists(self):
-        """Full audit document should exist."""
-        path = os.path.join(os.path.dirname(__file__), "..", "docs", "UI_FULL_CENTRALIZATION_AUDIT.md")
-        self.assertTrue(os.path.exists(path))
+        """Documentation index should exist under RDOS v1.0 layout."""
+        path = os.path.join(os.path.dirname(__file__), "..", "docs", "README.md")
+        self.assertTrue(os.path.exists(path), "docs/README.md must exist")
 
     def test_theme_css_is_sole_entrypoint(self):
         """base.html should only load theme.css, not individual CSS files."""
