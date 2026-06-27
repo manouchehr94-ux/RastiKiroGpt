@@ -104,6 +104,34 @@ class TechnicianLedgerEntry(CompanyOwnedModel):
         sign = "+" if self.entry_type == self.EntryType.CREDIT else "-"
         return f"{sign}{self.amount_rial:,} [{self.source}] key={self.idempotency_key}"
 
+    def delete(self, *args, **kwargs):
+        raise PermissionError(
+            f"TechnicianLedgerEntry #{self.pk} is immutable and cannot be deleted. "
+            "Reverse with an offsetting entry."
+        )
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            update_fields = kwargs.get("update_fields")
+            immutable = {"amount_rial", "balance_after"}
+            if update_fields is None or immutable & set(update_fields):
+                original = (
+                    TechnicianLedgerEntry.objects
+                    .filter(pk=self.pk)
+                    .values("amount_rial", "balance_after")
+                    .first()
+                )
+                if original is not None:
+                    if original["amount_rial"] != self.amount_rial:
+                        raise PermissionError(
+                            f"TechnicianLedgerEntry #{self.pk}: amount_rial is immutable."
+                        )
+                    if original["balance_after"] != self.balance_after:
+                        raise PermissionError(
+                            f"TechnicianLedgerEntry #{self.pk}: balance_after is immutable."
+                        )
+        super().save(*args, **kwargs)
+
 
 class PaymentSplitSnapshot(CompanyOwnedModel):
     """
@@ -234,3 +262,31 @@ class CompanyPlatformFeeEntry(CompanyOwnedModel):
     def __str__(self) -> str:
         sign = "+" if self.entry_type == self.EntryType.DEBIT else "-"
         return f"{sign}{self.amount_rial:,} [{self.source}] key={self.idempotency_key}"
+
+    def delete(self, *args, **kwargs):
+        raise PermissionError(
+            f"CompanyPlatformFeeEntry #{self.pk} is immutable and cannot be deleted. "
+            "Reverse with an offsetting credit entry."
+        )
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            update_fields = kwargs.get("update_fields")
+            immutable = {"amount_rial", "balance_after"}
+            if update_fields is None or immutable & set(update_fields):
+                original = (
+                    CompanyPlatformFeeEntry.objects
+                    .filter(pk=self.pk)
+                    .values("amount_rial", "balance_after")
+                    .first()
+                )
+                if original is not None:
+                    if original["amount_rial"] != self.amount_rial:
+                        raise PermissionError(
+                            f"CompanyPlatformFeeEntry #{self.pk}: amount_rial is immutable."
+                        )
+                    if original["balance_after"] != self.balance_after:
+                        raise PermissionError(
+                            f"CompanyPlatformFeeEntry #{self.pk}: balance_after is immutable."
+                        )
+        super().save(*args, **kwargs)

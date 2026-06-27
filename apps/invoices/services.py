@@ -4,6 +4,7 @@ Invoices - Service Layer.
 All write operations for invoices.
 Business logic MUST live here, never in views.
 """
+import logging
 from decimal import Decimal
 from typing import Any, Optional
 
@@ -13,6 +14,8 @@ from django.utils import timezone
 from apps.accounts.models import Customer
 
 from .models import Invoice, InvoiceItem, generate_invoice_number
+
+logger = logging.getLogger(__name__)
 
 
 def _money(value, default=0) -> Decimal:
@@ -362,30 +365,34 @@ class InvoiceMarkPaidService:
             from apps.payouts.services import TechnicianLedgerService
             TechnicianLedgerService.create_invoice_entries(invoice, payment=payment)
         except Exception:
-            import logging
-            logging.getLogger(__name__).exception(
-                "Failed to create ledger entries for invoice %s — ledger will need backfill.",
+            # Ledger failure is CRITICAL: the invoice is PAID but the technician
+            # wage entry is missing. Log prominently; do not crash the payment flow.
+            # Manual backfill is required.
+            logger.critical(
+                "TECHNICIAN LEDGER NOT RECORDED for invoice %s — manual backfill required.",
                 getattr(invoice, "id", None),
+                exc_info=True,
             )
 
         # Record platform fee only for payments through a platform-owned gateway.
         # PlatformFeeService enforces the same gate internally; this outer check
         # is defence-in-depth that avoids the call entirely for cash/manual paths.
+        # Uses the OwnerType enum constant, not a string literal.
+        from apps.payments.models import PaymentGateway
         _gw = getattr(payment, "gateway", None) if payment is not None else None
         if (
             payment is not None
             and _gw is not None
-            and getattr(_gw, "owner_type", "company") == "platform"
+            and getattr(_gw, "owner_type", PaymentGateway.OwnerType.COMPANY)
+                == PaymentGateway.OwnerType.PLATFORM
             and getattr(payment, "status", "") == "paid"
         ):
+            from apps.payouts.services_platform_fee import PlatformFeeService, PlatformFeeRecordingFailed
             try:
-                from apps.payouts.services_platform_fee import PlatformFeeService
                 PlatformFeeService.record_invoice_fee(invoice, payment=payment)
-            except Exception:
-                import logging
-                logging.getLogger(__name__).exception(
-                    "Failed to record platform fee for invoice %s — ledger will need backfill.",
-                    getattr(invoice, "id", None),
-                )
+            except PlatformFeeRecordingFailed:
+                # PlatformFeeService already logged CRITICAL with full detail.
+                # Invoice remains PAID. Platform fee must be backfilled manually.
+                pass
 
         return invoice

@@ -13,7 +13,7 @@ import secrets
 import string
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 
 from apps.common.models import CompanyOwnedModel
 
@@ -190,6 +190,16 @@ class Invoice(CompanyOwnedModel):
                 fields=["company", "invoice_number"],
                 name="unique_invoice_number_per_company",
             ),
+            # Enforce one open (DRAFT or ISSUED) invoice per order at the DB level.
+            # PAID and CANCELLED invoices are closed and do not count.
+            # Standalone invoices (order=NULL) are excluded automatically — NULL values
+            # are never considered equal in a unique index, so multiple standalone drafts
+            # are allowed.
+            models.UniqueConstraint(
+                fields=["order"],
+                condition=models.Q(status__in=["draft", "issued"]),
+                name="unique_active_invoice_per_order",
+            ),
         ]
         indexes = [
             models.Index(fields=["company", "status"]),
@@ -243,6 +253,11 @@ class Invoice(CompanyOwnedModel):
         self.public_code = code
 
     def recalculate_totals(self, *, save: bool = True) -> None:
+        if self.pk and self.status == self.Status.PAID:
+            raise ValueError(
+                f"Cannot recalculate totals on PAID invoice #{self.invoice_number}. "
+                "Settlement is frozen."
+            )
         gross_amount = sum(item.gross_price for item in self.items.all())
         row_discount_amount = sum((item.discount_amount or 0) for item in self.items.all())
         subtotal = sum(item.net_price for item in self.items.all())
@@ -389,17 +404,55 @@ class InvoiceCancellationRequest(CompanyOwnedModel):
         return f"CancelRequest #{self.id} for Invoice #{inv_num} [{self.status}]"
 
 
+class InvoiceCounter(models.Model):
+    """
+    Per-company sequential counter for invoice number generation.
+
+    Incremented under select_for_update() so concurrent invoice creation for
+    the same company never produces the same number. Must be called inside an
+    atomic transaction (InvoiceCreateService.create() is already atomic).
+    """
+
+    company = models.OneToOneField(
+        "tenants.Company",
+        on_delete=models.CASCADE,
+        related_name="invoice_counter",
+    )
+    last_number = models.PositiveIntegerField(default=0)
+
+    def __str__(self) -> str:
+        return f"InvoiceCounter({self.company_id}): {self.last_number}"
+
+
 def generate_invoice_number(company) -> str:
     """
-    Generate a unique invoice number for a company.
+    Generate a concurrency-safe unique invoice number per company.
 
-    Format: INV-<COMPANY_CODE>-<SEQUENCE_PADDED>
+    Uses InvoiceCounter with select_for_update() to serialize concurrent calls
+    for the same company. Safe to call from within an existing atomic transaction
+    — the inner atomic() becomes a savepoint.
+
+    Skips numbers already taken by invoices created outside this function
+    (e.g., direct Invoice.objects.create() calls or pre-counter legacy data).
+
+    Format: INV-<COMPANY_CODE>-<SEQUENCE>
     Example: INV-N54-00042
     """
-    count = Invoice.objects.filter(company=company).count()
-    number = f"INV-{company.code.upper()}-{count + 1:05d}"
-    while Invoice.objects.filter(company=company, invoice_number=number).exists():
-        count += 1
-        number = f"INV-{company.code.upper()}-{count + 1:05d}"
-    return number
+    with transaction.atomic():
+        # get_or_create is race-safe: the OneToOneField unique constraint on
+        # InvoiceCounter.company prevents two concurrent creates from succeeding.
+        InvoiceCounter.objects.get_or_create(company=company, defaults={"last_number": 0})
+        # Re-fetch under lock to serialize increments within this transaction.
+        counter = InvoiceCounter.objects.select_for_update().get(company=company)
+        prefix = f"INV-{company.code.upper()}-"
+        next_num = counter.last_number + 1
+        # Skip numbers that are already taken to handle pre-counter invoices
+        # or invoices created by bypassing this function.
+        while Invoice.objects.filter(
+            company=company, invoice_number=f"{prefix}{next_num:05d}"
+        ).exists():
+            next_num += 1
+        counter.last_number = next_num
+        counter.save(update_fields=["last_number"])
+        return f"{prefix}{next_num:05d}"
 

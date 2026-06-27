@@ -21,6 +21,16 @@ from django.db import transaction
 logger = logging.getLogger(__name__)
 
 
+class PlatformFeeRecordingFailed(Exception):
+    """
+    Raised when a platform fee ledger entry cannot be written for a PAID invoice.
+
+    Callers must catch this explicitly and log at CRITICAL level — this exception
+    must NEVER be silently swallowed, as it represents potential revenue loss.
+    The invoice remains PAID; the fee must be backfilled manually.
+    """
+
+
 def _get_policy_fee_percent(company) -> Decimal:
     """Return platform_fee_percent for a company, or 0 if no policy."""
     try:
@@ -187,12 +197,18 @@ class PlatformFeeService:
                 description=f"کارمزد پلتفرم فاکتور {invoice.invoice_number}",
                 created_by=created_by,
             )
-        except Exception:
-            logger.exception(
-                "Failed to record platform fee for invoice %s — will need backfill.",
+        except Exception as exc:
+            logger.critical(
+                "PLATFORM FEE NOT RECORDED for invoice %s (payment %s, amount=%s rial) — "
+                "manual backfill is required: %s",
                 getattr(invoice, "id", None),
+                getattr(payment, "id", None),
+                amount,
+                exc,
             )
-            return None
+            raise PlatformFeeRecordingFailed(
+                f"Platform fee recording failed for invoice {getattr(invoice, 'id', None)}: {exc}"
+            ) from exc
 
     @staticmethod
     def record_manual_credit(
