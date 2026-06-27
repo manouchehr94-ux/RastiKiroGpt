@@ -47,11 +47,21 @@ This model covers exactly one pricing mode in Phase 1:
 
 - **Pricing type:** fixed rial amount per unit
 - **Unit of measurement:** `OrderItemDefinition.value_number` captured on the order
-- **Eligible items:** only `OrderItemDefinition.kind = NUMBER`
+- **Eligible items:** `OrderItemDefinition` with `kind = NUMBER` **and** `is_technician_wage_applicable = True`
 - **Rate granularity:** per technician per item definition
 - **Rate timing:** rate is read at order completion time
 - **Rate isolation:** after a wage ledger entry is posted, the rate can change freely without affecting past entries
-- **Non-eligible items:** MONEY, TEXT, BOOL item definitions cannot have a wage rate
+- **Non-eligible items:** MONEY, TEXT, BOOL item definitions cannot have a wage rate; NUMBER items with `is_technician_wage_applicable = False` are also excluded
+
+### Wage Applicability Flag Rule
+
+`OrderItemDefinition.is_technician_wage_applicable` (added TASK-010B-1):
+
+- Default: `False`
+- Only `kind = NUMBER` items may have this set to `True` (enforced by `clean()`)
+- During order completion (TASK-010B), only items with `is_technician_wage_applicable = True` will be checked for a `TechnicianServiceRate`
+- If such an item has no active rate, TASK-010B must emit a financial warning/log event (missing rate on expected wage item)
+- If `is_technician_wage_applicable = False`, missing rate is NOT a warning — the item intentionally produces no technician wage
 
 The model does **not** yet cover:
 

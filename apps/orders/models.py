@@ -229,12 +229,28 @@ class OrderItemDefinition(CompanyOwnedModel):
     kind = models.CharField(max_length=10, choices=Kind.choices)
     is_active = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(default=0)
+    is_technician_wage_applicable = models.BooleanField(
+        default=False,
+        help_text=(
+            "اگر فعال باشد، این آیتم در محاسبه اجرت تکنسین لحاظ می‌شود. "
+            "فقط برای آیتم‌های از نوع عدد (NUMBER) معتبر است."
+        ),
+    )
 
     class Meta:
         ordering = ("sort_order", "id")
 
     def __str__(self) -> str:
         return f"{self.title} ({self.get_kind_display()})"
+
+    def clean(self) -> None:
+        from django.core.exceptions import ValidationError
+        if self.is_technician_wage_applicable and self.kind != self.Kind.NUMBER:
+            raise ValidationError({
+                "is_technician_wage_applicable": (
+                    "فقط آیتم‌های از نوع عدد (NUMBER) می‌توانند مشمول اجرت تکنسین باشند."
+                )
+            })
 
 
 class OrderItemValue(models.Model):

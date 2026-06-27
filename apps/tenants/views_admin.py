@@ -2256,12 +2256,15 @@ def admin_base_item_create(request: HttpRequest, **kwargs) -> HttpResponse:
         ).first()
         title = request.POST.get("title", "").strip()
         kind = request.POST.get("kind", OrderItemDefinition.Kind.NUMBER)
+        is_wage_applicable = bool(request.POST.get("is_technician_wage_applicable"))
         if category is None:
             error = "رسته خدمات معتبر انتخاب کنید."
         elif not title:
             error = "عنوان آیتم سفارش الزامی است."
         elif kind not in dict(OrderItemDefinition.Kind.choices):
             error = "نوع آیتم معتبر نیست."
+        elif is_wage_applicable and kind != OrderItemDefinition.Kind.NUMBER:
+            error = "فقط آیتم‌های از نوع عدد می‌توانند مشمول اجرت تکنسین باشند."
         else:
             item = OrderItemDefinition.objects.create(
                 company=company,
@@ -2270,6 +2273,7 @@ def admin_base_item_create(request: HttpRequest, **kwargs) -> HttpResponse:
                 kind=kind,
                 sort_order=_parse_positive_int(request.POST.get("sort_order"), 0),
                 is_active=bool(request.POST.get("is_active")),
+                is_technician_wage_applicable=is_wage_applicable,
             )
             return redirect(f"/{company.code}/admin/base-data/items/")
 
@@ -2302,19 +2306,26 @@ def admin_base_item_edit(request: HttpRequest, item_id: int, **kwargs) -> HttpRe
         ).first()
         title = request.POST.get("title", "").strip()
         kind = request.POST.get("kind", item.kind)
+        is_wage_applicable = bool(request.POST.get("is_technician_wage_applicable"))
         if category is None:
             error = "رسته خدمات معتبر انتخاب کنید."
         elif not title:
             error = "عنوان آیتم سفارش الزامی است."
         elif kind not in dict(OrderItemDefinition.Kind.choices):
             error = "نوع آیتم معتبر نیست."
+        elif is_wage_applicable and kind != OrderItemDefinition.Kind.NUMBER:
+            error = "فقط آیتم‌های از نوع عدد می‌توانند مشمول اجرت تکنسین باشند."
         else:
             item.category = category
             item.title = title
             item.kind = kind
             item.sort_order = _parse_positive_int(request.POST.get("sort_order"), item.sort_order)
             item.is_active = bool(request.POST.get("is_active"))
-            item.save(update_fields=["category", "title", "kind", "sort_order", "is_active", "updated_at"])
+            item.is_technician_wage_applicable = is_wage_applicable
+            item.save(update_fields=[
+                "category", "title", "kind", "sort_order", "is_active",
+                "is_technician_wage_applicable", "updated_at",
+            ])
             return redirect(f"/{company.code}/admin/base-data/items/")
 
     return render(request, "tenants/admin_base_item_form.html", {
