@@ -64,13 +64,24 @@ class PaymentSplitDecisionService:
             tech_verified = bool(technician.shaba_verified)
             tech_sub_merchant_id = technician.sub_merchant_id or ""
 
-        # Split decision
+        # Split decision (policy + KYC gates)
         can_split = (
             payout_strategy == CompanyFinancialPolicy.PayoutStrategy.SPLIT_WITH_TECHNICIAN
             and tech_verified
             and bool(tech_sub_merchant_id)
             and tech_wage > 0
         )
+
+        # Gateway gate: only PLATFORM-owned gateways can physically execute PSP-level splits.
+        # Company-owned gateways route payments through the company's own merchant account;
+        # the platform has no authority to instruct a Shaparak split on them.
+        gateway_blocks_split = False
+        if can_split and payment is not None:
+            from apps.payments.models import PaymentGateway
+            gw = getattr(payment, "gateway", None)
+            if gw is not None and gw.owner_type != PaymentGateway.OwnerType.PLATFORM:
+                can_split = False
+                gateway_blocks_split = True
 
         if can_split:
             technician_direct_amount = tech_wage
@@ -81,7 +92,9 @@ class PaymentSplitDecisionService:
             technician_direct_amount = 0
             technician_ledger_amount = tech_wage
             company_deposit_amount = max(0, total_amount - platform_fee_amount)
-            if payout_strategy != CompanyFinancialPolicy.PayoutStrategy.SPLIT_WITH_TECHNICIAN:
+            if gateway_blocks_split:
+                reason = "gateway_is_company_owned_cannot_execute_platform_split"
+            elif payout_strategy != CompanyFinancialPolicy.PayoutStrategy.SPLIT_WITH_TECHNICIAN:
                 reason = "payout_strategy_is_direct_to_company"
             elif not tech_verified:
                 reason = "technician_not_verified"
