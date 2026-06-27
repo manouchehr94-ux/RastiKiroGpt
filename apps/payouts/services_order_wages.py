@@ -12,6 +12,41 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Exception hierarchy
+# ---------------------------------------------------------------------------
+
+class TechnicianWagePostingError(Exception):
+    """Base class for all technician wage posting errors."""
+
+
+class TechnicianWagePostingBusinessWarning(TechnicianWagePostingError):
+    """
+    Recoverable business condition encountered during wage posting.
+
+    Callers (OrderCompleteService) may catch this to log a warning and
+    allow order completion to continue.  Must NOT be used for data-integrity
+    or programming errors.
+
+    Note: missing active rate is NOT raised as this exception — it is handled
+    by logging a warning and recording the item in metadata.missing_rate_items.
+    This class is reserved for higher-level recoverable business conditions.
+    """
+
+
+class TechnicianWagePostingIntegrityError(TechnicianWagePostingError):
+    """
+    Data integrity or programming error during wage posting.
+
+    Must not be swallowed silently.  Will cause the enclosing
+    @transaction.atomic block to roll back.
+    """
+
+
+# ---------------------------------------------------------------------------
+# Service
+# ---------------------------------------------------------------------------
+
 class TechnicianWagePostingService:
     """
     Calculates and posts one TechnicianLedgerEntry CREDIT per completed order.
@@ -34,6 +69,11 @@ class TechnicianWagePostingService:
         Returns:
             []      — no entry created (no technician, no eligible items, zero wage)
             [entry] — one CREDIT TechnicianLedgerEntry created (or idempotency hit)
+
+        Raises:
+            TechnicianWagePostingBusinessWarning — recoverable business condition.
+            TechnicianWagePostingIntegrityError  — integrity / programming error.
+            (Other exceptions propagate as-is.)
         """
         from apps.payouts.models import TechnicianLedgerEntry, TechnicianServiceRate
         from apps.orders.models import OrderItemValue
@@ -106,6 +146,7 @@ class TechnicianWagePostingService:
             return []
 
         metadata = {
+            "metadata_version": 1,
             "posting_type": "technician_service_wage",
             "order_id": order.id,
             "technician_id": technician.id,
@@ -139,7 +180,7 @@ class TechnicianWagePostingService:
             amount_rial=total_wage,
             idempotency_key=idempotency_key,
             order=order,
-            description=f"اجرت خدمت سفارش #{order.id}",
+            description=f"اجرت خدمات انجام‌شده سفارش #{order.id}",
             metadata=metadata,
         )
 

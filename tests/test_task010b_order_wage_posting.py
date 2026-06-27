@@ -1,5 +1,6 @@
 """
 TASK-010B — Technician Service Wage Posting on Order Completion.
+TASK-010B-FIX-1 — Hardened error handling, metadata_version, description.
 
 Tests cover:
  1.  Single wage-applicable NUMBER item posts one CREDIT entry.
@@ -23,9 +24,16 @@ Tests cover:
 19.  Missing-rate item appears in metadata.missing_rate_items.
 20.  Calling TechnicianWagePostingService.post_for_order twice on the same completed
      order creates no duplicate (idempotency key).
+FIX1. Missing rate still does not fail order completion.
+FIX2. Missing rate still logs warning.
+FIX3. Missing rate does not create wage entry when no payable items exist.
+FIX4. Unexpected (non-business-warning) error propagates from OrderCompleteService.
+FIX5. metadata contains metadata_version = 1.
+FIX6. Ledger description matches the canonical Persian string.
 """
 import itertools
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -514,3 +522,94 @@ class WagePostingOrderCompleteIntegrationTest(TestCase):
         self.assertEqual(
             TechnicianLedgerEntry.objects.filter(order=order).count(), 0
         )
+
+    # ------------------------------------------------------------------
+    # FIX-1 hardening tests
+    # ------------------------------------------------------------------
+
+    def test_fix1_missing_rate_does_not_fail_order_completion(self):
+        """FIX1: Missing rate for a wage-applicable item does not raise or rollback."""
+        from apps.orders.services import OrderCompleteService
+
+        item = _item(self.company)
+        # No rate created — should log warning but not raise
+        order = _order(self.company, technician=self.technician, status=Order.Status.IN_PROGRESS)
+        _item_value(order, item, 3)
+
+        # Must not raise
+        with self.assertLogs("apps.payouts.services_order_wages", level="WARNING"):
+            OrderCompleteService.complete(order=order, completed_by=self.admin)
+
+        order.refresh_from_db()
+        self.assertEqual(order.status, Order.Status.DONE)
+
+    def test_fix2_missing_rate_logs_warning(self):
+        """FIX2: Missing active rate emits a WARNING-level log."""
+        item = _item(self.company)
+        order = _order(self.company, technician=self.technician)
+        _item_value(order, item, 1)
+
+        with self.assertLogs("apps.payouts.services_order_wages", level="WARNING") as cm:
+            TechnicianWagePostingService.post_for_order(order=order)
+
+        self.assertTrue(
+            any("no active rate" in msg for msg in cm.output),
+            "Expected 'no active rate' in warning log output",
+        )
+
+    def test_fix3_missing_rate_no_entry_when_all_items_unrated(self):
+        """FIX3: No CREDIT entry when all wage-applicable items have missing rates."""
+        item_a = _item(self.company)
+        item_b = _item(self.company)
+        # No rates for either
+        order = _order(self.company, technician=self.technician)
+        _item_value(order, item_a, 1)
+        _item_value(order, item_b, 2)
+
+        with self.assertLogs("apps.payouts.services_order_wages", level="WARNING"):
+            result = TechnicianWagePostingService.post_for_order(order=order)
+
+        self.assertEqual(result, [])
+        self.assertEqual(TechnicianLedgerEntry.objects.filter(order=order).count(), 0)
+
+    def test_fix4_unexpected_error_propagates_from_order_complete(self):
+        """FIX4: Non-business-warning error propagates out of OrderCompleteService.complete()."""
+        from apps.orders.services import OrderCompleteService
+        from apps.payouts.services_order_wages import TechnicianWagePostingIntegrityError
+
+        order = _order(self.company, technician=self.technician, status=Order.Status.IN_PROGRESS)
+
+        with patch.object(
+            TechnicianWagePostingService,
+            "post_for_order",
+            side_effect=TechnicianWagePostingIntegrityError("simulated integrity error"),
+        ):
+            with self.assertRaises(TechnicianWagePostingIntegrityError):
+                OrderCompleteService.complete(order=order, completed_by=self.admin)
+
+        # Transaction rolled back — order must still be IN_PROGRESS
+        order.refresh_from_db()
+        self.assertEqual(order.status, Order.Status.IN_PROGRESS)
+
+    def test_fix5_metadata_version_is_1(self):
+        """FIX5: metadata_version key equals 1 in every posted wage entry."""
+        item = _item(self.company)
+        _rate(self.company, self.technician, item, wage=1_000_000)
+        order = _order(self.company, technician=self.technician)
+        _item_value(order, item, 1)
+
+        result = TechnicianWagePostingService.post_for_order(order=order)
+
+        self.assertEqual(result[0].metadata["metadata_version"], 1)
+
+    def test_fix6_description_is_canonical_persian(self):
+        """FIX6: Ledger entry description matches the canonical Persian format."""
+        item = _item(self.company)
+        _rate(self.company, self.technician, item, wage=1_000_000)
+        order = _order(self.company, technician=self.technician)
+        _item_value(order, item, 1)
+
+        result = TechnicianWagePostingService.post_for_order(order=order)
+
+        expected = f"اجرت خدمات انجام‌شده سفارش #{order.id}"
+        self.assertEqual(result[0].description, expected)

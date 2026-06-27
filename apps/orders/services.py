@@ -209,14 +209,19 @@ class OrderCompleteService:
             note="Order completed.",
         )
 
-        # Post technician service wage (idempotent; non-fatal on unexpected errors)
+        # Post technician service wage (idempotent).
+        # Only TechnicianWagePostingBusinessWarning is caught here — all other
+        # errors propagate and roll back the enclosing @transaction.atomic.
+        from apps.payouts.services_order_wages import (
+            TechnicianWagePostingService,
+            TechnicianWagePostingBusinessWarning,
+        )
         try:
-            from apps.payouts.services_order_wages import TechnicianWagePostingService
             TechnicianWagePostingService.post_for_order(order=order)
-        except Exception:
-            logger.exception(
-                "TechnicianWagePostingService.post_for_order failed for order=%d",
-                order.id,
+        except TechnicianWagePostingBusinessWarning as exc:
+            logger.warning(
+                "Wage posting business warning for order=%d: %s",
+                order.id, exc,
             )
 
         # Create invoice placeholder
