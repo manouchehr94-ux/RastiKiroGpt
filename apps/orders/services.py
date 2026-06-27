@@ -10,11 +10,14 @@ IMPORTANT:
 - Services use transactions for data integrity
 - Services never handle HTTP request/response
 """
+import logging
 from decimal import Decimal
 from typing import Any, Optional
 
 from django.db import transaction
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 from apps.accounts.models import CompanyUser, Customer, Technician
 
@@ -205,6 +208,16 @@ class OrderCompleteService:
             changed_by=completed_by,
             note="Order completed.",
         )
+
+        # Post technician service wage (idempotent; non-fatal on unexpected errors)
+        try:
+            from apps.payouts.services_order_wages import TechnicianWagePostingService
+            TechnicianWagePostingService.post_for_order(order=order)
+        except Exception:
+            logger.exception(
+                "TechnicianWagePostingService.post_for_order failed for order=%d",
+                order.id,
+            )
 
         # Create invoice placeholder
         OrderCompleteService._create_invoice_placeholder(order=order)

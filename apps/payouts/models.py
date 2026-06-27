@@ -38,6 +38,7 @@ class TechnicianLedgerEntry(CompanyOwnedModel):
         DIRECT_GATEWAY_SETTLEMENT = "direct_gateway_settlement", "تسویه مستقیم درگاه"
         ADJUSTMENT = "adjustment", "تعدیل"
         REFUND = "refund", "بازگشت وجه"
+        TECHNICIAN_SERVICE_WAGE = "technician_service_wage", "اجرت خدمت تکنسین"
 
     technician = models.ForeignKey(
         "accounts.Technician",
