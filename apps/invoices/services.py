@@ -364,15 +364,30 @@ class InvoiceMarkPaidService:
         try:
             from apps.payouts.services import TechnicianLedgerService
             TechnicianLedgerService.create_invoice_entries(invoice, payment=payment)
-        except Exception:
+        except Exception as exc:
             # Ledger failure is CRITICAL: the invoice is PAID but the technician
             # wage entry is missing. Log prominently; do not crash the payment flow.
-            # Manual backfill is required.
             logger.critical(
                 "TECHNICIAN LEDGER NOT RECORDED for invoice %s — manual backfill required.",
                 getattr(invoice, "id", None),
                 exc_info=True,
             )
+            try:
+                from apps.payouts.services_backfill import FinancialBackfillService
+                FinancialBackfillService.create_task(
+                    company=invoice.company,
+                    task_type="technician_ledger",
+                    invoice=invoice,
+                    payment=payment,
+                    error_message=str(exc),
+                )
+            except Exception as backfill_exc:
+                logger.critical(
+                    "Failed to create technician_ledger backfill task for invoice %s: %s",
+                    getattr(invoice, "id", None),
+                    backfill_exc,
+                    exc_info=True,
+                )
 
         # Record platform fee only for payments through a platform-owned gateway.
         # PlatformFeeService enforces the same gate internally; this outer check
@@ -390,9 +405,24 @@ class InvoiceMarkPaidService:
             from apps.payouts.services_platform_fee import PlatformFeeService, PlatformFeeRecordingFailed
             try:
                 PlatformFeeService.record_invoice_fee(invoice, payment=payment)
-            except PlatformFeeRecordingFailed:
+            except PlatformFeeRecordingFailed as exc:
                 # PlatformFeeService already logged CRITICAL with full detail.
-                # Invoice remains PAID. Platform fee must be backfilled manually.
-                pass
+                # Invoice remains PAID. Create a backfill task for retry.
+                try:
+                    from apps.payouts.services_backfill import FinancialBackfillService
+                    FinancialBackfillService.create_task(
+                        company=invoice.company,
+                        task_type="platform_fee",
+                        invoice=invoice,
+                        payment=payment,
+                        error_message=str(exc),
+                    )
+                except Exception as backfill_exc:
+                    logger.critical(
+                        "Failed to create platform_fee backfill task for invoice %s: %s",
+                        getattr(invoice, "id", None),
+                        backfill_exc,
+                        exc_info=True,
+                    )
 
         return invoice

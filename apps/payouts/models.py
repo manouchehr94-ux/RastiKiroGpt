@@ -290,3 +290,73 @@ class CompanyPlatformFeeEntry(CompanyOwnedModel):
                             f"CompanyPlatformFeeEntry #{self.pk}: balance_after is immutable."
                         )
         super().save(*args, **kwargs)
+
+
+class FinancialBackfillTask(CompanyOwnedModel):
+    """
+    Tracks a failed financial write (ledger or platform fee) that must be retried.
+
+    Created by InvoiceMarkPaidService when TechnicianLedgerService or
+    PlatformFeeService fails to write. FinancialBackfillService.process_pending()
+    retries each task and marks it RESOLVED on success.
+
+    Idempotency: at most one PENDING or PROCESSING task may exist per
+    (company, task_type, invoice) combination. Enforced by create_task().
+    """
+
+    class TaskType(models.TextChoices):
+        TECHNICIAN_LEDGER = "technician_ledger", "Technician Ledger"
+        PLATFORM_FEE = "platform_fee", "Platform Fee"
+        PAYMENT_SPLIT_SNAPSHOT = "payment_split_snapshot", "Payment Split Snapshot"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
+        RESOLVED = "resolved", "Resolved"
+        FAILED = "failed", "Failed"
+
+    task_type = models.CharField(
+        max_length=30,
+        choices=TaskType.choices,
+        db_index=True,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    invoice = models.ForeignKey(
+        "invoices.Invoice",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="backfill_tasks",
+    )
+    payment = models.ForeignKey(
+        "payments.Payment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="backfill_tasks",
+    )
+    error_message = models.TextField(blank=True)
+    attempts = models.PositiveIntegerField(default=0)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["company", "status", "task_type"],
+                name="fbk_co_status_type_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return (
+            f"BackfillTask #{self.pk} [{self.task_type}] "
+            f"status={self.status} invoice={self.invoice_id}"
+        )
