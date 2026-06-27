@@ -323,6 +323,18 @@ class PaymentVerifyService:
                         payment.id,
                     )
 
+            # Post direct Shaparak settlement DEBIT if applicable (non-blocking).
+            try:
+                from apps.payouts.services_direct_settlement import (
+                    TechnicianDirectSettlementService,
+                )
+                TechnicianDirectSettlementService.post_for_payment(payment)
+            except Exception:
+                logger.exception(
+                    "TechnicianDirectSettlementService.post_for_payment failed for payment %s",
+                    payment.id,
+                )
+
             return True, "Payment verified successfully."
         else:
             # Mark payment as failed
