@@ -153,7 +153,67 @@ accurate even when the underlying master data changes.
 
 ---
 
-### 7. TASK-010C direct Shaparak settlement — DEBIT rule
+### 7. Ledger entries are created from business events, not from other ledger entries
+
+Every `TechnicianLedgerEntry` records one **business event**. The amount posted in that
+entry must come from the **authoritative source or snapshot of that event** — it must never
+be derived by reading a previously created ledger entry.
+
+Ledger entries may be related in meaning (e.g., an `online_gateway` CREDIT and a
+`direct_gateway_settlement` DEBIT both arise from the same payment), but their amounts are
+**financially independent**: each is computed from its own authoritative data source.
+
+**Authoritative source per business event:**
+
+| Business event | Entry created | Amount source |
+|---|---|---|
+| Order marked DONE | CREDIT `technician_service_wage` | `OrderItemValue.value_number × TechnicianServiceRate.fixed_wage_rial` (read at completion time) |
+| Invoice settled / paid | CREDIT `online_gateway` / `cash_from_customer` / `manual_payment` | `invoice.settled_technician_wage` (frozen by `InvoiceSettlementService.settle()`) |
+| Gateway split executed (Shaparak) | DEBIT `direct_gateway_settlement` | `PaymentSplitSnapshot.technician_direct_amount` (frozen at payment verification) |
+| Technician collects cash | DEBIT `cash_from_customer` | Actual cash amount recorded in the payment/metadata at collection time |
+| Manual company payout | DEBIT `manual_settlement` | Amount recorded by admin at the time of manual settlement |
+| Adjustment | CREDIT or DEBIT `adjustment` | Explicit amount set by authorised admin, with reason documented in metadata |
+
+**Anti-pattern — forbidden:**
+
+```
+# WRONG: reading a prior ledger entry to determine DEBIT amount
+credit = TechnicianLedgerEntry.objects.get(
+    source="online_gateway", order=order
+)
+debit_amount = credit.amount_rial  # ← DO NOT DO THIS
+```
+
+**Correct pattern — always read the snapshot:**
+
+```
+# CORRECT: read the frozen business-event snapshot
+snapshot = PaymentSplitSnapshot.objects.get(payment=payment)
+debit_amount = snapshot.technician_direct_amount  # ← authoritative source
+```
+
+**Why this rule matters:**
+
+- Ledger entries may be created out of order or retried by a backfill job. If entry B
+  reads entry A to determine its amount, a missing or delayed A produces a wrong B.
+- Snapshots (e.g., `PaymentSplitSnapshot`, `invoice.settled_technician_wage`) are written
+  atomically with the business event they describe. They are the single source of truth.
+- Reading a prior ledger entry introduces an implicit dependency that violates immutability
+  discipline: if entry A is ever reversed by an `ADJUSTMENT`, entry B's amount would be
+  wrong but not detectable.
+
+**TASK-010C application of this rule:**
+
+The `direct_gateway_settlement` DEBIT must read `PaymentSplitSnapshot.technician_direct_amount`.
+It must **not** look up the earlier `online_gateway` CREDIT amount, even though both entries
+relate to the same payment. The split snapshot is the authoritative record of what Shaparak
+actually settled; the ledger CREDIT is the accounting record of what the company owed.
+They happen to be equal in the common case, but they are derived from different sources and
+must remain independent.
+
+---
+
+### 8. TASK-010C direct Shaparak settlement — DEBIT rule (detail)
 
 When `PaymentSplitSnapshot.should_split_with_technician == True` after a successful online
 payment verification, the PSP (Shaparak) has wired money **directly** to the technician's
@@ -177,7 +237,7 @@ settled amount.
 
 ---
 
-### 8. Internal accounting stays strict; technician view stays simple
+### 9. Internal accounting stays strict; technician view stays simple
 
 The internal `TechnicianLedgerEntry` table enforces financial discipline:
 
@@ -198,7 +258,7 @@ entry types, reconciliation adjustments) without requiring changes to the statem
 
 ---
 
-### 9. Future additions (approved, not yet scheduled)
+### 10. Future additions (approved, not yet scheduled)
 
 The following capabilities are planned but not implemented:
 
