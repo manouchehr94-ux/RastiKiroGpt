@@ -61,6 +61,33 @@
     {% endif %}
 </div>
 
+{% if rate_formset %}
+<div class="nested-box">
+    <h3 class="section-title">تعرفه اجرت آیتم‌های سفارش</h3>
+    <p class="help-text">مبلغ ثابت اجرت تکنسین به ازای هر واحد از آیتم‌های قابل‌شمارش سفارش (ریال). فقط آیتم‌های عددی نمایش داده می‌شوند.</p>
+    {{ rate_formset.management_form }}
+    {% if rate_formset.non_form_errors %}
+    <div class="alert alert-error">{{ rate_formset.non_form_errors }}</div>
+    {% endif %}
+    <div class="table-wrapper"><table>
+        <thead><tr><th>آیتم سفارش</th><th>اجرت هر واحد (ریال)</th><th>فعال</th><th>حذف</th></tr></thead>
+        <tbody>
+        {% for rf in rate_formset %}
+        <tr>
+            <td>{{ rf.item_definition }}{% if rf.errors.item_definition %}<div class="help-text text-danger">{{ rf.errors.item_definition }}</div>{% endif %}</td>
+            <td>{{ rf.fixed_wage_rial }}{% if rf.errors.fixed_wage_rial %}<div class="help-text text-danger">{{ rf.errors.fixed_wage_rial }}</div>{% endif %}</td>
+            <td style="text-align:center">{{ rf.is_active }}</td>
+            <td style="text-align:center">{{ rf.DELETE }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% if not rate_formset.forms.0.fields.item_definition.queryset.count %}
+    <div class="alert alert-info">هنوز آیتم عددی برای این شرکت تعریف نشده است. ابتدا از بخش «ورود اطلاعات پایه» آیتم‌های سفارش را تعریف کنید.</div>
+    {% endif %}
+</div>
+{% endif %}
+
 <div class="nested-box">
     <h3 class="section-title">رسته‌های قابل انجام و اولویت نمایش سفارش</h3>
     <p class="help-text" class="mb-item">اولویت اینجا برای نمایش سفارش و ارسال نوتیفیکیشن به نیرو استفاده می‌شود؛ داخل فرم سفارش وارد نمی‌شود.</p>

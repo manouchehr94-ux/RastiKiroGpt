@@ -38,6 +38,7 @@ from .forms import (
     CompanyServiceForm,
     TechnicianCreateForm,
     TechnicianEditForm,
+    TechnicianRateFormSet,
 )
 from .models import CompanyService, ServiceRequest
 from .selectors import (
@@ -257,6 +258,34 @@ def _save_technician_category_priorities(*, technician: Technician, company, pos
         )
 
 
+def _save_rate_formset(rate_formset, *, company, technician) -> None:
+    """
+    Persist TechnicianServiceRate rows from a validated TechnicianRateFormSet.
+
+    Replaces all existing rates for this technician with the submitted data.
+    Must be called inside a transaction.atomic block.
+    Only processes rows that have both item_definition and fixed_wage_rial filled.
+    """
+    from apps.payouts.models import TechnicianServiceRate
+
+    TechnicianServiceRate.objects.filter(company=company, technician=technician).delete()
+    for form in rate_formset.forms:
+        if not form.cleaned_data or form.cleaned_data.get("DELETE"):
+            continue
+        item_def = form.cleaned_data.get("item_definition")
+        wage = form.cleaned_data.get("fixed_wage_rial")
+        if not item_def or wage is None:
+            continue
+        is_active = bool(form.cleaned_data.get("is_active", False))
+        TechnicianServiceRate.objects.create(
+            company=company,
+            technician=technician,
+            item_definition=item_def,
+            fixed_wage_rial=wage,
+            is_active=is_active,
+        )
+
+
 # =============================================================================
 # TECHNICIANS CRUD
 # =============================================================================
@@ -280,7 +309,10 @@ def admin_technician_create(request: HttpRequest, **kwargs) -> HttpResponse:
 
     if request.method == "POST":
         form = TechnicianCreateForm(request.POST)
-        if form.is_valid():
+        rate_formset = TechnicianRateFormSet(
+            request.POST, prefix="rates", form_kwargs={"company": company}
+        )
+        if form.is_valid() and rate_formset.is_valid():
             from apps.common.phone_utils import normalize_iran_mobile
 
             username = form.cleaned_data["username"].strip().lower()
@@ -293,42 +325,46 @@ def admin_technician_create(request: HttpRequest, **kwargs) -> HttpResponse:
             elif not username:
                 error = "نام کاربری الزامی است."
             else:
-                _tech_password = form.cleaned_data.get("password") or "123456"
-                user = CompanyUser.objects.create_user(
-                    username=username,
-                    password=_tech_password,
-                    company=company,
-                    role=UserRole.TECHNICIAN,
-                    phone=normalized_phone,
-                    first_name=form.cleaned_data["first_name"],
-                    last_name=form.cleaned_data["last_name"],
-                    must_change_password=(_tech_password == "123456"),
-                )
-                technician = Technician.objects.create(
-                    company=company,
-                    user=user,
-                    is_available=form.cleaned_data.get("is_available", True),
-                    service_wage_percent=_parse_wage_percent(request.POST.get("service_wage_percent", "0")),
-                    goods_wage_percent=_parse_wage_percent(request.POST.get("goods_wage_percent", "0")),
-                    travel_wage_percent=_parse_wage_percent(request.POST.get("travel_wage_percent", "0")),
-                    shaba_number=_parse_shaba(request.POST.get("shaba_number", "")),
-                )
-                # Create legacy free-text skills
-                skills_str = form.cleaned_data.get("skills", "")
-                if skills_str:
-                    for skill_name in skills_str.split(","):
-                        skill_name = skill_name.strip()
-                        if skill_name:
-                            TechnicianSkill.objects.get_or_create(
-                                company=company, technician=technician, name=skill_name,
-                                defaults={"level": "intermediate"},
-                            )
-                _save_technician_category_priorities(
-                    technician=technician, company=company, post_data=request.POST,
-                )
+                from django.db import transaction as _tx
+                with _tx.atomic():
+                    _tech_password = form.cleaned_data.get("password") or "123456"
+                    user = CompanyUser.objects.create_user(
+                        username=username,
+                        password=_tech_password,
+                        company=company,
+                        role=UserRole.TECHNICIAN,
+                        phone=normalized_phone,
+                        first_name=form.cleaned_data["first_name"],
+                        last_name=form.cleaned_data["last_name"],
+                        must_change_password=(_tech_password == "123456"),
+                    )
+                    technician = Technician.objects.create(
+                        company=company,
+                        user=user,
+                        is_available=form.cleaned_data.get("is_available", True),
+                        service_wage_percent=_parse_wage_percent(request.POST.get("service_wage_percent", "0")),
+                        goods_wage_percent=_parse_wage_percent(request.POST.get("goods_wage_percent", "0")),
+                        travel_wage_percent=_parse_wage_percent(request.POST.get("travel_wage_percent", "0")),
+                        shaba_number=_parse_shaba(request.POST.get("shaba_number", "")),
+                    )
+                    # Create legacy free-text skills
+                    skills_str = form.cleaned_data.get("skills", "")
+                    if skills_str:
+                        for skill_name in skills_str.split(","):
+                            skill_name = skill_name.strip()
+                            if skill_name:
+                                TechnicianSkill.objects.get_or_create(
+                                    company=company, technician=technician, name=skill_name,
+                                    defaults={"level": "intermediate"},
+                                )
+                    _save_technician_category_priorities(
+                        technician=technician, company=company, post_data=request.POST,
+                    )
+                    _save_rate_formset(rate_formset, company=company, technician=technician)
                 return redirect(f"/{company.code}/admin/technicians/")
     else:
         form = TechnicianCreateForm()
+        rate_formset = TechnicianRateFormSet(prefix="rates", form_kwargs={"company": company})
 
     from apps.tenants.models import CompanyServiceCategory
     categories = CompanyServiceCategory.objects.filter(company=company, is_active=True).order_by("sort_order", "title")
@@ -340,6 +376,7 @@ def admin_technician_create(request: HttpRequest, **kwargs) -> HttpResponse:
     return render(request, "tenants/admin_technician_form.html", {
         "company": company, "form": form, "error": error, "is_edit": False,
         "category_priority_rows": category_priority_rows,
+        "rate_formset": rate_formset,
     })
 
 
@@ -351,67 +388,74 @@ def admin_technician_edit(request: HttpRequest, technician_id: int, **kwargs) ->
     if not technician:
         raise Http404("تکنسین یافت نشد.")
 
+    from apps.payouts.models import TechnicianServiceRate
     error = ""
     if request.method == "POST":
         form = TechnicianEditForm(request.POST)
-        if form.is_valid():
+        rate_formset = TechnicianRateFormSet(
+            request.POST, prefix="rates", form_kwargs={"company": company}
+        )
+        if form.is_valid() and rate_formset.is_valid():
             from apps.common.phone_utils import normalize_iran_mobile
             new_phone_raw = form.cleaned_data["phone"].strip()
             new_phone = normalize_iran_mobile(new_phone_raw) or new_phone_raw
             if CompanyUser.objects.filter(phone=new_phone).exclude(id=technician.user_id).exists():
                 error = "کاربری دیگر با این شماره تلفن وجود دارد."
+                from apps.tenants.models import CompanyServiceCategory as _CSC
+                _cats = _CSC.objects.filter(company=company, is_active=True).order_by("sort_order", "title")
                 return render(request, "tenants/admin_technician_form.html", {
                     "company": company, "form": form, "error": error, "is_edit": True, "technician": technician,
                     "category_priority_rows": [
-                        {"category": category, "priority": request.POST.get(f"category_priority_{category.id}", "")}
-                        for category in __import__("apps.tenants.models", fromlist=["CompanyServiceCategory"]).CompanyServiceCategory.objects.filter(company=company, is_active=True).order_by("sort_order", "title")
+                        {"category": cat, "priority": request.POST.get(f"category_priority_{cat.id}", "")}
+                        for cat in _cats
                     ],
+                    "rate_formset": rate_formset,
                 })
 
-            technician.user.phone = new_phone
-            technician.user.first_name = form.cleaned_data["first_name"]
-            technician.user.last_name = form.cleaned_data["last_name"]
-            new_password = form.cleaned_data.get("password", "").strip()
-            if new_password:
-                technician.user.set_password(new_password)
-            technician.user.save()
-            technician.is_available = form.cleaned_data.get("is_available", True)
-            technician.service_wage_percent = _parse_wage_percent(request.POST.get("service_wage_percent", "0"))
-            technician.goods_wage_percent = _parse_wage_percent(request.POST.get("goods_wage_percent", "0"))
-            technician.travel_wage_percent = _parse_wage_percent(request.POST.get("travel_wage_percent", "0"))
-            new_shaba = _parse_shaba(request.POST.get("shaba_number", ""))
-            if new_shaba != technician.shaba_number:
-                # SHABA changed — reset verification so platform owner re-reviews
-                technician.shaba_number = new_shaba
-                if new_shaba:
-                    from apps.accounts.models import Technician as _Tech
-                    technician.financial_verification_status = _Tech.FinancialVerificationStatus.PENDING
-                    technician.shaba_verified = False
-                    technician.shaba_verified_at = None
-                else:
-                    from apps.accounts.models import Technician as _Tech
-                    technician.financial_verification_status = _Tech.FinancialVerificationStatus.NOT_SUBMITTED
-                    technician.shaba_verified = False
-                    technician.shaba_verified_at = None
-            technician.save(update_fields=[
-                "is_available", "service_wage_percent", "goods_wage_percent", "travel_wage_percent",
-                "shaba_number", "shaba_verified", "shaba_verified_at", "financial_verification_status",
-                "updated_at",
-            ])
-            # Update skills
-            skills_str = form.cleaned_data.get("skills", "")
-            TechnicianSkill.objects.filter(company=company, technician=technician).delete()
-            if skills_str:
-                for skill_name in skills_str.split(","):
-                    skill_name = skill_name.strip()
-                    if skill_name:
-                        TechnicianSkill.objects.create(
-                            company=company, technician=technician,
-                            name=skill_name, level="intermediate",
-                        )
-            _save_technician_category_priorities(
-                technician=technician, company=company, post_data=request.POST,
-            )
+            from django.db import transaction as _tx
+            with _tx.atomic():
+                technician.user.phone = new_phone
+                technician.user.first_name = form.cleaned_data["first_name"]
+                technician.user.last_name = form.cleaned_data["last_name"]
+                new_password = form.cleaned_data.get("password", "").strip()
+                if new_password:
+                    technician.user.set_password(new_password)
+                technician.user.save()
+                technician.is_available = form.cleaned_data.get("is_available", True)
+                technician.service_wage_percent = _parse_wage_percent(request.POST.get("service_wage_percent", "0"))
+                technician.goods_wage_percent = _parse_wage_percent(request.POST.get("goods_wage_percent", "0"))
+                technician.travel_wage_percent = _parse_wage_percent(request.POST.get("travel_wage_percent", "0"))
+                new_shaba = _parse_shaba(request.POST.get("shaba_number", ""))
+                if new_shaba != technician.shaba_number:
+                    technician.shaba_number = new_shaba
+                    if new_shaba:
+                        technician.financial_verification_status = Technician.FinancialVerificationStatus.PENDING
+                        technician.shaba_verified = False
+                        technician.shaba_verified_at = None
+                    else:
+                        technician.financial_verification_status = Technician.FinancialVerificationStatus.NOT_SUBMITTED
+                        technician.shaba_verified = False
+                        technician.shaba_verified_at = None
+                technician.save(update_fields=[
+                    "is_available", "service_wage_percent", "goods_wage_percent", "travel_wage_percent",
+                    "shaba_number", "shaba_verified", "shaba_verified_at", "financial_verification_status",
+                    "updated_at",
+                ])
+                # Update skills
+                skills_str = form.cleaned_data.get("skills", "")
+                TechnicianSkill.objects.filter(company=company, technician=technician).delete()
+                if skills_str:
+                    for skill_name in skills_str.split(","):
+                        skill_name = skill_name.strip()
+                        if skill_name:
+                            TechnicianSkill.objects.create(
+                                company=company, technician=technician,
+                                name=skill_name, level="intermediate",
+                            )
+                _save_technician_category_priorities(
+                    technician=technician, company=company, post_data=request.POST,
+                )
+                _save_rate_formset(rate_formset, company=company, technician=technician)
             return redirect(f"/{company.code}/admin/technicians/")
     else:
         skills = ", ".join(
@@ -425,6 +469,20 @@ def admin_technician_edit(request: HttpRequest, technician_id: int, **kwargs) ->
             "is_available": technician.is_available,
             "skills": skills,
         })
+        existing_rates = TechnicianServiceRate.objects.filter(
+            company=company, technician=technician
+        ).select_related("item_definition").order_by("item_definition__title")
+        rate_initial = [
+            {
+                "item_definition": r.item_definition_id,
+                "fixed_wage_rial": r.fixed_wage_rial,
+                "is_active": r.is_active,
+            }
+            for r in existing_rates
+        ]
+        rate_formset = TechnicianRateFormSet(
+            prefix="rates", initial=rate_initial, form_kwargs={"company": company}
+        )
 
     from apps.tenants.models import CompanyServiceCategory
     categories = CompanyServiceCategory.objects.filter(company=company, is_active=True).order_by("sort_order", "title")
@@ -440,6 +498,7 @@ def admin_technician_edit(request: HttpRequest, technician_id: int, **kwargs) ->
     return render(request, "tenants/admin_technician_form.html", {
         "company": company, "form": form, "error": error, "is_edit": True, "technician": technician,
         "category_priority_rows": category_priority_rows,
+        "rate_formset": rate_formset,
     })
 
 

@@ -127,3 +127,76 @@ class TechnicianEditForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "مهارت‌ها (با کاما جدا کنید)"}),
     )
+
+
+class TechnicianServiceRateForm(forms.Form):
+    """One row in the technician service rate inline table."""
+
+    item_definition = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        empty_label="— انتخاب آیتم —",
+        widget=forms.Select(attrs={"class": "form-control form-control-sm"}),
+    )
+    fixed_wage_rial = forms.IntegerField(
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(
+            attrs={"class": "form-control form-control-sm", "placeholder": "مثلاً 4000000"}
+        ),
+    )
+    is_active = forms.BooleanField(required=False)
+
+    def __init__(self, *args, company=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        from apps.orders.models import OrderItemDefinition
+
+        if company is not None:
+            self.fields["item_definition"].queryset = (
+                OrderItemDefinition.objects.filter(
+                    company=company,
+                    kind=OrderItemDefinition.Kind.NUMBER,
+                    is_active=True,
+                )
+                .select_related("category")
+                .order_by("category__title", "title")
+            )
+        else:
+            self.fields["item_definition"].queryset = OrderItemDefinition.objects.none()
+
+    def clean(self):
+        cleaned = super().clean()
+        item_def = cleaned.get("item_definition")
+        wage = cleaned.get("fixed_wage_rial")
+        if not item_def and wage is None:
+            return cleaned  # empty row — skip silently
+        if item_def and wage is None:
+            self.add_error("fixed_wage_rial", "مبلغ اجرت را وارد کنید.")
+        if wage is not None and not item_def:
+            self.add_error("item_definition", "آیتم سفارش را انتخاب کنید.")
+        return cleaned
+
+
+class _BaseTechRateFormSet(forms.BaseFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        seen = set()
+        for form in self.forms:
+            if not form.cleaned_data or form.cleaned_data.get("DELETE"):
+                continue
+            item_def = form.cleaned_data.get("item_definition")
+            if item_def:
+                if item_def.pk in seen:
+                    raise forms.ValidationError(
+                        "آیتم تکراری: یک آیتم سفارش را نمی‌توان چندبار برای یک تکنسین تعریف کرد."
+                    )
+                seen.add(item_def.pk)
+
+
+TechnicianRateFormSet = forms.formset_factory(
+    TechnicianServiceRateForm,
+    formset=_BaseTechRateFormSet,
+    extra=3,
+    can_delete=True,
+)
