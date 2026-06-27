@@ -360,3 +360,78 @@ class FinancialBackfillTask(CompanyOwnedModel):
             f"BackfillTask #{self.pk} [{self.task_type}] "
             f"status={self.status} invoice={self.invoice_id}"
         )
+
+
+class TechnicianServiceRate(CompanyOwnedModel):
+    """
+    Fixed rial wage per countable order item for a specific technician.
+
+    Rates are read at order completion time and frozen in the ledger entry.
+    Changing a rate after an order is completed never affects past ledger rows.
+
+    Only OrderItemDefinition with kind=NUMBER may have a rate — non-countable
+    item types (MONEY, TEXT, BOOL) do not represent billable service units.
+    """
+
+    technician = models.ForeignKey(
+        "accounts.Technician",
+        on_delete=models.CASCADE,
+        related_name="service_rates",
+    )
+    item_definition = models.ForeignKey(
+        "orders.OrderItemDefinition",
+        on_delete=models.CASCADE,
+        related_name="technician_rates",
+    )
+    fixed_wage_rial = models.PositiveBigIntegerField(
+        help_text="مبلغ ثابت اجرت تکنسین به ازای هر واحد این آیتم سفارش، به ریال",
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["technician", "item_definition"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["company", "technician", "item_definition"],
+                name="unique_tech_rate_per_item",
+            ),
+            models.CheckConstraint(
+                check=models.Q(fixed_wage_rial__gte=0),
+                name="tech_rate_wage_non_negative",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        tech_name = getattr(getattr(self, "technician", None), "user", None)
+        tech_label = tech_name.get_full_name() if tech_name else f"Tech#{self.technician_id}"
+        item_label = getattr(getattr(self, "item_definition", None), "title", f"Item#{self.item_definition_id}")
+        return f"{tech_label} / {item_label} = {self.fixed_wage_rial:,} ریال"
+
+    def clean(self) -> None:
+        from django.core.exceptions import ValidationError
+
+        errors = {}
+
+        if self.technician_id and self.company_id:
+            tech = self.technician
+            if tech.company_id != self.company_id:
+                errors["technician"] = "تکنسین باید به همین شرکت تعلق داشته باشد."
+
+        if self.item_definition_id and self.company_id:
+            defn = self.item_definition
+            if defn.company_id != self.company_id:
+                errors["item_definition"] = "آیتم سفارش باید به همین شرکت تعلق داشته باشد."
+
+        if self.item_definition_id:
+            defn = self.item_definition
+            if defn.kind != "number":
+                errors["item_definition"] = (
+                    "تنها آیتم‌های از نوع عدد (NUMBER) می‌توانند نرخ اجرت داشته باشند."
+                )
+            elif self.is_active and not defn.is_active:
+                errors["item_definition"] = (
+                    "نمی‌توان برای آیتم غیرفعال، نرخ اجرت فعال ثبت کرد."
+                )
+
+        if errors:
+            raise ValidationError(errors)
