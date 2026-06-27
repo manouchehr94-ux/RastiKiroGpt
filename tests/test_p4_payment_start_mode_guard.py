@@ -275,13 +275,22 @@ class PaymentEnabledFlagBlockTest(TestCase, PaymentModeGuardTestMixin):
         self.invoice = self.create_issued_invoice(self.company)
 
     def test_is_online_payment_enabled_false_blocks_payment_start(self):
-        """is_online_payment_enabled=False raises ValueError even when mode+status are active."""
-        self.create_payment_settings(
+        """Defense-in-depth: inconsistent is_online_payment_enabled=False blocks payment.
+
+        The CompanyPaymentSettings.save() hook keeps is_online_payment_enabled in sync
+        with payment_mode + gateway_activation_status, so this inconsistent state cannot
+        arise via normal save(). We force it via QuerySet.update() to verify the
+        PaymentStartService check acts as a defense-in-depth guard.
+        """
+        ps = self.create_payment_settings(
             self.company,
             mode=CompanyPaymentSettings.PaymentMode.COMPANY_GATEWAY,
             status=CompanyPaymentSettings.ActivationStatus.ACTIVE,
             enabled=False,
         )
+        # save() sync sets is_online_payment_enabled=True; bypass it to inject
+        # the inconsistent state and verify PaymentStartService catches it.
+        CompanyPaymentSettings.objects.filter(pk=ps.pk).update(is_online_payment_enabled=False)
 
         with self.assertRaises(ValueError) as ctx:
             self.PaymentStartService.start(

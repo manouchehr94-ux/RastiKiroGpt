@@ -613,6 +613,21 @@ class CompanyPaymentSettings(models.Model):
         verbose_name = "Company Payment Settings"
         verbose_name_plural = "Company Payment Settings"
 
+    def save(self, *args, **kwargs):
+        # Keep is_online_payment_enabled in sync with the two authoritative fields.
+        # This ensures no code path can produce an inconsistent trio:
+        #   payment_mode=DISABLED + is_online_payment_enabled=True
+        #   gateway_activation_status=INACTIVE + is_online_payment_enabled=True
+        self.is_online_payment_enabled = (
+            self.payment_mode != self.PaymentMode.DISABLED
+            and self.gateway_activation_status == self.ActivationStatus.ACTIVE
+        )
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "is_online_payment_enabled" not in update_fields:
+            # Extend caller's update_fields to persist the recomputed value.
+            kwargs["update_fields"] = list(update_fields) + ["is_online_payment_enabled"]
+        super().save(*args, **kwargs)
+
     def __str__(self) -> str:
         return f"PaymentSettings: {self.company.name} [{self.payment_mode} / {self.gateway_activation_status}]"
 

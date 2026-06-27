@@ -132,7 +132,9 @@ class CustomerInvoiceListFilterTest(TestCase):
         self.order = _order(self.company)
 
     def _make(self, status):
-        return _invoice(self.company, self.order, customer=self.customer, status=status)
+        # Each invoice needs its own order: the DB constraint allows only one
+        # DRAFT or ISSUED invoice per order at a time.
+        return _invoice(self.company, _order(self.company), customer=self.customer, status=status)
 
     def test_draft_invoice_excluded_from_customer_list(self):
         """Test 1: DRAFT invoice must not appear in the customer queryset."""
@@ -317,9 +319,11 @@ class PublicInvoicePrintAccessTest(TestCase):
         Regression: invoice_print and public_invoice_detail must block
         the same statuses. Previously invoice_print did not block DRAFT.
         """
-        draft_inv = _invoice(self.company, self.order, status=Invoice.Status.DRAFT)
-        cancelled_inv = _invoice(self.company, self.order, status=Invoice.Status.CANCELLED)
-        issued_inv = _invoice(self.company, self.order, status=Invoice.Status.ISSUED)
+        # Each invoice needs its own order: the DB constraint allows only one
+        # DRAFT or ISSUED invoice per order at a time.
+        draft_inv = _invoice(self.company, _order(self.company), status=Invoice.Status.DRAFT)
+        cancelled_inv = _invoice(self.company, _order(self.company), status=Invoice.Status.CANCELLED)
+        issued_inv = _invoice(self.company, _order(self.company), status=Invoice.Status.ISSUED)
 
         def _public_detail(invoice):
             rf = RequestFactory()
