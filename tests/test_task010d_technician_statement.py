@@ -2,8 +2,9 @@
 TASK-010D — Technician Statement Service.
 
 TechnicianStatementService.build() is a purely transformational layer:
-it converts immutable TechnicianLedgerEntry rows into an ordered list of
-human-readable statement dicts. No financial writes, no amount recomputation.
+it converts immutable TechnicianLedgerEntry rows into a structured statement
+dict with a rows list and a summary block. No financial writes, no amount
+recomputation.
 
 Tests:
  1. Single CREDIT entry → correct row fields
@@ -20,7 +21,7 @@ Tests:
 12. Calling build() twice does not mutate any ledger entry
 13. Empty result when technician has no entries
 14. Multi-source statement matches ADR-006 example (work + invoice + cash + shaparak)
-15. balance_after from ledger is used directly (not recomputed from scratch)
+15. balance_after from ledger is used directly (not recomputed here)
 """
 import datetime
 import itertools
@@ -108,6 +109,11 @@ def _set_date(entry, date_obj):
     return entry
 
 
+def _rows(technician, **kwargs):
+    """Return the rows list from build()."""
+    return TechnicianStatementService.build(technician, **kwargs)["rows"]
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -122,7 +128,7 @@ class TechnicianStatementServiceTest(TestCase):
         """Single CREDIT entry produces correct row keys and values."""
         entry = _credit(self.company, self.tech, 2_000,
                         source=TechnicianLedgerEntry.Source.TECHNICIAN_SERVICE_WAGE)
-        rows = TechnicianStatementService.build(self.tech)
+        rows = _rows(self.tech)
 
         self.assertEqual(len(rows), 1)
         row = rows[0]
@@ -142,7 +148,7 @@ class TechnicianStatementServiceTest(TestCase):
         _credit(self.company, self.tech, 5_000)
         entry = _debit(self.company, self.tech, 3_000,
                        source=TechnicianLedgerEntry.Source.DIRECT_GATEWAY_SETTLEMENT)
-        rows = TechnicianStatementService.build(self.tech)
+        rows = _rows(self.tech)
 
         debit_row = rows[1]
         self.assertEqual(debit_row["debit"], 3_000)
@@ -157,15 +163,14 @@ class TechnicianStatementServiceTest(TestCase):
         e3 = _debit(self.company, self.tech, 500)
         e4 = _debit(self.company, self.tech, 3_500)
 
-        rows = TechnicianStatementService.build(self.tech)
+        rows = _rows(self.tech)
         self.assertEqual(len(rows), 4)
 
-        self.assertEqual(rows[0]["balance_after"], e1.balance_after)   # 2000
-        self.assertEqual(rows[1]["balance_after"], e2.balance_after)   # 5500
-        self.assertEqual(rows[2]["balance_after"], e3.balance_after)   # 5000
-        self.assertEqual(rows[3]["balance_after"], e4.balance_after)   # 1500
+        self.assertEqual(rows[0]["balance_after"], e1.balance_after)
+        self.assertEqual(rows[1]["balance_after"], e2.balance_after)
+        self.assertEqual(rows[2]["balance_after"], e3.balance_after)
+        self.assertEqual(rows[3]["balance_after"], e4.balance_after)
 
-        # Verify the ledger produced the expected absolute values
         self.assertEqual(rows[0]["balance_after"], 2_000)
         self.assertEqual(rows[1]["balance_after"], 5_500)
         self.assertEqual(rows[2]["balance_after"], 5_000)
@@ -173,15 +178,13 @@ class TechnicianStatementServiceTest(TestCase):
 
     def test_04_rows_ordered_oldest_first(self):
         """Rows are returned in ascending created_at, id order."""
-        e1 = _credit(self.company, self.tech, 100)
-        e2 = _credit(self.company, self.tech, 200)
-        e3 = _credit(self.company, self.tech, 300)
+        _credit(self.company, self.tech, 100)
+        _credit(self.company, self.tech, 200)
+        _credit(self.company, self.tech, 300)
 
-        rows = TechnicianStatementService.build(self.tech)
-        ids = [r["source"] for r in rows]  # proxy — each uses same source
-        # Verify amount order matches creation order
+        rows = _rows(self.tech)
         self.assertEqual([r["credit"] for r in rows], [100, 200, 300])
-        # Verify IDs from entry objects are ascending
+
         pks = list(
             TechnicianLedgerEntry.objects
             .filter(company=self.company, technician=self.tech)
@@ -197,7 +200,7 @@ class TechnicianStatementServiceTest(TestCase):
         _debit(self.company, self.tech, 500)
         _debit(self.company, self.tech, 750)
 
-        rows = TechnicianStatementService.build(self.tech)
+        rows = _rows(self.tech)
         credits = rows[:2]
         debits = rows[2:]
 
@@ -210,27 +213,25 @@ class TechnicianStatementServiceTest(TestCase):
 
     def test_06_all_source_types_produce_nonempty_description(self):
         """Every defined Source value yields a non-empty description."""
-        sources = [
-            (TechnicianLedgerEntry.Source.TECHNICIAN_SERVICE_WAGE, True),
-            (TechnicianLedgerEntry.Source.ONLINE_GATEWAY, True),
-            (TechnicianLedgerEntry.Source.REFUND, True),
-            (TechnicianLedgerEntry.Source.ADJUSTMENT, True),
-        ]
-        debit_sources = [
-            (TechnicianLedgerEntry.Source.CASH_FROM_CUSTOMER, False),
-            (TechnicianLedgerEntry.Source.DIRECT_GATEWAY_SETTLEMENT, False),
-            (TechnicianLedgerEntry.Source.MANUAL_PAYMENT, False),
-            (TechnicianLedgerEntry.Source.MANUAL_SETTLEMENT, False),
-        ]
-        # Ensure positive balance before debits
         _credit(self.company, self.tech, 1_000_000)
 
-        for source, is_credit in sources:
+        for source in [
+            TechnicianLedgerEntry.Source.TECHNICIAN_SERVICE_WAGE,
+            TechnicianLedgerEntry.Source.ONLINE_GATEWAY,
+            TechnicianLedgerEntry.Source.REFUND,
+            TechnicianLedgerEntry.Source.ADJUSTMENT,
+        ]:
             _credit(self.company, self.tech, 10, source=source)
-        for source, _ in debit_sources:
+
+        for source in [
+            TechnicianLedgerEntry.Source.CASH_FROM_CUSTOMER,
+            TechnicianLedgerEntry.Source.DIRECT_GATEWAY_SETTLEMENT,
+            TechnicianLedgerEntry.Source.MANUAL_PAYMENT,
+            TechnicianLedgerEntry.Source.MANUAL_SETTLEMENT,
+        ]:
             _debit(self.company, self.tech, 10, source=source)
 
-        rows = TechnicianStatementService.build(self.tech)
+        rows = _rows(self.tech)
         for row in rows:
             self.assertTrue(row["description"], f"Empty description for source={row['source']}")
 
@@ -241,7 +242,7 @@ class TechnicianStatementServiceTest(TestCase):
             source=TechnicianLedgerEntry.Source.TECHNICIAN_SERVICE_WAGE,
             description="کارکرد سفارش #99",
         )
-        rows = TechnicianStatementService.build(self.tech)
+        rows = _rows(self.tech)
         self.assertEqual(rows[0]["description"], "کارکرد سفارش #99")
 
     def test_08_date_filter_from_date_excludes_earlier_entries(self):
@@ -251,9 +252,7 @@ class TechnicianStatementServiceTest(TestCase):
         _set_date(old, datetime.date(2025, 1, 1))
         _set_date(new, datetime.date(2025, 6, 1))
 
-        rows = TechnicianStatementService.build(
-            self.tech, from_date=datetime.date(2025, 3, 1)
-        )
+        rows = _rows(self.tech, from_date=datetime.date(2025, 3, 1))
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["credit"], 200)
 
@@ -264,9 +263,7 @@ class TechnicianStatementServiceTest(TestCase):
         _set_date(early, datetime.date(2025, 1, 1))
         _set_date(late, datetime.date(2025, 6, 1))
 
-        rows = TechnicianStatementService.build(
-            self.tech, to_date=datetime.date(2025, 3, 1)
-        )
+        rows = _rows(self.tech, to_date=datetime.date(2025, 3, 1))
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["credit"], 100)
 
@@ -279,7 +276,7 @@ class TechnicianStatementServiceTest(TestCase):
         _set_date(e2, datetime.date(2025, 4, 15))
         _set_date(e3, datetime.date(2025, 9, 1))
 
-        rows = TechnicianStatementService.build(
+        rows = _rows(
             self.tech,
             from_date=datetime.date(2025, 3, 1),
             to_date=datetime.date(2025, 6, 30),
@@ -295,8 +292,8 @@ class TechnicianStatementServiceTest(TestCase):
         _credit(self.company, self.tech, 1_000)
         _credit(company_b, tech_b, 9_999)
 
-        rows_a = TechnicianStatementService.build(self.tech)
-        rows_b = TechnicianStatementService.build(tech_b)
+        rows_a = _rows(self.tech)
+        rows_b = _rows(tech_b)
 
         self.assertEqual(len(rows_a), 1)
         self.assertEqual(rows_a[0]["credit"], 1_000)
@@ -327,9 +324,12 @@ class TechnicianStatementServiceTest(TestCase):
         self.assertEqual(before, after)
 
     def test_13_empty_result_for_technician_with_no_entries(self):
-        """build() returns [] when the technician has no ledger entries."""
-        rows = TechnicianStatementService.build(self.tech)
-        self.assertEqual(rows, [])
+        """build() returns empty rows and zero summary when technician has no entries."""
+        result = TechnicianStatementService.build(self.tech)
+        self.assertEqual(result["rows"], [])
+        self.assertEqual(result["summary"]["total_credit"], 0)
+        self.assertEqual(result["summary"]["total_debit"], 0)
+        self.assertEqual(result["summary"]["final_balance"], 0)
 
     def test_14_adr006_example_multi_source_statement(self):
         """ADR-006 example: work + invoice share + cash + shaparak matches expected balances."""
@@ -342,18 +342,18 @@ class TechnicianStatementServiceTest(TestCase):
         _debit(self.company, self.tech, 3_500,
                source=TechnicianLedgerEntry.Source.DIRECT_GATEWAY_SETTLEMENT)
 
-        rows = TechnicianStatementService.build(self.tech)
+        rows = _rows(self.tech)
         self.assertEqual(len(rows), 4)
 
         expected = [
-            {"credit": 2_000, "debit": 0, "balance_after": 2_000},
-            {"credit": 3_500, "debit": 0, "balance_after": 5_500},
+            {"credit": 2_000, "debit": 0,     "balance_after": 2_000},
+            {"credit": 3_500, "debit": 0,     "balance_after": 5_500},
             {"credit": 0,     "debit": 500,   "balance_after": 5_000},
             {"credit": 0,     "debit": 3_500, "balance_after": 1_500},
         ]
         for i, (row, exp) in enumerate(zip(rows, expected)):
-            self.assertEqual(row["credit"],       exp["credit"],       f"row {i} credit")
-            self.assertEqual(row["debit"],        exp["debit"],        f"row {i} debit")
+            self.assertEqual(row["credit"],        exp["credit"],        f"row {i} credit")
+            self.assertEqual(row["debit"],         exp["debit"],         f"row {i} debit")
             self.assertEqual(row["balance_after"], exp["balance_after"], f"row {i} balance_after")
 
     def test_15_balance_after_is_read_from_ledger_not_recomputed(self):
@@ -361,21 +361,7 @@ class TechnicianStatementServiceTest(TestCase):
         e1 = _credit(self.company, self.tech, 1_000)
         e2 = _debit(self.company, self.tech, 400)
 
-        rows = TechnicianStatementService.build(self.tech)
+        rows = _rows(self.tech)
 
-        # Fetch stored values directly from DB
-        stored = {
-            e.pk: e.balance_after
-            for e in TechnicianLedgerEntry.objects.filter(
-                company=self.company, technician=self.tech
-            )
-        }
-
-        for row in rows:
-            # Re-fetch the matching entry by balance_after value to compare
-            # (we have two rows; their balance_afters must match the DB values)
-            self.assertIn(row["balance_after"], stored.values())
-
-        # Spot-check exact values
         self.assertEqual(rows[0]["balance_after"], e1.balance_after)
         self.assertEqual(rows[1]["balance_after"], e2.balance_after)
