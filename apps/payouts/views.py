@@ -8,7 +8,9 @@ import uuid
 
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 
 from apps.accounts.models import Technician
 from apps.accounts.permissions import require_tenant_role
@@ -168,3 +170,82 @@ def technician_statement(request, technician_id: int, company_code=None):
             "to_date": to_date_raw,
         },
     })
+
+
+@login_required
+@require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
+def technician_statement_print(request, technician_id: int, company_code=None):
+    """Print-optimised HTML statement page. Same filters as main statement view."""
+    company = request.company
+    technician = get_object_or_404(Technician, id=technician_id, company=company)
+    from_date = _parse_statement_date((request.GET.get("from_date") or "").strip())
+    to_date = _parse_statement_date((request.GET.get("to_date") or "").strip())
+    statement = TechnicianStatementService.build(technician, from_date=from_date, to_date=to_date)
+    return render(request, "payouts/technician_statement_print.html", {
+        "company": company,
+        "technician": technician,
+        "statement": statement,
+        "from_date": from_date,
+        "to_date": to_date,
+    })
+
+
+@login_required
+@require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
+def technician_statement_pdf(request, technician_id: int, company_code=None):
+    """PDF download of the technician statement via WeasyPrint."""
+    company = request.company
+    technician = get_object_or_404(Technician, id=technician_id, company=company)
+    from_date = _parse_statement_date((request.GET.get("from_date") or "").strip())
+    to_date = _parse_statement_date((request.GET.get("to_date") or "").strip())
+    statement = TechnicianStatementService.build(technician, from_date=from_date, to_date=to_date)
+    html_string = render_to_string("payouts/technician_statement_print.html", {
+        "company": company,
+        "technician": technician,
+        "statement": statement,
+        "from_date": from_date,
+        "to_date": to_date,
+    }, request=request)
+    from weasyprint import HTML as WeasyHTML
+    pdf_bytes = WeasyHTML(string=html_string).write_pdf()
+    tech_name = statement.get("technician_name", f"tech_{technician_id}").replace(" ", "_")
+    filename = f"statement_{company.code}_{tech_name}.pdf"
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
+@require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
+def technician_statement_export(request, technician_id: int, company_code=None):
+    """CSV export of the technician statement. UTF-8 with BOM for Excel compatibility."""
+    import csv as _csv
+    company = request.company
+    technician = get_object_or_404(Technician, id=technician_id, company=company)
+    from_date = _parse_statement_date((request.GET.get("from_date") or "").strip())
+    to_date = _parse_statement_date((request.GET.get("to_date") or "").strip())
+    statement = TechnicianStatementService.build(technician, from_date=from_date, to_date=to_date)
+    tech_name = statement.get("technician_name", f"tech_{technician_id}").replace(" ", "_")
+    filename = f"statement_{company.code}_{tech_name}.csv"
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response.write("﻿")  # UTF-8 BOM — Excel requires this for correct Persian rendering
+    writer = _csv.writer(response)
+    writer.writerow([
+        "تاریخ", "شرح", "بستانکار", "بدهکار", "مانده",
+        "منبع", "شماره سفارش", "شماره فاکتور", "شناسه پرداخت",
+    ])
+    for row in statement["rows"]:
+        date_str = row["date"].strftime("%Y-%m-%d %H:%M") if row["date"] else ""
+        writer.writerow([
+            date_str,
+            row["description"],
+            row["credit"] if row["credit"] else "",
+            row["debit"] if row["debit"] else "",
+            row["balance_after"],
+            row["source"],
+            row["order_id"] or "",
+            row["invoice_id"] or "",
+            row["payment_id"] or "",
+        ])
+    return response

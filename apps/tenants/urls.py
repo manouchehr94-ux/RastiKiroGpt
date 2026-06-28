@@ -22,6 +22,7 @@ from django.urls import include, path
 from . import views, views_admin, views_branding
 from apps.payouts import views as payouts_views
 from apps.payouts import views_split_snapshots as split_snapshot_views
+from apps.payouts.views_split_snapshots import gateway_reconciliation
 from apps.payments import views_operations as payment_operations_views
 from . import views_merchant_profile as merchant_profile_views
 from apps.platform_core import views_tenant_sms_credit as tenant_sms_views
@@ -100,6 +101,9 @@ urlpatterns = [
     path("admin/technicians/<int:technician_id>/toggle-active/", views_admin.admin_technician_toggle_active, name="admin_technician_toggle_active"),
     path("admin/technicians/<int:technician_id>/ledger/", payouts_views.technician_ledger, name="admin_technician_ledger"),
     path("admin/technicians/<int:technician_id>/statement/", payouts_views.technician_statement, name="admin_technician_statement"),
+    path("admin/technicians/<int:technician_id>/statement/print/", payouts_views.technician_statement_print, name="admin_technician_statement_print"),
+    path("admin/technicians/<int:technician_id>/statement/pdf/", payouts_views.technician_statement_pdf, name="admin_technician_statement_pdf"),
+    path("admin/technicians/<int:technician_id>/statement/export/", payouts_views.technician_statement_export, name="admin_technician_statement_export"),
 
     # Admin: Payment Operations Dashboard (P13)
     path("admin/payments/operations/", payment_operations_views.company_payment_operations, name="admin_payment_operations"),
@@ -107,6 +111,10 @@ urlpatterns = [
     # Admin: Payment Split Snapshot Report (P4)
     path("admin/payments/split-snapshots/", split_snapshot_views.split_snapshot_list, name="admin_split_snapshots"),
     path("admin/payments/split-snapshots/<int:snapshot_id>/", split_snapshot_views.split_snapshot_detail, name="admin_split_snapshot_detail"),
+
+    # Admin: Gateway Reconciliation (TASK-010H)
+    path("admin/payments/gateway-reconciliation/", gateway_reconciliation, name="admin_gateway_reconciliation"),
+
     path("admin/technicians/<int:technician_id>/ledger/settlement/", payouts_views.technician_settlement, name="admin_technician_settlement"),
 
     # Admin: Customers — central customer file and history

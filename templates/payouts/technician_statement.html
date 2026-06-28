@@ -13,6 +13,9 @@
   </div>
   <div class="actions-row">
     <a href="/{{ company.code }}/admin/technicians/{{ technician.id }}/ledger/" class="btn btn-outline">دفتر حساب کامل</a>
+    <a href="/{{ company.code }}/admin/technicians/{{ technician.id }}/statement/print/{% if filters.from_date or filters.to_date %}?from_date={{ filters.from_date }}&to_date={{ filters.to_date }}{% endif %}" class="btn btn-outline btn-sm" target="_blank">چاپ</a>
+    <a href="/{{ company.code }}/admin/technicians/{{ technician.id }}/statement/pdf/{% if filters.from_date or filters.to_date %}?from_date={{ filters.from_date }}&to_date={{ filters.to_date }}{% endif %}" class="btn btn-ghost btn-sm">خروجی PDF</a>
+    <a href="/{{ company.code }}/admin/technicians/{{ technician.id }}/statement/export/{% if filters.from_date or filters.to_date %}?from_date={{ filters.from_date }}&to_date={{ filters.to_date }}{% endif %}" class="btn btn-ghost btn-sm">دانلود CSV</a>
     <a href="/{{ company.code }}/admin/technicians/{{ technician.id }}/ledger/settlement/" class="btn btn-ghost btn-sm">ثبت تسویه</a>
     <a href="/{{ company.code }}/admin/technicians/" class="btn btn-ghost btn-sm">← بازگشت</a>
   </div>

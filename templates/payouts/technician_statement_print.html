@@ -1,0 +1,121 @@
+{% load smart_numbers jalali_tags %}
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>صورت‌حساب — {{ statement.technician_name }} — {{ company.name }}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Tahoma,'Vazirmatn',Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;font-size:13px;line-height:1.6}
+.page{max-width:860px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:28px;box-shadow:0 4px 16px rgba(15,23,42,.06)}
+.print-header{border-bottom:2px solid #e2e8f0;padding-bottom:16px;margin-bottom:20px;text-align:center}
+.print-header h1{font-size:18pt;font-weight:bold;color:#0f172a;margin-bottom:4px}
+.print-header .sub{font-size:10pt;color:#64748b;margin-top:3px}
+.summary-bar{display:flex;gap:32px;justify-content:center;border:1px solid #e2e8f0;padding:12px 20px;margin-bottom:20px;background:#f8fafc;border-radius:8px}
+.summary-bar .item .label{font-size:8.5pt;color:#64748b;margin-bottom:2px}
+.summary-bar .item .value{font-size:11pt;font-weight:bold}
+.c-positive{color:#166534}
+.c-negative{color:#991b1b}
+.c-neutral{color:#475569}
+table{width:100%;border-collapse:collapse;font-size:9.5pt}
+th{background:#f1f5f9;color:#475569;font-weight:600;padding:8px 10px;border:1px solid #e2e8f0;text-align:right}
+td{padding:7px 10px;border:1px solid #e2e8f0;text-align:right}
+tfoot td{background:#f1f5f9;font-weight:bold}
+.ltr{direction:ltr;text-align:left}
+.empty-state{text-align:center;padding:40px;color:#64748b;font-size:10pt}
+.actions-bar{margin-bottom:20px;display:flex;gap:10px;align-items:center}
+.btn-print{background:#0f172a;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:10pt;cursor:pointer;font-family:inherit}
+.btn-back{color:#0f172a;text-decoration:none;font-size:10pt;padding:8px 14px;border:1px solid #e2e8f0;border-radius:6px}
+@media print{
+  body{background:#fff;padding:0}
+  .page{box-shadow:none;border:0;border-radius:0;padding:16px}
+  .actions-bar{display:none !important}
+  @page{margin:15mm 12mm}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="actions-bar">
+    <button class="btn-print" onclick="window.print()">🖨 چاپ</button>
+    <a class="btn-back" href="javascript:history.back()">← بازگشت</a>
+  </div>
+
+  <div class="print-header">
+    <h1>صورت‌حساب تکنسین</h1>
+    <div class="sub">{{ company.name }}</div>
+    <div class="sub">{{ statement.technician_name }}</div>
+    {% if from_date or to_date %}
+    <div class="sub">
+      بازه زمانی:
+      {% if from_date %}از {{ from_date }}{% endif %}
+      {% if to_date %} تا {{ to_date }}{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="summary-bar">
+    <div class="item">
+      <div class="label">جمع بستانکار</div>
+      <div class="value c-positive">{{ statement.summary.total_credit|smart_number }} ریال</div>
+    </div>
+    <div class="item">
+      <div class="label">جمع بدهکار</div>
+      <div class="value c-negative">{{ statement.summary.total_debit|smart_number }} ریال</div>
+    </div>
+    <div class="item">
+      <div class="label">مانده نهایی</div>
+      <div class="value {% if statement.summary.final_balance > 0 %}c-positive{% elif statement.summary.final_balance < 0 %}c-negative{% else %}c-neutral{% endif %}">
+        {{ statement.summary.final_balance|smart_number }} ریال
+      </div>
+    </div>
+  </div>
+
+  {% if statement.rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>تاریخ</th>
+        <th>شرح</th>
+        <th>بستانکار (ریال)</th>
+        <th>بدهکار (ریال)</th>
+        <th>مانده (ریال)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in statement.rows %}
+      <tr>
+        <td>{{ row.date|jalali_datetime }}</td>
+        <td>{{ row.description }}</td>
+        <td class="ltr">
+          {% if row.credit > 0 %}<span class="c-positive">{{ row.credit|smart_number }}</span>{% else %}—{% endif %}
+        </td>
+        <td class="ltr">
+          {% if row.debit > 0 %}<span class="c-negative">{{ row.debit|smart_number }}</span>{% else %}—{% endif %}
+        </td>
+        <td class="ltr {% if row.balance_after > 0 %}c-positive{% elif row.balance_after < 0 %}c-negative{% else %}c-neutral{% endif %}">
+          {{ row.balance_after|smart_number }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">جمع کل</td>
+        <td class="ltr c-positive">{{ statement.summary.total_credit|smart_number }}</td>
+        <td class="ltr c-negative">{{ statement.summary.total_debit|smart_number }}</td>
+        <td class="ltr {% if statement.summary.final_balance > 0 %}c-positive{% elif statement.summary.final_balance < 0 %}c-negative{% else %}c-neutral{% endif %}">
+          {{ statement.summary.final_balance|smart_number }}
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+  {% else %}
+  <div class="empty-state">هیچ رویداد مالی در این بازه زمانی یافت نشد.</div>
+  {% endif %}
+
+</div>
+</body>
+</html>
