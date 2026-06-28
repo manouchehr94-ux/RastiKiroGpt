@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from decimal import Decimal
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Sum
 
 logger = logging.getLogger(__name__)
@@ -345,21 +345,47 @@ class TechnicianLedgerService:
         else:
             balance_after = current_balance - int(amount_rial)
 
-        return TechnicianLedgerEntry.objects.create(
-            company=company,
-            technician=technician,
-            invoice=invoice,
-            payment=payment,
-            order=order,
-            entry_type=entry_type,
-            source=source,
-            amount_rial=int(amount_rial),
-            balance_after=balance_after,
-            description=description,
-            idempotency_key=idempotency_key,
-            created_by=created_by,
-            metadata=metadata,
-        )
+        # Wrap create() in a savepoint so that a concurrent writer racing past the
+        # idempotency check above (TOCTOU window between exists() and create())
+        # causes only the savepoint to roll back rather than aborting the outer
+        # transaction entirely.  We then re-read and return the already-committed
+        # row so callers receive a valid object instead of an unhandled exception.
+        #
+        # NOTE — intentional deferral: this savepoint pattern addresses the
+        # IntegrityError propagation risk but does NOT prevent the brief window
+        # in which two concurrent writers both pass the exists() check and both
+        # compute balance_after independently.  A future Financial Lock
+        # architecture (per-technician serialisation at the application layer)
+        # will close that window.  For V1 the balance SUM stored in balance_after
+        # may be incorrect on first concurrent writes for a brand-new technician,
+        # but get_balance() (which recomputes from the full SUM) stays correct.
+        try:
+            with transaction.atomic():
+                return TechnicianLedgerEntry.objects.create(
+                    company=company,
+                    technician=technician,
+                    invoice=invoice,
+                    payment=payment,
+                    order=order,
+                    entry_type=entry_type,
+                    source=source,
+                    amount_rial=int(amount_rial),
+                    balance_after=balance_after,
+                    description=description,
+                    idempotency_key=idempotency_key,
+                    created_by=created_by,
+                    metadata=metadata,
+                )
+        except IntegrityError:
+            logger.warning(
+                "Concurrent ledger write detected. "
+                "Recovered existing ledger entry. "
+                "idempotency_key=%s",
+                idempotency_key,
+            )
+            return TechnicianLedgerEntry.objects.filter(
+                idempotency_key=idempotency_key
+            ).first()
 
 
 # ------------------------------------------------------------------
