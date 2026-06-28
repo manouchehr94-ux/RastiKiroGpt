@@ -183,9 +183,9 @@ class FinancialBackfillService:
         elif task.task_type == FinancialBackfillTask.TaskType.PLATFORM_FEE:
             _retry_platform_fee(task)
         elif task.task_type == FinancialBackfillTask.TaskType.PAYMENT_SPLIT_SNAPSHOT:
-            raise NotImplementedError(
-                "payment_split_snapshot backfill is not yet implemented."
-            )
+            _retry_payment_split_snapshot(task)
+        elif task.task_type == FinancialBackfillTask.TaskType.DIRECT_GATEWAY_SETTLEMENT:
+            _retry_direct_gateway_settlement(task)
         else:
             raise ValueError(f"Unknown task_type: {task.task_type!r}")
 
@@ -211,3 +211,51 @@ def _retry_platform_fee(task) -> None:
     # record_invoice_fee is idempotent — skips if entry already exists.
     # Raises PlatformFeeRecordingFailed if the write fails again.
     PlatformFeeService.record_invoice_fee(task.invoice, payment=task.payment)
+
+
+def _retry_payment_split_snapshot(task) -> None:
+    from .services_split import PaymentSplitDecisionService
+
+    if task.payment is None:
+        raise ValueError(
+            f"BackfillTask #{task.pk} (payment_split_snapshot): payment FK is None."
+        )
+    payment = task.payment
+    invoice = getattr(payment, "invoice", None)
+    if invoice is None:
+        raise ValueError(
+            f"BackfillTask #{task.pk} (payment_split_snapshot): payment has no invoice."
+        )
+    # Reload the invoice to pick up any settled_* fields written by mark_paid.
+    fresh_invoice = invoice.__class__.objects.get(pk=invoice.pk)
+    # create_snapshot is idempotent — returns existing snapshot if already present.
+    PaymentSplitDecisionService.create_snapshot(payment, fresh_invoice)
+
+
+def _retry_direct_gateway_settlement(task) -> None:
+    from .models import PaymentSplitSnapshot
+    from .services_split import PaymentSplitDecisionService
+    from .services_direct_settlement import TechnicianDirectSettlementService
+
+    if task.payment is None:
+        raise ValueError(
+            f"BackfillTask #{task.pk} (direct_gateway_settlement): payment FK is None."
+        )
+    payment = task.payment
+
+    # Ensure the split snapshot exists before attempting to post the DEBIT.
+    # It may be missing if PaymentSplitDecisionService.create_snapshot() also failed.
+    snapshot = PaymentSplitSnapshot.objects.filter(payment=payment).first()
+    if snapshot is None:
+        invoice = getattr(payment, "invoice", None)
+        if invoice is None:
+            raise ValueError(
+                f"BackfillTask #{task.pk} (direct_gateway_settlement): "
+                "payment has no invoice; cannot create missing split snapshot."
+            )
+        fresh_invoice = invoice.__class__.objects.get(pk=invoice.pk)
+        PaymentSplitDecisionService.create_snapshot(payment, fresh_invoice)
+
+    # post_for_payment is idempotent via idempotency_key.
+    # Returns [] gracefully when conditions are not met (e.g. should_split=False).
+    TechnicianDirectSettlementService.post_for_payment(payment)

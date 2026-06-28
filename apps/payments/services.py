@@ -322,6 +322,22 @@ class PaymentVerifyService:
                         "Failed to create split snapshot for payment %s",
                         payment.id,
                     )
+                    try:
+                        from apps.payouts.services_backfill import FinancialBackfillService
+                        from apps.payouts.models import FinancialBackfillTask
+                        FinancialBackfillService.create_task(
+                            company=payment.company,
+                            task_type=FinancialBackfillTask.TaskType.PAYMENT_SPLIT_SNAPSHOT,
+                            payment=payment,
+                            invoice=getattr(payment, "invoice", None),
+                            error_message="split_snapshot_creation_failed",
+                        )
+                    except Exception:
+                        logger.critical(
+                            "Failed to create PAYMENT_SPLIT_SNAPSHOT backfill task for payment %s",
+                            payment.id,
+                            exc_info=True,
+                        )
 
             # Post direct Shaparak settlement DEBIT if applicable (non-blocking).
             try:
@@ -334,6 +350,22 @@ class PaymentVerifyService:
                     "TechnicianDirectSettlementService.post_for_payment failed for payment %s",
                     payment.id,
                 )
+                try:
+                    from apps.payouts.services_backfill import FinancialBackfillService
+                    from apps.payouts.models import FinancialBackfillTask
+                    FinancialBackfillService.create_task(
+                        company=payment.company,
+                        task_type=FinancialBackfillTask.TaskType.DIRECT_GATEWAY_SETTLEMENT,
+                        payment=payment,
+                        invoice=getattr(payment, "invoice", None),
+                        error_message="direct_gateway_settlement_failed",
+                    )
+                except Exception:
+                    logger.critical(
+                        "Failed to create DIRECT_GATEWAY_SETTLEMENT backfill task for payment %s",
+                        payment.id,
+                        exc_info=True,
+                    )
 
             return True, "Payment verified successfully."
         else:
