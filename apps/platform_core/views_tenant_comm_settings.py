@@ -9,13 +9,15 @@ from __future__ import annotations
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template import Context, Template
+from django.utils import timezone
 
 from apps.accounts.permissions import require_tenant_role
 from apps.notifications.event_catalog import EVENT_DEFINITIONS, Payer
 from apps.notifications.models import NotificationSetting
 from apps.notifications.services import NotificationSettingService
-from apps.sms.models import SMSTemplate
+from apps.sms.models import SMSOutbox, SMSTemplate
 from apps.sms.models_master import SMSMasterTemplate, SMSTemplateChangeRequest
+from apps.sms.services import SMSOutboxProcessorService, SMSSendingSafetyService
 
 
 RECIPIENT_LABELS = {
@@ -81,6 +83,52 @@ def _render_preview(template_text):
         return "(خطا در رندر پیش‌نمایش)"
 
 
+def _build_sms_status(company) -> dict:
+    """Return operational SMS statistics scoped strictly to company."""
+    today = timezone.now().date()
+
+    queued_count = SMSOutbox.objects.filter(company=company, status=SMSOutbox.Status.QUEUED).count()
+    failed_count = SMSOutbox.objects.filter(company=company, status=SMSOutbox.Status.FAILED).count()
+    sent_today_count = SMSOutbox.objects.filter(
+        company=company,
+        status__in=[SMSOutbox.Status.SENT, SMSOutbox.Status.DELIVERED],
+        sent_at__date=today,
+    ).count()
+
+    last_sent_row = (
+        SMSOutbox.objects.filter(company=company, status__in=[SMSOutbox.Status.SENT, SMSOutbox.Status.DELIVERED])
+        .order_by("-sent_at").values("sent_at").first()
+    )
+    last_failed_row = (
+        SMSOutbox.objects.filter(company=company, status=SMSOutbox.Status.FAILED)
+        .order_by("-failed_at").values("failed_at").first()
+    )
+
+    provider_info = SMSSendingSafetyService.get_status(company=company)
+    provider_obj = provider_info.get("provider")
+
+    sms_balance_rial = None
+    try:
+        from apps.platform_core.models import CompanySMSWallet
+        wallet = CompanySMSWallet.objects.filter(company=company).first()
+        if wallet is not None:
+            sms_balance_rial = wallet.balance_rial
+    except Exception:
+        pass
+
+    return {
+        "queued_count": queued_count,
+        "failed_count": failed_count,
+        "sent_today_count": sent_today_count,
+        "last_sent_at": last_sent_row["sent_at"] if last_sent_row else None,
+        "last_failed_at": last_failed_row["failed_at"] if last_failed_row else None,
+        "provider_configured": provider_info["enabled"],
+        "provider_name": getattr(provider_obj, "name", "") if provider_obj else "",
+        "provider_reason": provider_info.get("reason", ""),
+        "sms_balance_rial": sms_balance_rial,
+    }
+
+
 def _build_event_rows(company):
     NotificationSettingService.ensure_defaults(company=company)
 
@@ -126,42 +174,57 @@ def _build_event_rows(company):
 
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def tenant_comm_settings(request: HttpRequest, **kwargs) -> HttpResponse:
-    """GET: show company communication settings. POST: toggle event settings."""
+    """GET: show company communication settings. POST: toggle event settings or process SMS queue."""
     company = request.company
     success = ""
     error = ""
+    process_result = None
 
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
     if request.method == "POST":
-        event_key = request.POST.get("event_key", "").strip()
-        field = request.POST.get("field", "").strip()
-        value = request.POST.get("value", "").strip() == "1"
+        action = request.POST.get("action", "").strip()
 
-        definition = EVENT_DEFINITIONS.get(event_key)
-        if not definition or definition.payer != Payer.COMPANY:
-            error = "این رویداد برای تنظیمات شرکت معتبر نیست."
-            if is_ajax:
-                return JsonResponse({"ok": False, "message": error}, status=400)
-        elif field not in ("sms_enabled", "in_app_enabled"):
-            error = "نوع تنظیم معتبر نیست."
-            if is_ajax:
-                return JsonResponse({"ok": False, "message": error}, status=400)
+        if action == "process_queue":
+            results = SMSOutboxProcessorService.process(company=company, limit=20)
+            process_result = results
+            scanned = results.get("scanned", 0)
+            sent = results.get("sent", 0)
+            failed = results.get("failed", 0)
+            if scanned == 0:
+                success = "هیچ پیامکی در صف ارسال وجود نداشت."
+            else:
+                success = f"پردازش انجام شد: {sent} ارسال شد، {failed} ناموفق، {scanned} بررسی شد."
         else:
-            setting = _get_or_create_notification_setting(company, event_key, definition)
-            setattr(setting, field, value)
-            setting.save(update_fields=[field, "updated_at"])
-            success = "تنظیمات پیام ذخیره شد."
-            if is_ajax:
-                return JsonResponse({
-                    "ok": True,
-                    "message": success,
-                    "event_key": event_key,
-                    "field": field,
-                    "new_value": value,
-                })
+            event_key = request.POST.get("event_key", "").strip()
+            field = request.POST.get("field", "").strip()
+            value = request.POST.get("value", "").strip() == "1"
+
+            definition = EVENT_DEFINITIONS.get(event_key)
+            if not definition or definition.payer != Payer.COMPANY:
+                error = "این رویداد برای تنظیمات شرکت معتبر نیست."
+                if is_ajax:
+                    return JsonResponse({"ok": False, "message": error}, status=400)
+            elif field not in ("sms_enabled", "in_app_enabled"):
+                error = "نوع تنظیم معتبر نیست."
+                if is_ajax:
+                    return JsonResponse({"ok": False, "message": error}, status=400)
+            else:
+                setting = _get_or_create_notification_setting(company, event_key, definition)
+                setattr(setting, field, value)
+                setting.save(update_fields=[field, "updated_at"])
+                success = "تنظیمات پیام ذخیره شد."
+                if is_ajax:
+                    return JsonResponse({
+                        "ok": True,
+                        "message": success,
+                        "event_key": event_key,
+                        "field": field,
+                        "new_value": value,
+                    })
 
     event_rows = _build_event_rows(company)
+    sms_status = _build_sms_status(company)
 
     return render(request, "tenants/admin_comm_settings.html", {
         "company": company,
@@ -170,6 +233,8 @@ def tenant_comm_settings(request: HttpRequest, **kwargs) -> HttpResponse:
         "success": success,
         "error": error,
         "event_rows": event_rows,
+        "sms_status": sms_status,
+        "process_result": process_result,
     })
 
 

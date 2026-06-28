@@ -1,5 +1,5 @@
 ﻿{% extends "layouts/dashboard.html" %}
-
+{% load jalali_tags %}
 {% block title %}تنظیمات پیام‌ها - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
@@ -36,6 +36,106 @@
 {% if error %}
 <div class="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">{{ error }}</div>
 {% endif %}
+
+{# ── SMS Operational Status Card ── #}
+<div class="comm-card" style="margin-bottom:1.25rem;" id="sms-status-section">
+  <div class="flex items-start justify-between gap-3 flex-wrap mb-3">
+    <div>
+      <h2 class="text-base font-bold">وضعیت ارسال پیامک</h2>
+      <p class="text-sm text-slate-500 mt-0.5">آمار صندوق خروجی پیامک شرکت در لحظه جاری.</p>
+    </div>
+  </div>
+
+  {# Warnings #}
+  {% if sms_status.queued_count > 0 %}
+  <div class="mb-3 p-3 rounded-xl" style="background:var(--color-warning-bg,#fffbeb);border:1px solid var(--color-warning-border,#fcd34d);color:var(--color-warning-dark,#92400e);font-size:.85rem;" id="sms-queue-warning">
+    ⚠️ پیامک‌های در صف وجود دارد. اگر ارسال خودکار تنظیم نشده باشد، این پیامک‌ها ارسال نمی‌شوند.
+  </div>
+  {% endif %}
+  {% if sms_status.failed_count > 0 %}
+  <div class="mb-3 p-3 rounded-xl" style="background:var(--color-danger-bg);border:1px solid var(--color-danger-border,#fca5a5);color:var(--color-danger-dark);font-size:.85rem;" id="sms-failed-warning">
+    ✗ برخی پیامک‌ها ناموفق بوده‌اند و نیاز به بررسی دارند.
+  </div>
+  {% endif %}
+
+  {# Stats grid #}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1rem;">
+    <div style="background:var(--color-surface-1);border-radius:12px;padding:.75rem 1rem;text-align:center;" id="sms-queued-stat">
+      <div style="font-size:1.6rem;font-weight:700;color:var(--color-warning-dark,#92400e);">{{ sms_status.queued_count }}</div>
+      <div style="font-size:.78rem;color:var(--color-text-muted);">در صف ارسال</div>
+    </div>
+    <div style="background:var(--color-surface-1);border-radius:12px;padding:.75rem 1rem;text-align:center;" id="sms-failed-stat">
+      <div style="font-size:1.6rem;font-weight:700;color:var(--color-danger-dark);">{{ sms_status.failed_count }}</div>
+      <div style="font-size:.78rem;color:var(--color-text-muted);">ناموفق</div>
+    </div>
+    <div style="background:var(--color-surface-1);border-radius:12px;padding:.75rem 1rem;text-align:center;" id="sms-sent-today-stat">
+      <div style="font-size:1.6rem;font-weight:700;color:var(--color-success-dark,#166534);">{{ sms_status.sent_today_count }}</div>
+      <div style="font-size:.78rem;color:var(--color-text-muted);">ارسال امروز</div>
+    </div>
+    <div style="background:var(--color-surface-1);border-radius:12px;padding:.75rem 1rem;text-align:center;" id="sms-provider-stat">
+      {% if sms_status.provider_configured %}
+        <div style="font-size:.9rem;font-weight:700;color:var(--color-success-dark,#166534);">✓ فعال</div>
+        <div style="font-size:.78rem;color:var(--color-text-muted);" title="{{ sms_status.provider_name }}">ارائه‌دهنده</div>
+      {% else %}
+        <div style="font-size:.9rem;font-weight:700;color:var(--color-danger-dark);">✗ غیرفعال</div>
+        <div style="font-size:.78rem;color:var(--color-text-muted);">ارائه‌دهنده تنظیم نشده</div>
+      {% endif %}
+    </div>
+    {% if sms_status.sms_balance_rial is not None %}
+    <div style="background:var(--color-surface-1);border-radius:12px;padding:.75rem 1rem;text-align:center;" id="sms-balance-stat">
+      <div style="font-size:1rem;font-weight:700;direction:ltr;">{{ sms_status.sms_balance_rial }}</div>
+      <div style="font-size:.78rem;color:var(--color-text-muted);">موجودی پیامک (ریال)</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {# Last activity times #}
+  <div style="font-size:.8rem;color:var(--color-text-muted);display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+    {% if sms_status.last_sent_at %}
+    <span>آخرین ارسال موفق: <strong>{{ sms_status.last_sent_at|jalali_date }}</strong></span>
+    {% else %}
+    <span>آخرین ارسال موفق: —</span>
+    {% endif %}
+    {% if sms_status.last_failed_at %}
+    <span>آخرین خطا: <strong>{{ sms_status.last_failed_at|jalali_date }}</strong></span>
+    {% endif %}
+  </div>
+
+  {# Process queue button #}
+  {% if sms_status.queued_count > 0 or sms_status.failed_count > 0 %}
+  <form method="post" style="margin-bottom:.5rem;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="process_queue">
+    <button type="submit" class="btn btn-primary btn-sm" id="sms-process-btn"
+            onclick="return confirm('ارسال {{ sms_status.queued_count }} پیامک در صف را آغاز کنم؟')">
+      ارسال پیامک‌های در صف
+    </button>
+    <span style="font-size:.78rem;color:var(--color-text-muted);margin-right:.75rem;">حداکثر ۲۰ پیامک در هر بار</span>
+  </form>
+  {% endif %}
+
+  {# Process result (after POST) #}
+  {% if process_result %}
+  <div class="p-3 rounded-xl" style="background:var(--color-surface-1);font-size:.85rem;" id="sms-process-result">
+    <strong>نتیجه پردازش:</strong>
+    بررسی شد: {{ process_result.scanned }} |
+    ارسال شد: <span style="color:var(--color-success-dark,#166534);">{{ process_result.sent }}</span> |
+    ناموفق: <span style="color:var(--color-danger-dark);">{{ process_result.failed }}</span>
+  </div>
+  {% endif %}
+
+  {# Runner documentation #}
+  <details style="margin-top:.75rem;">
+    <summary style="font-size:.8rem;color:var(--color-text-muted);cursor:pointer;">راهنمای اجرای خودکار پیامک</summary>
+    <div style="margin-top:.5rem;font-size:.8rem;color:var(--color-text-muted);line-height:1.7;">
+      <p>دکمه بالا یک ابزار دستی برای تست و بازیابی است. در محیط تولید، ارسال پیامک باید توسط یک زمان‌بند خودکار انجام شود:</p>
+      <div dir="ltr" style="background:var(--color-surface-2);border-radius:8px;padding:.5rem .75rem;font-family:monospace;font-size:.78rem;margin:.4rem 0;">
+        python manage.py process_sms_outbox --limit=100
+      </div>
+      <p>این دستور را از طریق cron, systemd یا Celery Beat هر ۶۰ ثانیه یک‌بار اجرا کنید.</p>
+    </div>
+  </details>
+</div>
 
 <div class="comm-card">
   <div class="flex items-start justify-between gap-3 flex-wrap mb-4">
