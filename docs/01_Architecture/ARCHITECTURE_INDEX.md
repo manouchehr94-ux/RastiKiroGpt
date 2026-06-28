@@ -15,6 +15,10 @@ Use this index before every implementation task. It tells you which documents ar
 | Gateway ownership | `07_ADR/ADR-003-Payment-Architecture.md` | `01_Architecture/PAYMENT_ARCHITECTURE.md` |
 | Platform commission | `03_Business/PAYMENT_RULES.md` | `SKILL.md` |
 | Ledger immutability | `07_ADR/ADR-004-Ledger-Discipline.md` | `03_Business/ACCOUNTING_RULES.md` |
+| Technician wage rates | `07_ADR/ADR-005-Technician-Service-Pricing.md` | `03_Business/ACCOUNTING_RULES.md` |
+| Ledger vs statement separation | `07_ADR/ADR-006-Technician-Ledger-Statement-Architecture.md` | `apps/payouts/services_statement.py` |
+| Financial event ordering | `07_ADR/ADR-007-Financial-Event-Timeline.md` | `07_ADR/FINANCIAL_ARCHITECTURE_INDEX.md` |
+| Financial recovery and backfill | `07_ADR/ADR-008-Financial-Recovery-Policy.md` | `apps/payouts/services_backfill.py` |
 | Orders | `03_Business/ORDER_RULES.md` | `01_Architecture/DOMAIN_MODEL.md` |
 | Invoices | `03_Business/INVOICE_RULES.md` | `01_Architecture/DOMAIN_MODEL.md` |
 | Multi-tenancy | `01_Architecture/MULTI_TENANT.md` | `01_Architecture/DATABASE_RULES.md` |
@@ -52,10 +56,20 @@ Read:
 
 ### Ledger or accounting task
 Read:
+- `07_ADR/FINANCIAL_ARCHITECTURE_INDEX.md` ← start here
 - `07_ADR/ADR-004-Ledger-Discipline.md`
+- `07_ADR/ADR-006-Technician-Ledger-Statement-Architecture.md`
+- `07_ADR/ADR-007-Financial-Event-Timeline.md`
+- `07_ADR/ADR-008-Financial-Recovery-Policy.md`
 - `03_Business/ACCOUNTING_RULES.md`
-- `03_Business/PAYMENT_RULES.md`
 - related payout models/services/tests
+
+### Financial recovery or backfill task
+Read:
+- `07_ADR/ADR-008-Financial-Recovery-Policy.md`
+- `07_ADR/ADR-007-Financial-Event-Timeline.md`
+- `apps/payouts/services_backfill.py`
+- `apps/payouts/models.py` (FinancialBackfillTask)
 
 ### SMS or notification task
 Read:
