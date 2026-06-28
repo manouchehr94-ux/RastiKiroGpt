@@ -1,5 +1,6 @@
 ﻿{% extends "layouts/dashboard.html" %}
 {% load jalali_tags %}
+{% load smart_numbers %}
 {% block title %}{% if is_edit %}ویرایش{% else %}ایجاد{% endif %} نیروی خدماتی - {{ company.name }}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
@@ -75,13 +76,20 @@
         {% for rf in rate_formset %}
         <tr>
             <td>{{ rf.item_definition }}{% if rf.errors.item_definition %}<div class="help-text text-danger">{{ rf.errors.item_definition }}</div>{% endif %}</td>
-            <td>{{ rf.fixed_wage_rial }}{% if rf.errors.fixed_wage_rial %}<div class="help-text text-danger">{{ rf.errors.fixed_wage_rial }}</div>{% endif %}</td>
+            <td>
+                {{ rf.fixed_wage_rial }}
+                {% if rf.initial %}
+                <small class="help-text{% if rf.initial.fixed_wage_rial < 0 %} text-danger{% endif %}">{{ rf.initial.fixed_wage_rial|smart_money }}</small>
+                {% endif %}
+                {% if rf.errors.fixed_wage_rial %}<div class="help-text text-danger">{{ rf.errors.fixed_wage_rial }}</div>{% endif %}
+            </td>
             <td style="text-align:center">{{ rf.is_active }}</td>
             <td style="text-align:center">{{ rf.DELETE }}</td>
         </tr>
         {% endfor %}
         </tbody>
     </table></div>
+    <p class="help-text">برای هر آیتم سفارش فقط یک تعرفه تعریف کنید. مبلغ می‌تواند مثبت، صفر یا منفی باشد.</p>
     {% if not rate_formset.forms.0.fields.item_definition.queryset.count %}
     <div class="alert alert-info">هنوز آیتم عددی برای این شرکت تعریف نشده است. ابتدا از بخش «ورود اطلاعات پایه» آیتم‌های سفارش را تعریف کنید.</div>
     {% endif %}

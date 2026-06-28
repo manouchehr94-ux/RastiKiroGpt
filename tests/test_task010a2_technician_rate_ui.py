@@ -484,3 +484,82 @@ class TechnicianRateEditPageTest(TestCase):
         self.tech.user.refresh_from_db()
         self.assertEqual(self.tech.user.first_name, "نام جدید")
         self.assertEqual(self.tech.user.last_name, "فامیلی")
+
+    def test_negative_amount_rendered_correctly(self):
+        """Test: Negative wage appears in edit page with minus sign and thousand separators."""
+        TechnicianServiceRate.objects.create(
+            company=self.company,
+            technician=self.tech,
+            item_definition=self.item1,
+            fixed_wage_rial=-500_000,
+            is_active=True,
+        )
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("-500,000", content)
+
+    def test_thousand_separator_formatting_in_edit_page(self):
+        """Test: Rate amounts are displayed with thousand separators in edit page."""
+        TechnicianServiceRate.objects.create(
+            company=self.company,
+            technician=self.tech,
+            item_definition=self.item1,
+            fixed_wage_rial=4_000_000,
+            is_active=True,
+        )
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("4,000,000", content)
+
+
+@override_settings(ROOT_URLCONF="config.urls")
+class TechnicianRateAmountTest(TestCase):
+    """Tests for positive, zero, and negative wage amounts being accepted."""
+
+    def setUp(self):
+        self.company = _company("Amount Co")
+        self.admin_user = _admin(self.company)
+        self.item = _number_item(self.company)
+        self.client.login(username=self.admin_user.username, password="testpass123")
+        self.url = f"/{self.company.code}/admin/technicians/create/"
+
+    def _post_create(self, username, wage):
+        tag = _n()
+        data = _create_post(
+            self.company,
+            username=username,
+            phone=f"091{tag:08d}",
+            first_name="تست",
+            last_name="اجرت",
+            rate_rows=[(self.item.id, wage, True)],
+        )
+        return self.client.post(self.url, data)
+
+    def test_positive_amount_accepted(self):
+        """Test: Positive wage is saved without error."""
+        tag = _n()
+        response = self._post_create(f"postech{tag}", 4_000_000)
+        self.assertEqual(response.status_code, 302, response.content.decode()[:500])
+        tech = Technician.objects.filter(company=self.company).order_by("-id").first()
+        rate = TechnicianServiceRate.objects.get(company=self.company, technician=tech)
+        self.assertEqual(rate.fixed_wage_rial, 4_000_000)
+
+    def test_zero_amount_accepted(self):
+        """Test: Zero wage is saved without error."""
+        tag = _n()
+        response = self._post_create(f"zerotech{tag}", 0)
+        self.assertEqual(response.status_code, 302, response.content.decode()[:500])
+        tech = Technician.objects.filter(company=self.company).order_by("-id").first()
+        rate = TechnicianServiceRate.objects.get(company=self.company, technician=tech)
+        self.assertEqual(rate.fixed_wage_rial, 0)
+
+    def test_negative_amount_accepted(self):
+        """Test: Negative wage is saved without error (valid business data)."""
+        tag = _n()
+        response = self._post_create(f"negtech{tag}", -500_000)
+        self.assertEqual(response.status_code, 302, response.content.decode()[:500])
+        tech = Technician.objects.filter(company=self.company).order_by("-id").first()
+        rate = TechnicianServiceRate.objects.get(company=self.company, technician=tech)
+        self.assertEqual(rate.fixed_wage_rial, -500_000)

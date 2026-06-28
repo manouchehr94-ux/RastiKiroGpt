@@ -140,7 +140,6 @@ class TechnicianServiceRateForm(forms.Form):
     )
     fixed_wage_rial = forms.IntegerField(
         required=False,
-        min_value=0,
         widget=forms.NumberInput(
             attrs={"class": "form-control form-control-sm", "placeholder": "مثلاً 4000000"}
         ),

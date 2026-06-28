@@ -385,7 +385,7 @@ class TechnicianServiceRate(CompanyOwnedModel):
         on_delete=models.CASCADE,
         related_name="technician_rates",
     )
-    fixed_wage_rial = models.PositiveBigIntegerField(
+    fixed_wage_rial = models.BigIntegerField(
         help_text="مبلغ ثابت اجرت تکنسین به ازای هر واحد این آیتم سفارش، به ریال",
     )
     is_active = models.BooleanField(default=True)
@@ -396,10 +396,6 @@ class TechnicianServiceRate(CompanyOwnedModel):
             models.UniqueConstraint(
                 fields=["company", "technician", "item_definition"],
                 name="unique_tech_rate_per_item",
-            ),
-            models.CheckConstraint(
-                check=models.Q(fixed_wage_rial__gte=0),
-                name="tech_rate_wage_non_negative",
             ),
         ]
 

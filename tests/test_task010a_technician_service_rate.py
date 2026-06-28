@@ -9,7 +9,7 @@ Covers:
   5. Cross-company technician is rejected by clean().
   6. Cross-company item_definition is rejected by clean().
   7. Non-NUMBER item_definition is rejected by clean().
-  8. Negative fixed_wage_rial is rejected by full_clean().
+  8. Negative fixed_wage_rial is ACCEPTED (valid business data).
   9. Inactive item_definition is rejected for active rate by clean().
  10. Inactive rate (is_active=False) can be saved regardless of definition state.
  11. __str__ contains technician name, item title, and amount.
@@ -258,17 +258,26 @@ class TechnicianServiceRateWageValidationTest(TestCase):
         self.tech = _technician(self.company)
         self.item = _number_item(self.company)
 
-    def test_8_negative_wage_rejected(self):
-        """Test 8: Negative fixed_wage_rial is rejected by full_clean()."""
+    def test_8_negative_wage_accepted(self):
+        """Test 8: Negative fixed_wage_rial is valid business data and must be accepted."""
         rate = TechnicianServiceRate(
             company=self.company,
             technician=self.tech,
             item_definition=self.item,
-            fixed_wage_rial=-1,
+            fixed_wage_rial=-500_000,
             is_active=True,
         )
-        with self.assertRaises(ValidationError):
-            rate.full_clean()
+        rate.full_clean()  # must not raise
+        rate.save()
+        self.assertEqual(rate.fixed_wage_rial, -500_000)
+
+    def test_8b_negative_wage_str_formatted(self):
+        """Test 8b: Negative wage is formatted with minus sign in __str__."""
+        rate = _rate(self.company, self.tech, self.item, fixed_wage_rial=-500_000)
+        s = str(rate)
+        self.assertIn("-", s)
+        self.assertIn("500", s)
+        self.assertIn("ریال", s)
 
 
 class TechnicianServiceRateActiveInactiveTest(TestCase):
