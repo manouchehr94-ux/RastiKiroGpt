@@ -99,6 +99,7 @@ urlpatterns = [
     path("admin/technicians/<int:technician_id>/delete/", views_admin.admin_technician_delete, name="admin_technician_delete"),
     path("admin/technicians/<int:technician_id>/toggle-active/", views_admin.admin_technician_toggle_active, name="admin_technician_toggle_active"),
     path("admin/technicians/<int:technician_id>/ledger/", payouts_views.technician_ledger, name="admin_technician_ledger"),
+    path("admin/technicians/<int:technician_id>/statement/", payouts_views.technician_statement, name="admin_technician_statement"),
 
     # Admin: Payment Operations Dashboard (P13)
     path("admin/payments/operations/", payment_operations_views.company_payment_operations, name="admin_payment_operations"),

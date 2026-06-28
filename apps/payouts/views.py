@@ -1,8 +1,9 @@
 """
 Payouts - Views.
 
-Technician ledger and manual settlement pages for company admins.
+Technician ledger, settlement, and statement pages for company admins.
 """
+import datetime
 import uuid
 
 from django.contrib.auth.decorators import login_required
@@ -13,6 +14,25 @@ from apps.accounts.models import Technician
 from apps.accounts.permissions import require_tenant_role
 
 from .services import TechnicianLedgerService
+from .services_statement import TechnicianStatementService
+
+
+def _parse_statement_date(value: str):
+    """Parse a date string from GET params. Supports YYYY/MM/DD, YYYY-MM-DD, and Jalali."""
+    value = (value or "").strip()
+    if not value:
+        return None
+    try:
+        from apps.common.jalali import normalize_digits, parse_jalali_date
+        parsed = parse_jalali_date(normalize_digits(value))
+        if parsed:
+            return parsed
+    except Exception:
+        pass
+    try:
+        return datetime.datetime.strptime(value.replace("-", "/"), "%Y/%m/%d").date()
+    except Exception:
+        return None
 
 _SETTLEMENT_DIRECTIONS = [
     ("COMPANY_PAID_TECHNICIAN", "شرکت به تکنسین پرداخت کرد"),
@@ -112,4 +132,39 @@ def technician_settlement(request, technician_id: int, company_code=None):
         "errors": [],
         "form": {},
         "idempotency_token": idempotency_token,
+    })
+
+
+@login_required
+@require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
+def technician_statement(request, technician_id: int, company_code=None):
+    """
+    Read-only technician statement page.
+
+    Delegates entirely to TechnicianStatementService.build(); does not touch
+    the ledger directly.
+    """
+    company = request.company
+    technician = get_object_or_404(Technician, id=technician_id, company=company)
+
+    from_date_raw = (request.GET.get("from_date") or "").strip()
+    to_date_raw = (request.GET.get("to_date") or "").strip()
+
+    from_date = _parse_statement_date(from_date_raw)
+    to_date = _parse_statement_date(to_date_raw)
+
+    statement = TechnicianStatementService.build(
+        technician,
+        from_date=from_date,
+        to_date=to_date,
+    )
+
+    return render(request, "payouts/technician_statement.html", {
+        "company": company,
+        "technician": technician,
+        "statement": statement,
+        "filters": {
+            "from_date": from_date_raw,
+            "to_date": to_date_raw,
+        },
     })

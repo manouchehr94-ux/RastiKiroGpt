@@ -1,0 +1,157 @@
+{% extends "layouts/technician.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}صورت‌حساب — {{ technician.user.get_full_name|default:technician.user.username }} — {{ company.name }}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+
+{# ── سربرگ صفحه ── #}
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>صورت‌حساب: {{ technician.user.get_full_name|default:technician.user.username }}</h1>
+    <p class="page-header-subtitle">گزارش مالی نیروی خدماتی</p>
+  </div>
+  <div class="actions-row">
+    <a href="/{{ company.code }}/admin/technicians/{{ technician.id }}/ledger/" class="btn btn-outline">دفتر حساب کامل</a>
+    <a href="/{{ company.code }}/admin/technicians/{{ technician.id }}/ledger/settlement/" class="btn btn-ghost btn-sm">ثبت تسویه</a>
+    <a href="/{{ company.code }}/admin/technicians/" class="btn btn-ghost btn-sm">← بازگشت</a>
+  </div>
+</div>
+
+{# ── فیلتر بازه تاریخ ── #}
+<div class="card" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">فیلتر بازه زمانی</span>
+  </div>
+  <form method="get" class="filter-bar">
+    <div class="filter-group">
+      <label class="filter-label">از تاریخ</label>
+      <input type="text" name="from_date" value="{{ filters.from_date }}"
+             placeholder="مثال: ۱۴۰۳/۰۱/۰۱" class="input input-sm">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">تا تاریخ</label>
+      <input type="text" name="to_date" value="{{ filters.to_date }}"
+             placeholder="مثال: ۱۴۰۳/۱۲/۲۹" class="input input-sm">
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">اعمال فیلتر</button>
+    {% if filters.from_date or filters.to_date %}
+    <a href="/{{ company.code }}/admin/technicians/{{ technician.id }}/statement/" class="btn btn-ghost btn-sm">پاک کردن فیلتر</a>
+    {% endif %}
+  </form>
+</div>
+
+{# ── کارت‌های خلاصه ── #}
+<div class="stat-grid stat-grid-3" dir="rtl">
+
+  <div class="card">
+    <div class="stat-card-hint">جمع بستانکار</div>
+    <div class="stat-card-value fin-number-positive">
+      {{ statement.summary.total_credit|smart_number }} ریال
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stat-card-hint">جمع بدهکار</div>
+    <div class="stat-card-value fin-number-negative">
+      {{ statement.summary.total_debit|smart_number }} ریال
+    </div>
+  </div>
+
+  <div class="balance-insight {% if statement.summary.final_balance > 0 %}positive{% elif statement.summary.final_balance < 0 %}negative{% else %}zero{% endif %}">
+    <div class="balance-insight-body">
+      <div class="balance-insight-title">مانده نهایی</div>
+      <div class="balance-insight-amount">{{ statement.summary.final_balance|smart_number }} ریال</div>
+      <div class="balance-insight-detail">
+        {% if statement.summary.final_balance > 0 %}شرکت بدهکار است
+        {% elif statement.summary.final_balance < 0 %}نیرو بدهکار است
+        {% else %}حساب تسویه است{% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{# ── جدول ردیف‌های صورت‌حساب ── #}
+{% if statement.rows %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">ردیف‌های صورت‌حساب</span>
+    <span class="badge badge-neutral">{{ statement.rows|length }} ردیف</span>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>تاریخ</th>
+          <th>شرح</th>
+          <th class="ltr-cell">بستانکار (ریال)</th>
+          <th class="ltr-cell">بدهکار (ریال)</th>
+          <th class="ltr-cell">مانده (ریال)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in statement.rows %}
+        <tr class="{% if row.credit > 0 %}ledger-credit-row{% else %}ledger-debit-row{% endif %}">
+          <td class="stat-card-hint">{{ row.date|jalali_datetime }}</td>
+          <td>{{ row.description }}</td>
+          <td class="ltr-cell">
+            {% if row.credit > 0 %}
+              <span class="amount-positive">+{{ row.credit|smart_number }}</span>
+            {% else %}
+              <span class="fin-number-neutral">—</span>
+            {% endif %}
+          </td>
+          <td class="ltr-cell">
+            {% if row.debit > 0 %}
+              <span class="amount-negative">-{{ row.debit|smart_number }}</span>
+            {% else %}
+              <span class="fin-number-neutral">—</span>
+            {% endif %}
+          </td>
+          <td class="ltr-cell">
+            <span class="{% if row.balance_after > 0 %}amount-positive{% elif row.balance_after < 0 %}amount-negative{% else %}amount-neutral{% endif %}">
+              {{ row.balance_after|smart_number }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="table-summary-row">
+          <td colspan="2"><strong>جمع کل</strong></td>
+          <td class="ltr-cell"><span class="amount-positive">{{ statement.summary.total_credit|smart_number }}</span></td>
+          <td class="ltr-cell"><span class="amount-negative">{{ statement.summary.total_debit|smart_number }}</span></td>
+          <td class="ltr-cell">
+            <span class="{% if statement.summary.final_balance > 0 %}amount-positive{% elif statement.summary.final_balance < 0 %}amount-negative{% else %}amount-neutral{% endif %}">
+              {{ statement.summary.final_balance|smart_number }}
+            </span>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="card empty-state" dir="rtl">
+  <div class="empty-state-icon">📋</div>
+  <p class="empty-state-title">
+    {% if filters.from_date or filters.to_date %}
+      هیچ رویدادی در این بازه زمانی یافت نشد
+    {% else %}
+      هیچ رویداد مالی ثبت نشده
+    {% endif %}
+  </p>
+  <p class="empty-state-description">
+    {% if filters.from_date or filters.to_date %}
+      بازه تاریخ را تغییر دهید یا فیلتر را پاک کنید.
+    {% else %}
+      پس از پرداخت اولین فاکتور یا ثبت تسویه، صورت‌حساب اینجا نمایش داده می‌شود.
+    {% endif %}
+  </p>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}
