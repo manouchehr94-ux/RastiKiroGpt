@@ -146,19 +146,39 @@ class TechnicianServiceRateForm(forms.Form):
     )
     is_active = forms.BooleanField(required=False)
 
-    def __init__(self, *args, company=None, **kwargs):
+    def __init__(self, *args, company=None, category_ids=None, extra_item_ids=None, **kwargs):
         super().__init__(*args, **kwargs)
         from apps.orders.models import OrderItemDefinition
+        from django.db.models import Q
 
         if company is not None:
-            self.fields["item_definition"].queryset = (
-                OrderItemDefinition.objects.filter(
+            # Primary queryset: active NUMBER items, optionally filtered to tech's categories.
+            if category_ids:
+                primary_q = Q(
+                    company=company,
+                    kind=OrderItemDefinition.Kind.NUMBER,
+                    is_active=True,
+                    category_id__in=category_ids,
+                )
+            else:
+                primary_q = Q(
                     company=company,
                     kind=OrderItemDefinition.Kind.NUMBER,
                     is_active=True,
                 )
+
+            # Always include items with existing rates so they remain editable/deletable
+            # even if they are now outside the tech's categories or inactive.
+            if extra_item_ids:
+                combined_q = primary_q | Q(company=company, pk__in=extra_item_ids)
+            else:
+                combined_q = primary_q
+
+            self.fields["item_definition"].queryset = (
+                OrderItemDefinition.objects.filter(combined_q)
                 .select_related("category")
                 .order_by("category__title", "title")
+                .distinct()
             )
         else:
             self.fields["item_definition"].queryset = OrderItemDefinition.objects.none()
@@ -199,3 +219,13 @@ TechnicianRateFormSet = forms.formset_factory(
     extra=3,
     can_delete=True,
 )
+
+
+def make_rate_formset(extra=3):
+    """Return a formset class with the given number of extra blank rows."""
+    return forms.formset_factory(
+        TechnicianServiceRateForm,
+        formset=_BaseTechRateFormSet,
+        extra=extra,
+        can_delete=True,
+    )

@@ -96,6 +96,7 @@ urlpatterns = [
     # Admin: Technicians CRUD
     path("admin/technicians/", views_admin.admin_technician_list, name="admin_technicians"),
     path("admin/technicians/create/", views_admin.admin_technician_create, name="admin_technician_create"),
+    path("admin/technicians/rates/", views_admin.admin_technician_rate_overview, name="admin_technician_rate_overview"),
     path("admin/technicians/<int:technician_id>/edit/", views_admin.admin_technician_edit, name="admin_technician_edit"),
     path("admin/technicians/<int:technician_id>/delete/", views_admin.admin_technician_delete, name="admin_technician_delete"),
     path("admin/technicians/<int:technician_id>/toggle-active/", views_admin.admin_technician_toggle_active, name="admin_technician_toggle_active"),

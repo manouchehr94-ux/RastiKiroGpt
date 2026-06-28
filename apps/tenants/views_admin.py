@@ -38,7 +38,7 @@ from .forms import (
     CompanyServiceForm,
     TechnicianCreateForm,
     TechnicianEditForm,
-    TechnicianRateFormSet,
+    make_rate_formset,
 )
 from .models import CompanyService, ServiceRequest
 from .selectors import (
@@ -307,9 +307,15 @@ def admin_technician_create(request: HttpRequest, **kwargs) -> HttpResponse:
     company = request.company
     error = ""
 
+    from apps.orders.models import OrderItemDefinition as _OID
+    _eligible_count = _OID.objects.filter(
+        company=company, kind=_OID.Kind.NUMBER, is_active=True
+    ).count()
+    RateFormSet = make_rate_formset(extra=max(_eligible_count, 3))
+
     if request.method == "POST":
         form = TechnicianCreateForm(request.POST)
-        rate_formset = TechnicianRateFormSet(
+        rate_formset = RateFormSet(
             request.POST, prefix="rates", form_kwargs={"company": company}
         )
         if form.is_valid() and rate_formset.is_valid():
@@ -364,7 +370,7 @@ def admin_technician_create(request: HttpRequest, **kwargs) -> HttpResponse:
                 return redirect(f"/{company.code}/admin/technicians/")
     else:
         form = TechnicianCreateForm()
-        rate_formset = TechnicianRateFormSet(prefix="rates", form_kwargs={"company": company})
+        rate_formset = RateFormSet(prefix="rates", form_kwargs={"company": company})
 
     from apps.tenants.models import CompanyServiceCategory
     categories = CompanyServiceCategory.objects.filter(company=company, is_active=True).order_by("sort_order", "title")
@@ -389,11 +395,33 @@ def admin_technician_edit(request: HttpRequest, technician_id: int, **kwargs) ->
         raise Http404("تکنسین یافت نشد.")
 
     from apps.payouts.models import TechnicianServiceRate
+    from apps.orders.models import OrderItemDefinition as _OID
+
+    # Compute category-based queryset parameters once (used for both GET and POST).
+    _tech_category_ids = list(
+        TechnicianCategorySkill.objects.filter(technician=technician)
+        .values_list("category_id", flat=True)
+    )
+    _existing_rate_item_ids = list(
+        TechnicianServiceRate.objects.filter(company=company, technician=technician)
+        .values_list("item_definition_id", flat=True)
+    )
+    _rate_form_kwargs = {
+        "company": company,
+        "category_ids": _tech_category_ids or None,
+        "extra_item_ids": _existing_rate_item_ids or None,
+    }
+    _eligible_qs = _OID.objects.filter(company=company, kind=_OID.Kind.NUMBER, is_active=True)
+    if _tech_category_ids:
+        _eligible_qs = _eligible_qs.filter(category_id__in=_tech_category_ids)
+    _extra_rows = max(_eligible_qs.count() - len(_existing_rate_item_ids), 3)
+    RateFormSet = make_rate_formset(extra=_extra_rows)
+
     error = ""
     if request.method == "POST":
         form = TechnicianEditForm(request.POST)
-        rate_formset = TechnicianRateFormSet(
-            request.POST, prefix="rates", form_kwargs={"company": company}
+        rate_formset = RateFormSet(
+            request.POST, prefix="rates", form_kwargs=_rate_form_kwargs
         )
         if form.is_valid() and rate_formset.is_valid():
             from apps.common.phone_utils import normalize_iran_mobile
@@ -480,8 +508,8 @@ def admin_technician_edit(request: HttpRequest, technician_id: int, **kwargs) ->
             }
             for r in existing_rates
         ]
-        rate_formset = TechnicianRateFormSet(
-            prefix="rates", initial=rate_initial, form_kwargs={"company": company}
+        rate_formset = RateFormSet(
+            prefix="rates", initial=rate_initial, form_kwargs=_rate_form_kwargs
         )
 
     from apps.tenants.models import CompanyServiceCategory
@@ -519,6 +547,66 @@ def admin_technician_delete(request: HttpRequest, technician_id: int, **kwargs) 
 
     return render(request, "tenants/admin_technician_delete.html", {
         "company": company, "technician": technician,
+    })
+
+
+@require_tenant_role("COMPANY_ADMIN")
+def admin_technician_rate_overview(request: HttpRequest, **kwargs) -> HttpResponse:
+    """Read-only overview of all technician service rates with filters."""
+    from apps.payouts.models import TechnicianServiceRate
+    from apps.tenants.models import CompanyServiceCategory
+    from apps.orders.models import OrderItemDefinition
+
+    company = request.company
+
+    technician_id = request.GET.get("technician_id", "")
+    category_id = request.GET.get("category_id", "")
+    item_id = request.GET.get("item_id", "")
+    active_filter = request.GET.get("active", "")
+
+    qs = (
+        TechnicianServiceRate.objects.filter(company=company)
+        .select_related("technician__user", "item_definition__category")
+        .order_by(
+            "item_definition__category__title",
+            "item_definition__title",
+            "technician__user__first_name",
+        )
+    )
+
+    if technician_id:
+        qs = qs.filter(technician_id=technician_id)
+    if category_id:
+        qs = qs.filter(item_definition__category_id=category_id)
+    if item_id:
+        qs = qs.filter(item_definition_id=item_id)
+    if active_filter == "true":
+        qs = qs.filter(is_active=True)
+    elif active_filter == "false":
+        qs = qs.filter(is_active=False)
+
+    technicians = (
+        Technician.objects.filter(company=company)
+        .select_related("user")
+        .order_by("user__first_name", "user__last_name")
+    )
+    categories = CompanyServiceCategory.objects.filter(
+        company=company, is_active=True
+    ).order_by("sort_order", "title")
+    items = OrderItemDefinition.objects.filter(
+        company=company, kind=OrderItemDefinition.Kind.NUMBER
+    ).order_by("category__title", "title")
+
+    return render(request, "tenants/admin_technician_rates.html", {
+        "company": company,
+        "rates": qs,
+        "technicians": technicians,
+        "categories": categories,
+        "items": items,
+        "filter_technician_id": technician_id,
+        "filter_category_id": category_id,
+        "filter_item_id": item_id,
+        "filter_active": active_filter,
     })
 
 

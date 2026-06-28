@@ -131,6 +131,29 @@
 
 <script>
 (function () {
+    /* Duplicate-item prevention: disable already-selected options in other dropdowns. */
+    function syncItemDropdowns() {
+        var selects = Array.from(document.querySelectorAll('select[name$="-item_definition"]'));
+        var chosen = {};
+        selects.forEach(function (sel) { if (sel.value) chosen[sel.value] = true; });
+        selects.forEach(function (sel) {
+            var own = sel.value;
+            sel.querySelectorAll('option').forEach(function (opt) {
+                opt.disabled = !!(opt.value && opt.value !== own && chosen[opt.value]);
+            });
+        });
+    }
+    document.addEventListener('DOMContentLoaded', syncItemDropdowns);
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.name && e.target.name.indexOf('-item_definition') !== -1) {
+            syncItemDropdowns();
+        }
+    });
+})();
+</script>
+
+<script>
+(function () {
     function normalizeDigits(value) {
         value = (value || "").toString();
         var fa = "۰۱۲۳۴۵۶۷۸۹";
