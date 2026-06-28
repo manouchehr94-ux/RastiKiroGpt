@@ -1,0 +1,131 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}تطبیق تسویه درگاه — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+{% block content %}
+<div class="admin-compact">
+
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>تطبیق تسویه درگاه شاپرک</h1>
+    <p class="page-header-subtitle">بررسی و تطبیق تسهیم تراکنش‌های پرداخت آنلاین — فقط قابل مشاهده</p>
+  </div>
+</div>
+
+{# ── فیلترها ── #}
+<div class="card" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">فیلتر</span>
+  </div>
+  <form method="get" class="filter-bar">
+    <div class="filter-group">
+      <label class="filter-label">از تاریخ</label>
+      <input type="text" name="from_date" value="{{ from_date_raw }}"
+             placeholder="مثال: ۱۴۰۳/۰۱/۰۱" class="input input-sm">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">تا تاریخ</label>
+      <input type="text" name="to_date" value="{{ to_date_raw }}"
+             placeholder="مثال: ۱۴۰۳/۱۲/۲۹" class="input input-sm">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">تسهیم شاپرک</label>
+      <select name="split" class="input input-sm">
+        <option value="">همه</option>
+        <option value="yes" {% if split_filter == "yes" %}selected{% endif %}>انجام شد</option>
+        <option value="no" {% if split_filter == "no" %}selected{% endif %}>انجام نشد</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">اعمال فیلتر</button>
+    {% if from_date_raw or to_date_raw or split_filter %}
+    <a href="/{{ company.code }}/admin/payments/gateway-reconciliation/" class="btn btn-ghost btn-sm">پاک کردن فیلتر</a>
+    {% endif %}
+  </form>
+</div>
+
+{% if snapshots %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">تراکنش‌های پرداخت</span>
+    <span class="badge badge-neutral">{{ snapshots|length }} رکورد</span>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>تاریخ</th>
+          <th>شناسه پرداخت</th>
+          <th>فاکتور</th>
+          <th>سفارش</th>
+          <th>تکنسین</th>
+          <th class="ltr-cell">مبلغ کل</th>
+          <th class="ltr-cell">سهم مستقیم تکنسین</th>
+          <th class="ltr-cell">واریز شرکت</th>
+          <th>تسهیم شد؟</th>
+          <th>استراتژی</th>
+          <th>دلیل</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in snapshots %}
+        {% with tech=s.invoice.order.technician order=s.invoice.order %}
+        <tr>
+          <td class="stat-card-hint">{{ s.created_at|jalali_datetime }}</td>
+          <td class="ltr-cell">
+            {% if s.payment %}{{ s.payment.id }}{% else %}<span class="fin-number-neutral">—</span>{% endif %}
+          </td>
+          <td>
+            {% if s.invoice %}
+              <a href="/{{ company.code }}/admin/invoices/{{ s.invoice.id }}/" class="fin-number-positive">{{ s.invoice.invoice_number }}</a>
+            {% else %}<span class="fin-number-neutral">—</span>{% endif %}
+          </td>
+          <td>
+            {% if order %}
+              <a href="/{{ company.code }}/admin/orders/{{ order.id }}/" class="text-accent-purple">#{{ order.id }}</a>
+            {% else %}<span class="fin-number-neutral">—</span>{% endif %}
+          </td>
+          <td>
+            {% if tech %}{{ tech.user.get_full_name|default:tech.user.username }}
+            {% else %}<span class="fin-number-neutral">—</span>{% endif %}
+          </td>
+          <td class="ltr-cell fin-number">{{ s.total_amount|smart_number }}</td>
+          <td class="ltr-cell {% if s.technician_direct_amount > 0 %}fin-number-positive{% else %}fin-number-neutral{% endif %}">
+            {{ s.technician_direct_amount|smart_number }}
+          </td>
+          <td class="ltr-cell">{{ s.company_deposit_amount|smart_number }}</td>
+          <td>
+            {% if s.should_split_with_technician %}
+              <span class="badge badge-success">بله</span>
+            {% else %}
+              <span class="badge badge-danger">خیر</span>
+            {% endif %}
+          </td>
+          <td class="audit-meta">{{ s.payout_strategy_snapshot|default:"—" }}</td>
+          <td class="audit-meta">{{ s.reason|default:"—" }}</td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card empty-state" dir="rtl">
+  <div class="empty-state-icon">📊</div>
+  <p class="empty-state-title">
+    {% if from_date_raw or to_date_raw or split_filter %}
+      هیچ رکوردی با این فیلتر یافت نشد
+    {% else %}
+      هنوز هیچ تراکنش پرداختی ثبت نشده
+    {% endif %}
+  </p>
+  <p class="empty-state-description">
+    پس از انجام اولین پرداخت آنلاین توسط مشتریان، اطلاعات تسهیم اینجا نمایش داده می‌شود.
+  </p>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}
