@@ -168,8 +168,9 @@ urlpatterns = [
 
     # Admin: Communication Settings
     path("admin/communication-settings/", tenant_comm_views.tenant_comm_settings, name="admin_communication_settings"),
+    path("admin/communication-settings/cause/<str:cause_key>/", tenant_comm_views.tenant_comm_cause_detail, name="admin_comm_cause_detail"),
     path("admin/communication-settings/template/<str:event_key>/", tenant_comm_views.tenant_sms_template_view, name="admin_sms_template_view"),
-    path("admin/communication-settings/template/<str:event_key>/request/", tenant_comm_views.tenant_sms_template_change_request, name="admin_sms_template_request"),
+    # admin_sms_template_request URL removed — company template change requests disabled.
 
     # Admin: Financial Reports (P6)
     path("admin/financial-reports/summary/", financial_report_views.financial_summary, name="financial_summary"),

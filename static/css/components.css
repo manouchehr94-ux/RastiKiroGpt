@@ -1399,3 +1399,50 @@ textarea.form-control {
 [data-theme="dark"] hr {
   border-top-color: var(--border-color);
 }
+
+
+/* =============================================================================
+   TOGGLE SWITCH — class-based variant (.toggle-sw / .toggle-sw.on)
+   RTL-safe: knob sits on the right when off, moves left when on.
+   Usage: <div class="toggle-sw [on]"></div>
+   Referenced by: operator permissions, communication settings pages.
+   ============================================================================= */
+
+.toggle-sw {
+  width: 34px;
+  height: 20px;
+  background: var(--color-slate-300);
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-sw.on {
+  background: var(--color-success, #22c55e);
+}
+
+.toggle-sw::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.toggle-sw.on::after {
+  transform: translateX(-14px);
+}
+
+[data-theme="dark"] .toggle-sw {
+  background: var(--color-slate-600);
+}
+
+[data-theme="dark"] .toggle-sw.on {
+  background: var(--color-success);
+}

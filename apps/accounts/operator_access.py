@@ -127,7 +127,6 @@ TITLE_MAP = {
     "admin_sms_recharge": "شارژ اعتبار پیامک",
     "admin_sms_transactions": "تراکنش‌های پیامک",
     "admin_sms_template_view": "مشاهده قالب پیامک",
-    "admin_sms_template_request": "درخواست تغییر قالب",
     "admin_communication_settings": "تنظیمات ارتباط",
     # گزارش‌ها
     "financial_summary": "گزارش مالی خلاصه",
