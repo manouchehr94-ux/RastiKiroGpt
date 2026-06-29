@@ -127,6 +127,8 @@ class NotificationSetting(CompanyOwnedModel):
         INVOICE_CANCELLED = 'invoice_cancelled', 'لغو فاکتور'
         PAYMENT_STARTED = 'payment_started', 'شروع پرداخت'
         PAYMENT_SUCCESS_CUSTOMER = 'payment_success_customer', 'پرداخت موفق - مشتری'
+        PAYMENT_SUCCESS_ADMIN = 'payment_success_admin', 'پرداخت موفق - مدیر شرکت'
+        PAYMENT_SUCCESS_OPERATOR = 'payment_success_operator', 'پرداخت موفق - اپراتور'
         PAYMENT_FAILED_CUSTOMER = 'payment_failed_customer', 'پرداخت ناموفق - مشتری'
         WALLET_CHARGED = 'wallet_charged', 'شارژ کیف پول پیامک'
         SMS_CREDIT_LOW_ADMIN = 'sms_credit_low_admin', 'کم بودن اعتبار پیامک'

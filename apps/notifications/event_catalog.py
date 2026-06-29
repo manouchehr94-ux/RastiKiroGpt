@@ -44,6 +44,8 @@ class EventKey:
     INVOICE_CANCELLED = "invoice_cancelled"
     PAYMENT_STARTED = "payment_started"
     PAYMENT_SUCCESS_CUSTOMER = "payment_success_customer"
+    PAYMENT_SUCCESS_ADMIN = "payment_success_admin"
+    PAYMENT_SUCCESS_OPERATOR = "payment_success_operator"
     PAYMENT_FAILED_CUSTOMER = "payment_failed_customer"
     WALLET_CHARGED = "wallet_charged"
     SMS_CREDIT_LOW_ADMIN = "sms_credit_low_admin"
@@ -504,6 +506,30 @@ EVENT_DEFINITIONS: dict[str, EventDefinition] = {
         template_variables=('company_name', 'invoice_number', 'invoice_amount', 'customer_name'),
         trigger_condition='پرداخت موفق',
         description='پرداخت موفق',
+    ),
+    EventKey.PAYMENT_SUCCESS_ADMIN: EventDefinition(
+        key=EventKey.PAYMENT_SUCCESS_ADMIN,
+        title='پرداخت موفق - مدیر شرکت',
+        recipient=Recipient.COMPANY_ADMIN,
+        payer=Payer.COMPANY,
+        default_sms_enabled=False,
+        default_in_app_enabled=True,
+        sms_supported=False,
+        template_variables=('company_name', 'invoice_number', 'invoice_amount', 'customer_name'),
+        trigger_condition='پرداخت موفق فاکتور - اطلاع‌رسانی به مدیر شرکت',
+        description='اطلاع‌رسانی دریافت پرداخت به مدیر شرکت',
+    ),
+    EventKey.PAYMENT_SUCCESS_OPERATOR: EventDefinition(
+        key=EventKey.PAYMENT_SUCCESS_OPERATOR,
+        title='پرداخت موفق - اپراتور',
+        recipient=Recipient.OPERATOR,
+        payer=Payer.COMPANY,
+        default_sms_enabled=False,
+        default_in_app_enabled=True,
+        sms_supported=False,
+        template_variables=('company_name', 'invoice_number', 'invoice_amount', 'customer_name'),
+        trigger_condition='پرداخت موفق فاکتور - اطلاع‌رسانی به اپراتور شرکت',
+        description='اطلاع‌رسانی دریافت پرداخت به اپراتور شرکت',
     ),
     EventKey.PAYMENT_FAILED_CUSTOMER: EventDefinition(
         key=EventKey.PAYMENT_FAILED_CUSTOMER,
