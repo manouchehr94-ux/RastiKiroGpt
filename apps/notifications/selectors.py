@@ -33,6 +33,15 @@ class NotificationSelector:
         ).count()
 
     @staticmethod
+    def get_latest_for_user(
+        *, company, user: CompanyUser, limit: int = 5
+    ) -> QuerySet[Notification]:
+        """Get latest N notifications for a user — used for the bell dropdown."""
+        return Notification.objects.filter(
+            company=company, recipient=user
+        ).order_by("-created_at", "-id")[:limit]
+
+    @staticmethod
     def get_for_company(*, company) -> QuerySet[Notification]:
         """Get all notifications for a company (admin view)."""
         return Notification.objects.filter(company=company)

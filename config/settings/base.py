@@ -16,8 +16,8 @@ SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*", cast=Csv())
-
+#ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*", cast=Csv())
+ALLOWED_HOSTS = ["*"]
 # =============================================================================
 # APPLICATION DEFINITION
 # =============================================================================
@@ -91,6 +91,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.notifications.context_processors.notification_badge",
             ],
         },
     },

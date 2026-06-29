@@ -57,10 +57,16 @@
       <span>فاکتورها</span>
     </a>
     <a href="/{{ request.company.code }}/tech/notifications/"
-       class="tech-bottom-nav-item {% if '/tech/notifications/' in request.path %}active{% endif %}">
-      <svg class="tech-bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-      </svg>
+       class="tech-bottom-nav-item {% if '/tech/notifications/' in request.path %}active{% endif %}"
+       style="position:relative;">
+      <span style="position:relative;display:inline-flex;">
+        <svg class="tech-bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        {% if notif_unread_count > 0 %}
+        <span style="position:absolute;top:-4px;left:-4px;min-width:15px;height:15px;padding:0 3px;background:#ef4444;color:#fff;border-radius:999px;font-size:.62rem;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;border:2px solid var(--color-surface-0,#fff);">{{ notif_unread_count }}</span>
+        {% endif %}
+      </span>
       <span>اعلان‌ها</span>
     </a>
     {% endblock %}

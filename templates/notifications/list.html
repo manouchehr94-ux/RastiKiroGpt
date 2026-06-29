@@ -4,7 +4,7 @@
 
 {% block title %}اعلان‌ها - {{ company.name }}{% endblock %}
 {% block page_title %}اعلان‌ها{% endblock %}
-{% block page_description %}{{ unread_count }} اعلان خوانده نشده{% endblock %}
+{% block page_description %}{% if unread_count > 0 %}{{ unread_count }} اعلان خوانده‌نشده{% else %}همه خوانده شده‌اند{% endif %}{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
 {% block sidebar_subtitle %}پنل مدیریت{% endblock %}
 {% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
