@@ -228,7 +228,7 @@ class NotificationMarkReadService:
         """Mark all unread notifications as read for a user. Returns count."""
         count = Notification.objects.filter(
             company=company, recipient=user, is_read=False
-        ).update(is_read=True, read_at=timezone.now())
+        ).update(is_read=True, read_at=timezone.now(), updated_at=timezone.now())
         return count
 
 
@@ -313,14 +313,37 @@ class NotificationEventHooks:
                 event_key=NotificationSetting.EventKey.PAYMENT_SUCCESS_CUSTOMER,
             )
 
-        NotificationCreateService.notify_company_admins(
+        # Admin (COMPANY_ADMIN) — gated by PAYMENT_SUCCESS_ADMIN, independent of customer setting.
+        for admin in CompanyUser.objects.filter(
             company=payment.company,
-            notification_type=Notification.NotificationType.PAYMENT_PAID,
-            title="ظ¾ط±ط¯ط§ط®طھ ط¯ط±غŒط§ظپطھ ط´ط¯",
-            message=f"ظ¾ط±ط¯ط§ط®طھ ط¨ظ‡ ظ…ط¨ظ„ط؛ {payment.amount} ط¯ط±غŒط§ظپطھ ط´ط¯.",
-            related_invoice=invoice,
-            event_key=NotificationSetting.EventKey.PAYMENT_SUCCESS_CUSTOMER,
-        )
+            role=UserRole.COMPANY_ADMIN,
+            is_active=True,
+        ):
+            NotificationCreateService.create(
+                company=payment.company,
+                recipient=admin,
+                notification_type=Notification.NotificationType.PAYMENT_PAID,
+                title="پرداخت دریافت شد",
+                message=f"پرداخت به مبلغ {payment.amount} دریافت شد.",
+                related_invoice=invoice,
+                event_key=NotificationSetting.EventKey.PAYMENT_SUCCESS_ADMIN,
+            )
+
+        # Operator/staff (COMPANY_STAFF) — gated by PAYMENT_SUCCESS_OPERATOR, independent of customer/admin settings.
+        for operator in CompanyUser.objects.filter(
+            company=payment.company,
+            role=UserRole.COMPANY_STAFF,
+            is_active=True,
+        ):
+            NotificationCreateService.create(
+                company=payment.company,
+                recipient=operator,
+                notification_type=Notification.NotificationType.PAYMENT_PAID,
+                title="پرداخت دریافت شد",
+                message=f"پرداخت به مبلغ {payment.amount} دریافت شد.",
+                related_invoice=invoice,
+                event_key=NotificationSetting.EventKey.PAYMENT_SUCCESS_OPERATOR,
+            )
 
     @staticmethod
     def on_payment_failed(*, payment) -> None:
