@@ -1,10 +1,12 @@
 # SKILL.md — Rasti Service AI Development Entry Point
 
-**Version:** RDOS v1.0 Stable  
-**Status:** Frozen baseline for implementation tasks  
+**Version:** EKB v1.0 (Engineering Knowledge Base)
+**Status:** Active
 **Primary rule:** Read the required documents before touching code.
 
 This file is the entry point for Claude Code, ChatGPT, or any AI agent working on this repository. It is intentionally short. Detailed rules live under `docs/`.
+
+> **For full AI operating instructions, read:** `docs/02_AI_Operating_System/AI_AGENT_START_HERE.md`
 
 ---
 
@@ -12,10 +14,10 @@ This file is the entry point for Claude Code, ChatGPT, or any AI agent working o
 
 When documents appear to conflict, use this order:
 
-1. `docs/07_ADR/*` — accepted architecture decisions
-2. `docs/03_Business/*` — business rules
-3. `docs/01_Architecture/*` — technical architecture rules
-4. `docs/02_Development_System/*` — development workflow and templates
+1. `docs/07_ADR/*` — accepted architecture decisions (binding)
+2. `docs/04_Business_Rules/*` — business rules per entity
+3. `docs/03_Architecture/*` — technical architecture rules
+4. `docs/02_AI_Operating_System/*` — AI development workflow and protocols
 5. Code and tests — current implementation evidence, not authority over business rules
 6. `docs/00_Project/*` — glossary, terminology, scope, and context
 
@@ -90,13 +92,13 @@ At the beginning of every Claude Code session:
 
 1. Read this `SKILL.md`.
 2. Read `docs/README.md`.
-3. Read `docs/02_Development_System/MASTER_PROMPT.md`.
-4. Read `docs/02_Development_System/CLAUDE_BEHAVIOR.md`.
-5. Read `docs/02_Development_System/COMMON_MISTAKES.md`.
-6. Read the ADRs relevant to the task.
+3. Read `docs/02_AI_Operating_System/AI_AGENT_START_HERE.md`.
+4. Read `docs/02_AI_Operating_System/AI_CODE_CHANGE_RULES.md`.
+5. Read `docs/11_Project_Knowledge/KNOWN_CONSTRAINTS.md`.
+6. Read the ADRs relevant to the task (`docs/07_ADR/`).
 7. Read business and architecture documents relevant to the task.
 8. Inspect related code and tests before planning.
-9. Produce a plan using `TASK_TEMPLATE.md`.
+9. Produce a plan and present it.
 10. Wait for approval before implementation unless the user explicitly permits execution.
 
 ---
@@ -182,6 +184,6 @@ Do not ask for intermediate confirmations.
 
 Follow:
 
-docs/02_Development_System/AUTONOMOUS_EXECUTION_POLICY.md
+`docs/02_AI_Operating_System/AI_SAFE_CHANGE_PROTOCOL.md`
 
 Stop only if a documented Stop Condition is encountered.
