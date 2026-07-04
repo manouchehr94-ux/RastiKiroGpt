@@ -46,6 +46,7 @@
     <a href="/{{ company.code }}/tech/orders/my/?status=in_progress" class="filter-pill {% if status_filter == 'in_progress' %}active{% endif %}">در حال انجام</a>
     <a href="/{{ company.code }}/tech/orders/my/?status=done" class="filter-pill {% if status_filter == 'done' %}active{% endif %}">انجام‌شده</a>
     <a href="/{{ company.code }}/tech/orders/my/?status=cancel_requested" class="filter-pill {% if status_filter == 'cancel_requested' %}active{% endif %}">درخواست لغو</a>
+    <a href="/{{ company.code }}/tech/orders/my/?status=cancelled" class="filter-pill {% if status_filter == 'cancelled' %}active{% endif %}">لغو شده</a>
 </div>
 
 {% if orders_with_items %}
@@ -106,9 +107,11 @@
         {% endif %}
 
         <a href="/{{ company.code }}/tech/orders/{{ entry.order.id }}/" class="btn btn-outline btn-block">جزئیات سفارش</a>
+        {% if entry.order.status != "cancel_requested" and entry.order.status != "cancelled" %}
         <form method="post" action="/{{ company.code }}/tech/invoices/order/{{ entry.order.id }}/create/">{% csrf_token %}
             <button type="submit" class="btn btn-primary btn-block">صدور فاکتور</button>
         </form>
+        {% endif %}
         <a href="/{{ company.code }}/tech/invoices/?order={{ entry.order.id }}" class="btn btn-outline btn-block">فاکتورهای سفارش</a>
     </div>
 </article>

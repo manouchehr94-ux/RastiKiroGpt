@@ -364,12 +364,22 @@ def technician_invoice_create(request, order_id, company_code=None, **kwargs):
 
     # Duplicate guard: if an active (non-cancelled) invoice already exists for
     # this order, redirect to it instead of creating a new one.
-    from apps.invoices.services import InvoiceDuplicateGuard, InvoiceCreateService, InvoiceItemBulkService, InvoiceIssueService
+    from apps.invoices.services import InvoiceCancellationGuard, InvoiceDuplicateGuard, InvoiceCreateService, InvoiceItemBulkService, InvoiceIssueService
+
+    # Order-level lock: a cancel-requested or already-cancelled order must not
+    # get a new/reissued invoice.
+    if InvoiceCancellationGuard.order_blocks_invoice_creation(order):
+        messages.error(request, "این سفارش لغو شده یا در حال بررسی درخواست لغو است و امکان صدور فاکتور برای آن وجود ندارد.")
+        return redirect(f"/{company.code}/tech/orders/{order.id}/")
 
     existing_invoice = InvoiceDuplicateGuard.get_active_for_order(
         company=company, order=order
     )
     if existing_invoice is not None:
+        # Cancellation request pending: lock editing/reissue until admin resolves it.
+        if InvoiceCancellationGuard.has_pending_request(existing_invoice):
+            messages.error(request, "این فاکتور دارای درخواست لغو در حال بررسی است و قابل ویرایش نیست.")
+            return redirect(f"/{company.code}/tech/invoices/{existing_invoice.id}/")
         # If already issued/paid, just redirect to detail
         if existing_invoice.status in (Invoice.Status.ISSUED, Invoice.Status.PAID):
             messages.info(request, "فاکتور این سفارش قبلاً صادر شده است.")
@@ -485,10 +495,25 @@ def technician_invoice_create(request, order_id, company_code=None, **kwargs):
     total_discount = extra_discount
 
     with transaction.atomic():
+        # Re-check the order-level lock inside the transaction too, in case
+        # the order was cancelled/cancel-requested between the pre-check
+        # above and this point (e.g. two tabs / a slow submit).
+        order.refresh_from_db(fields=["status"])
+        if InvoiceCancellationGuard.order_blocks_invoice_creation(order):
+            messages.error(request, "این سفارش لغو شده یا در حال بررسی درخواست لغو است و امکان صدور فاکتور برای آن وجود ندارد.")
+            return redirect(f"/{company.code}/tech/orders/{order.id}/")
+
         # Re-check duplicate inside transaction to avoid race condition
         existing_invoice = InvoiceDuplicateGuard.get_active_for_order(
             company=company, order=order
         )
+
+        # Re-check cancellation-request lock inside the transaction too, in case
+        # a technician requested cancellation between the pre-check above and
+        # this point (e.g. two tabs / a slow submit).
+        if existing_invoice is not None and InvoiceCancellationGuard.has_pending_request(existing_invoice):
+            messages.error(request, "این فاکتور دارای درخواست لغو در حال بررسی است و قابل ویرایش نیست.")
+            return redirect(f"/{company.code}/tech/invoices/{existing_invoice.id}/")
 
         if existing_invoice is not None and existing_invoice.status == Invoice.Status.DRAFT:
             # Reuse the existing draft: replace its items and issue it
@@ -728,6 +753,12 @@ def technician_invoice_mark_cash_paid(request, invoice_id, company_code=None, **
         messages.error(request, "فقط فاکتور صادرشده و پرداخت‌نشده قابل ثبت دریافت نقدی است.")
         return redirect(f"/{company.code}/tech/invoices/{invoice.id}/")
 
+    from apps.invoices.services import InvoiceCancellationGuard
+
+    if InvoiceCancellationGuard.has_pending_request(invoice):
+        messages.error(request, "این فاکتور دارای درخواست لغو در حال بررسی است و قابل تسویه نیست.")
+        return redirect(f"/{company.code}/tech/invoices/{invoice.id}/")
+
     cash_ref = f"CASH-{company.code.upper()}-{invoice.id:05d}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
 
     with transaction.atomic():
@@ -739,6 +770,10 @@ def technician_invoice_mark_cash_paid(request, invoice_id, company_code=None, **
         )
         if invoice.status != Invoice.Status.ISSUED:
             messages.error(request, "فقط فاکتور صادرشده و پرداخت‌نشده قابل ثبت دریافت نقدی است.")
+            return redirect(f"/{company.code}/tech/invoices/{invoice.id}/")
+
+        if InvoiceCancellationGuard.has_pending_request(invoice):
+            messages.error(request, "این فاکتور دارای درخواست لغو در حال بررسی است و قابل تسویه نیست.")
             return redirect(f"/{company.code}/tech/invoices/{invoice.id}/")
 
         # TODO: When a real gateway is added, discount finalization should move to a

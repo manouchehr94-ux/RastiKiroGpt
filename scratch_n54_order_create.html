@@ -1,0 +1,769 @@
+﻿﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اضافه کردن سفارش - شرکت خدماتی ن۵۴</title>
+    
+    
+    
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('rasti-theme') || 'light';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="/static/css/theme.css?v=green-dark-v2">
+    
+    <link rel="stylesheet" href="/static/css/jalali_datepicker.css">
+        <link rel="stylesheet" href="/static/css/tech_bottom_nav_fix.css">
+
+<style>
+.oc-lookup-notice{margin-top:.4rem;padding:.45rem .75rem;border-radius:.5rem;font-size:.8rem;font-weight:600;}
+.oc-lookup-existing{background:var(--color-success-bg);color:var(--color-success-dark);border:1px solid var(--color-success-border);}
+.oc-lookup-new{background:var(--color-info-bg);color:var(--color-info-dark);border:1px solid var(--color-info-border);}
+.oc-lookup-error{background:var(--color-danger-bg);color:var(--color-danger-dark);border:1px solid var(--color-danger-border);}
+.oc-addr-item{display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;border:1px solid var(--color-slate-200);border-radius:.5rem;margin-bottom:.35rem;font-size:.82rem;cursor:pointer;transition:all .12s;}
+.oc-addr-item:hover{background:var(--color-success-light);border-color:var(--color-success-border);}
+.oc-addr-item.selected{background:var(--color-success-bg);border-color:var(--color-success);}
+.oc-addr-badge{background:var(--color-warning-bg);color:var(--color-warning-dark);padding:.15rem .5rem;border-radius:999px;font-size:.7rem;font-weight:700;}
+</style>
+
+    
+    <script src="/static/js/jalali_datepicker.js" defer></script>
+    <script src="/static/js/phase_c2_datetime_local_v2.js?v=phase-c2-v2" defer></script>
+    <script src="/static/js/rasti_ui_formatters.js" defer></script>
+    
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+    
+<div class="dashboard-shell" id="app">
+
+  
+  <aside id="sidebar" class="sidebar no-print">
+
+    
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <div style="min-width:0;flex:1;">
+        <div class="sidebar-brand-name">شرکت خدماتی ن۵۴</div>
+        <div class="sidebar-brand-sub">پنل مدیریت</div>
+      </div>
+      <button type="button" class="sidebar-close-btn" onclick="closeSidebar()" aria-label="بستن منو">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    
+    <nav class="sidebar-nav">
+      
+
+
+
+<div class="nav-group">
+    <p class="nav-group-title">عملیات</p>
+    <a href="/n54/admin/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z"/></svg>
+        <span>داشبورد</span>
+    </a>
+    <a href="/n54/admin/orders/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth active">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <span>سفارش‌ها</span>
+    </a>
+    <a href="/n54/admin/customers/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m0-4a4 4 0 100-8 4 4 0 000 8zm8 0a4 4 0 100-8 4 4 0 000 8z"/></svg>
+        <span>مشتریان</span>
+    </a>
+    <a href="/n54/admin/requests/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+        <span>درخواست‌ها</span>
+    </a>
+    <a href="/n54/admin/invoices/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+        <span>فاکتورها</span>
+    </a>
+</div>
+
+
+<div class="nav-group">
+    <p class="nav-group-title">تیم و دسترسی‌ها</p>
+    <a href="/n54/admin/settings/operators/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <span>اپراتورها</span>
+    </a>
+    <a href="/n54/admin/technicians/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>نیروهای خدماتی</span>
+    </a>
+    <a href="/n54/admin/technicians/rates/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        <span>تعرفه‌های اجرت</span>
+    </a>
+</div>
+
+
+<div class="nav-group">
+    <p class="nav-group-title">داده‌های پایه</p>
+    <a href="/n54/admin/custom-fields/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        <span>فیلدهای سفارشی</span>
+    </a>
+        <a href="/n54/admin/base-data/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+        <span>اطلاعات پایه</span>
+    </a>
+</div>
+
+
+<div class="nav-group">
+    <p class="nav-group-title">ارتباطات</p>
+    <a href="/n54/admin/notifications/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span>اعلان‌ها</span>
+    </a>
+    <a href="/n54/admin/sms/outbox/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        <span>پیامک</span>
+    </a>
+    <a href="/n54/admin/sms-credit/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        <span>اعتبار پیامک</span>
+    </a>
+    <a href="/n54/admin/communication-settings/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <span>تنظیمات پیام‌ها</span>
+    </a>
+</div>
+
+
+<div class="nav-group">
+    <p class="nav-group-title">تنظیمات</p>
+    <a href="/n54/admin/settings/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+        <span>تنظیمات شرکت</span>
+    </a>
+    <a href="/n54/admin/page/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
+        <span>صفحه عمومی</span>
+    </a>
+    <a href="/n54/admin/payment-gateway/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span>درگاه پرداخت</span>
+    </a>
+    <a href="/n54/admin/payment/merchant-profile/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>پروفایل پذیرنده (KYC)</span>
+    </a>
+</div>
+
+
+<div class="nav-group">
+    <p class="nav-group-title">تحلیل</p>
+    <a href="/n54/admin/reports/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span>گزارش‌ها</span>
+    </a>
+    <a href="/n54/admin/reports/discount-campaigns/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+        <span>کمپین‌های تخفیف</span>
+    </a>
+    <a href="/n54/admin/payments/operations/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <span>عملیات پرداخت</span>
+    </a>
+    <a href="/n54/admin/payments/split-snapshots/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        <span>تسهیم پرداخت‌ها</span>
+    </a>
+    <a href="/n54/admin/financial-reports/summary/" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-smooth ">
+        <svg class="nav-icon w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>گزارش مالی</span>
+    </a>
+</div>
+
+
+
+    </nav>
+
+    
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+        </div>
+        <div style="min-width:0;flex:1;">
+          <div class="sidebar-user-name">مدیر شرکت خدماتی ن۵۴</div>
+          <div class="sidebar-user-role">کاربر</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  
+  <div id="sidebarOverlay" class="sidebar-overlay no-print" onclick="closeSidebar()"></div>
+
+  
+  <div class="dashboard-main">
+
+    
+    <header class="topbar no-print">
+      <div style="display:flex;align-items:center;gap:var(--space-3);min-width:0;flex:1;">
+        <button class="topbar-toggle" onclick="toggleSidebar()" aria-label="باز کردن منو">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <div style="min-width:0;">
+          <h1 class="topbar-title">داشبورد</h1>
+          <p class="topbar-subtitle"></p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        
+
+        
+        
+        <div class="notif-bell-wrap" id="notif-bell-wrap">
+          <button type="button"
+                  id="notif-bell-btn"
+                  class="notif-bell-btn dark-mode-toggle"
+                  aria-label="اعلان‌ها"
+                  aria-expanded="false"
+                  onclick="toggleNotifDropdown(event)">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            
+            <span class="notif-badge" aria-label="4 اعلان جدید">4</span>
+            
+          </button>
+
+          
+          <div class="notif-dropdown" id="notif-dropdown" role="dialog" aria-label="اعلان‌های اخیر">
+            <div class="notif-dropdown-header">
+              <span class="notif-dropdown-title">اعلان‌ها</span>
+              
+              <span class="notif-badge-pill">4 جدید</span>
+              
+            </div>
+            <div class="notif-dropdown-list">
+              
+              
+              <div class="notif-dropdown-item notif-item-unread">
+                <div class="notif-item-title">درخواست لغو سفارش</div>
+                <div class="notif-item-msg">شماره سفارش 32</div>
+                <div class="notif-item-time">1405/04/11 08:30</div>
+              </div>
+              
+              <div class="notif-dropdown-item">
+                <div class="notif-item-title">سفارش جدید</div>
+                <div class="notif-item-msg">شماره سفارش 36</div>
+                <div class="notif-item-time">1405/03/26 09:06</div>
+              </div>
+              
+              <div class="notif-dropdown-item">
+                <div class="notif-item-title">سفارش جدید</div>
+                <div class="notif-item-msg">شماره سفارش 35</div>
+                <div class="notif-item-time">1405/03/26 08:07</div>
+              </div>
+              
+              <div class="notif-dropdown-item notif-item-unread">
+                <div class="notif-item-title">سفارش جدید</div>
+                <div class="notif-item-msg">شماره سفارش 34</div>
+                <div class="notif-item-time">1405/03/25 17:55</div>
+              </div>
+              
+              <div class="notif-dropdown-item notif-item-unread">
+                <div class="notif-item-title">سفارش جدید</div>
+                <div class="notif-item-msg">شماره سفارش 33</div>
+                <div class="notif-item-time">1405/03/25 17:20</div>
+              </div>
+              
+              
+            </div>
+            <div class="notif-dropdown-footer">
+              <a href="/n54/admin/notifications/" class="notif-dropdown-all-link">مشاهده همه</a>
+            </div>
+          </div>
+        </div>
+        
+        
+
+        
+        <button
+          x-data="{
+            dark: document.documentElement.getAttribute('data-theme') === 'dark',
+            toggle() {
+              this.dark = !this.dark;
+              var theme = this.dark ? 'dark' : 'light';
+              document.documentElement.setAttribute('data-theme', theme);
+              try { localStorage.setItem('rasti-theme', theme); } catch(e) {}
+            }
+          }"
+          @click="toggle()"
+          class="dark-mode-toggle"
+          :title="dark ? 'تم روشن' : 'تم تاریک'"
+          type="button">
+          <svg x-show="dark" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+          </svg>
+          <svg x-show="!dark" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </button>
+
+        <a href="/n54/login/logout/"
+           class="btn btn-ghost btn-sm"
+           title="خروج">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span class="topbar-logout-label">خروج</span>
+        </a>
+      </div>
+    </header>
+
+    
+    <main class="dashboard-content">
+      
+      
+<div class="admin-compact">
+<div class="page-header"><h1>اضافه کردن سفارش</h1></div>
+
+
+
+
+
+<div class="card">
+  <form method="post">
+    <input type="hidden" name="csrfmiddlewaretoken" value="fTxD9nTC8xIouueMPLEjm4LhQG6XgtKcyae5mQZkGOjiU6WW1IqPTAI3A4BEjnIz">
+
+    <h3 class="section-title">اطلاعات مشتری</h3>
+    <p class="page-header-subtitle" style="margin-bottom:var(--space-4);">ابتدا شماره موبایل مشتری را وارد کنید.</p>
+
+    <div class="form-group">
+      <label class="form-label required">شماره تماس مشتری</label>
+      <input name="customer_phone" id="customerPhone" class="form-control ltr-field" placeholder="مثلاً 09121234567" value="" required autocomplete="tel">
+      <div id="phoneLookupResult"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label required">نام مشتری</label>
+      <input name="customer_name" id="customerName" class="form-control" placeholder="مثلاً رضا محمدی" value="" required autocomplete="name">
+    </div>
+
+    <div id="previousAddressesArea" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">آدرس‌های قبلی <span class="oc-addr-badge" id="addrCountBadge"></span></label>
+        <div id="previousAddressesList"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label required">آدرس مشتری</label>
+      <textarea name="address" id="customerAddress" class="form-control" rows="2" placeholder="آدرس محل انجام خدمت" required></textarea>
+    </div>
+
+    <h3 class="section-title">اطلاعات سفارش</h3>
+
+    <div class="form-group">
+      <label class="form-label required">رسته خدمات</label>
+      <select name="service_category_id" class="form-control" id="categorySelect" onchange="updateDynamicItems();" required>
+        <option value="">-- انتخاب رسته خدمات --</option>
+        <option value="1">نظافت منزل</option><option value="2">نظافت راه‌پله و مشاعات</option><option value="3">شستشو و خدمات ویژه</option>
+      </select>
+      <span class="form-hint">با انتخاب رسته، آیتم‌های همان رسته پایین فرم نمایش داده می‌شود.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label required">تاریخ انجام سفارش</label>
+      <input name="service_date_jalali" class="form-control" value="1405/04/11" placeholder="مثلاً 1405/03/04" required>
+      <span class="form-hint">تاریخ را شمسی وارد کنید؛ مثال: 1405/03/04</span>
+    </div>
+
+    <div id="dynamicItemsContainer" style="display:none;">
+      <h3 class="section-title">آیتم‌های سفارش</h3>
+      <p class="stat-card-hint">همه آیتم‌های رسته انتخاب‌شده اینجا نمایش داده می‌شود.</p>
+      <div id="dynamicItemsFields"></div>
+    </div>
+
+    <h3 class="section-title">جزئیات سفارش</h3>
+    <div class="form-group"><label class="form-label">توضیحات</label><textarea name="description" class="form-control" rows="3"></textarea></div>
+    <div class="form-group"><label class="form-label">پرداخت مازاد</label><input type="number" name="extra_payment" class="form-control" value="0" step="1"></div>
+    <div class="form-group"><label class="form-label">کسر از دستمزد</label><input type="number" name="wage_deduction" class="form-control" value="0" step="1"></div>
+
+    <h3 class="section-title">نیروی خدماتی و وضعیت</h3>
+    <div class="form-group">
+      <label class="form-label">نیروی خدماتی <span class="stat-card-hint">(اختیاری)</span></label>
+      <select name="technician_id" class="form-control">
+        <option value="">-- بدون تخصیص --</option>
+        <option value="1">علی محمدی</option><option value="2">حسین رضایی</option><option value="3">مهدی کریمی</option>
+      </select>
+      <span class="form-hint">اگر نیرو انتخاب شود، سفارش همان لحظه به «در انتظار خدمت» تغییر وضعیت می‌دهد.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">وضعیت</label>
+      <select name="status" class="form-control">
+        <option value="pending_review" >در انتظار بررسی</option><option value="new" selected>جدید</option><option value="waiting" >در انتظار</option><option value="in_progress" >در حال انجام</option><option value="done" >انجام شده</option><option value="cancel_requested" >درخواست لغو</option><option value="cancelled" >لغو شده</option>
+      </select>
+    </div>
+
+    <div class="form-group"><label class="form-label">یادداشت داخلی</label><textarea name="internal_note" class="form-control" rows="2" placeholder="فقط برای مدیر/کارمند"></textarea></div>
+
+
+    
+    <div class="card" style="margin-top:var(--space-4);">
+      <div class="card-header"><h3 class="card-title">اطلاعات تکمیلی</h3></div>
+      <div class="card-body">
+        
+        <div class="form-group" style="margin-bottom:var(--space-4);">
+          <label class="form-label">
+            وضعیت گارانتی
+            
+          </label>
+          
+            <select name="custom_field_2" class="form-input"
+              >
+              <option value="">-- انتخاب کنید --</option>
+              
+              <option value="دست تکنیسین">دست تکنیسین</option>
+              
+              <option value="دست خدمات">دست خدمات</option>
+              
+              <option value="دست شرکت">دست شرکت</option>
+              
+            </select>
+          
+        </div>
+        
+      </div>
+    </div>
+    
+
+    <div class="form-actions">
+      <a href="/n54/admin/orders/" class="btn btn-outline">انصراف</a>
+      <button type="submit" class="btn btn-primary">ذخیره و خروج</button>
+    </div>
+  </form>
+</div>
+
+<script>
+var allItemDefinitions = [{"id": 6, "title": "\u0634\u0633\u062a \u0648 \u0634\u0648\u06cc \u0633\u0631\u0648\u06cc", "kind": "number", "category_id": 3, "sort_order": 0}, {"id": 7, "title": "\u0634\u0633\u062a \u0648 \u0634\u0648\u06cc \u0628\u06cc\u0645\u0627\u0631", "kind": "number", "category_id": 3, "sort_order": 0}];
+var lookupUrl = "/n54/admin/customers/lookup/";
+var lookupTimer = null;
+
+(function() {
+  var phoneInput = document.getElementById("customerPhone");
+  var nameInput = document.getElementById("customerName");
+  var addressInput = document.getElementById("customerAddress");
+  var resultDiv = document.getElementById("phoneLookupResult");
+  var addrArea = document.getElementById("previousAddressesArea");
+  var addrList = document.getElementById("previousAddressesList");
+  var addrBadge = document.getElementById("addrCountBadge");
+
+  function doLookup() {
+    var phone = phoneInput.value.trim();
+    if (phone.length < 10) { resultDiv.innerHTML = ""; addrArea.style.display = "none"; return; }
+    fetch(lookupUrl + "?phone=" + encodeURIComponent(phone), {
+      credentials: "same-origin", headers: {"X-Requested-With": "XMLHttpRequest"}
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) {
+        resultDiv.innerHTML = '<div class="oc-lookup-notice oc-lookup-error">' + (data.error || "") + '</div>';
+        addrArea.style.display = "none"; return;
+      }
+      if (data.exists) {
+        resultDiv.innerHTML = '<div class="oc-lookup-notice oc-lookup-existing">مشتری قبلاً ثبت شده است: ' + escapeHtml(data.customer.full_name) + '</div>';
+        if (!nameInput.value.trim()) nameInput.value = data.customer.full_name;
+        if (data.addresses && data.addresses.length > 0) {
+          addrArea.style.display = "block";
+          addrBadge.textContent = data.addresses.length + " آدرس قبلی";
+          addrList.innerHTML = "";
+          data.addresses.forEach(function(a) {
+            var div = document.createElement("div");
+            div.className = "oc-addr-item";
+            div.textContent = a.address;
+            div.onclick = function() {
+              addressInput.value = a.address;
+              document.querySelectorAll(".oc-addr-item").forEach(function(el) { el.classList.remove("selected"); });
+              div.classList.add("selected");
+            };
+            addrList.appendChild(div);
+          });
+        } else { addrArea.style.display = "none"; }
+      } else {
+        resultDiv.innerHTML = '<div class="oc-lookup-notice oc-lookup-new">مشتری جدید است و پس از ثبت سفارش ذخیره می‌شود.</div>';
+        addrArea.style.display = "none";
+      }
+    })
+    .catch(function() { resultDiv.innerHTML = ""; addrArea.style.display = "none"; });
+  }
+
+  phoneInput.addEventListener("input", function() { clearTimeout(lookupTimer); lookupTimer = setTimeout(doLookup, 600); });
+  phoneInput.addEventListener("blur", function() { clearTimeout(lookupTimer); doLookup(); });
+  if (phoneInput.value.trim().length >= 10) { setTimeout(doLookup, 250); }
+})();
+
+function escapeHtml(text) { var d = document.createElement("div"); d.appendChild(document.createTextNode(text)); return d.innerHTML; }
+
+function buildItemInput(item, existingValues) {
+  var div = document.createElement('div'); div.className = 'form-group';
+  var label = document.createElement('label'); label.className = 'form-label';
+  label.textContent = item.title + (item.kind === 'number' ? ' / تعداد' : (item.kind === 'money' ? ' / مبلغ' : ''));
+  div.appendChild(label);
+  var existVal = existingValues ? existingValues[item.id] : undefined;
+  if (item.kind === 'number' || item.kind === 'money') {
+    var input = document.createElement('input');
+    input.type = 'number'; input.name = 'item_' + item.id; input.className = 'form-control';
+    input.step = item.kind === 'money' ? '1' : 'any'; input.placeholder = '0';
+    if (existVal !== undefined && existVal !== '') input.value = existVal;
+    div.appendChild(input);
+  } else if (item.kind === 'text') {
+    var textarea = document.createElement('textarea');
+    textarea.name = 'item_' + item.id; textarea.className = 'form-control'; textarea.rows = 2;
+    if (existVal !== undefined && existVal !== '') textarea.value = existVal;
+    div.appendChild(textarea);
+  } else if (item.kind === 'bool') {
+    var chk = document.createElement('input');
+    chk.type = 'checkbox'; chk.name = 'item_' + item.id; chk.value = 'on'; chk.id = 'item_' + item.id;
+    if (existVal === true) chk.checked = true;
+    var chkLabel = document.createElement('label');
+    chkLabel.htmlFor = 'item_' + item.id; chkLabel.textContent = ' بله'; chkLabel.style.marginRight = '0.5rem'; chkLabel.style.fontWeight = 'normal';
+    div.appendChild(chk); div.appendChild(chkLabel);
+  }
+  return div;
+}
+
+function updateDynamicItems(existingValues) {
+  var catId = document.getElementById('categorySelect').value;
+  var container = document.getElementById('dynamicItemsContainer');
+  var fields = document.getElementById('dynamicItemsFields');
+  fields.innerHTML = '';
+  if (!catId) { container.style.display = 'none'; return; }
+  var items = allItemDefinitions.filter(function(d) { return String(d.category_id) === String(catId); });
+  container.style.display = 'block';
+  if (items.length === 0) {
+    fields.innerHTML = '<div class="alert alert-warning">برای این رسته هنوز آیتم سفارش تعریف نشده است.</div>';
+    return;
+  }
+  items.forEach(function(item) { fields.appendChild(buildItemInput(item, existingValues || {})); });
+}
+</script>
+</div>
+
+    </main>
+
+    
+    <footer class="dashboard-footer no-print">
+      <p>&copy; رستی سرویس &mdash; سامانه مدیریت خدمات</p>
+    </footer>
+  </div>
+</div>
+
+
+<script>
+(function () {
+  'use strict';
+
+  // --- Notification dropdown ---
+  window.toggleNotifDropdown = function toggleNotifDropdown(e) {
+    if (e) { e.stopPropagation(); }
+    var drop = document.getElementById('notif-dropdown');
+    var btn  = document.getElementById('notif-bell-btn');
+    if (!drop) return;
+    var open = drop.classList.toggle('open');
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  document.addEventListener('click', function (e) {
+    var wrap = document.getElementById('notif-bell-wrap');
+    var drop = document.getElementById('notif-dropdown');
+    if (!drop || !drop.classList.contains('open')) return;
+    if (wrap && wrap.contains(e.target)) return;
+    drop.classList.remove('open');
+    var btn = document.getElementById('notif-bell-btn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      var drop = document.getElementById('notif-dropdown');
+      if (drop) drop.classList.remove('open');
+    }
+  });
+
+  var SIDEBAR_SCROLL_KEY = 'rasti_sidebar_scroll';
+  var SIDEBAR_COLLAPSED_KEY = 'rasti_sidebar_collapsed';
+
+  function getSidebar() {
+    return document.getElementById('sidebar');
+  }
+
+  function getOverlay() {
+    return document.getElementById('sidebarOverlay');
+  }
+
+  function rememberCollapsed(value) {
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, value ? 'true' : 'false');
+    } catch (e) {}
+  }
+
+  function forceOverlayClosed() {
+    var overlay = getOverlay();
+    if (overlay) {
+      overlay.classList.remove('active');
+      overlay.classList.add('hidden');
+      overlay.style.display = 'none';
+      overlay.style.opacity = '0';
+      overlay.style.pointerEvents = 'none';
+    }
+    document.body.classList.remove('admin-sidebar-is-open');
+    document.body.style.overflow = '';
+  }
+
+  window.openSidebar = function openSidebar() {
+    var sidebar = getSidebar();
+    var overlay = getOverlay();
+    if (!sidebar || !overlay) return;
+
+    sidebar.classList.add('open');
+    sidebar.classList.add('sidebar-opened');
+    sidebar.classList.remove('translate-x-full');
+
+    overlay.style.display = '';
+    overlay.style.opacity = '';
+    overlay.style.pointerEvents = '';
+    overlay.classList.remove('hidden');
+    overlay.classList.add('active');
+
+    document.body.classList.add('admin-sidebar-is-open');
+    document.body.style.overflow = 'hidden';
+    rememberCollapsed(false);
+  };
+
+  window.closeSidebar = function closeSidebar() {
+    var sidebar = getSidebar();
+    var overlay = getOverlay();
+
+    if (sidebar) {
+      sidebar.classList.remove('open');
+      sidebar.classList.remove('sidebar-opened');
+      if (window.innerWidth < 1024) {
+        sidebar.classList.add('translate-x-full');
+      }
+    }
+
+    if (overlay) {
+      overlay.classList.remove('active');
+      overlay.classList.add('hidden');
+      overlay.style.display = 'none';
+      overlay.style.opacity = '0';
+      overlay.style.pointerEvents = 'none';
+    }
+
+    document.body.classList.remove('admin-sidebar-is-open');
+    document.body.style.overflow = '';
+    rememberCollapsed(true);
+  };
+
+  window.toggleSidebar = function toggleSidebar() {
+    var sidebar = getSidebar();
+    if (!sidebar) return;
+    if (sidebar.classList.contains('open') || sidebar.classList.contains('sidebar-opened')) {
+      window.closeSidebar();
+    } else {
+      window.openSidebar();
+    }
+  };
+
+  function restoreSidebarScroll() {
+    var sidebar = getSidebar();
+    if (!sidebar) return;
+
+    try {
+      if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === null) {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, window.innerWidth < 1024 ? 'true' : 'false');
+      }
+    } catch (e) {}
+
+    try {
+      var savedScroll = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
+      if (savedScroll !== null && savedScroll !== '') {
+        sidebar.scrollTop = parseInt(savedScroll, 10) || 0;
+      }
+      sidebar.addEventListener('scroll', function () {
+        sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(sidebar.scrollTop || 0));
+      }, { passive: true });
+    } catch (e) {}
+  }
+
+  function initJalaliInputs() {
+    var selector = [
+      'input[type="date"]',
+      'input.jalali-date-input',
+      '[data-jalali-datepicker]',
+      'input[name*="date" i]',
+      'input[name*="_from" i]',
+      'input[name*="_to" i]',
+      'input[name="from"]',
+      'input[name="to"]'
+    ].join(',');
+
+    document.querySelectorAll(selector).forEach(function (el) {
+      el.setAttribute('data-jalali-datepicker', '1');
+      if (typeof initJalaliDatepicker === 'function') {
+        initJalaliDatepicker(el);
+      } else if (window.RastiJalaliDatepicker && typeof window.RastiJalaliDatepicker.attach === 'function') {
+        window.RastiJalaliDatepicker.attach();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') window.closeSidebar();
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    forceOverlayClosed();
+    restoreSidebarScroll();
+    if (window.innerWidth < 1024) {
+      window.closeSidebar();
+    }
+    initJalaliInputs();
+    if (window.RastiFormatNumbers && typeof window.RastiFormatNumbers.apply === 'function') {
+      window.RastiFormatNumbers.apply();
+    }
+  });
+
+  window.addEventListener('resize', function () {
+    forceOverlayClosed();
+    if (window.innerWidth < 1024) {
+      window.closeSidebar();
+    }
+  });
+})();
+</script>
+<script src="/static/js/jalali_datepicker.js"></script>
+<script src="/static/js/rasti_ui_formatters.js"></script>
+
+    
+    <script src="/static/js/rasti_ui_hotfix.js" defer></script>
+    <script src="/static/js/phase_c2_datetime_local.js" defer></script>
+    <script src="/static/js/rasti_sidebar.js?v=phase-b-v2" defer></script>
+    <script src="/static/js/tech_bottom_nav_fix.js?v=local-hotfix-1" defer></script>
+</body>
+</html>
+

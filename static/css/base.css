@@ -191,6 +191,17 @@ input[type="password"] {
   unicode-bidi: embed;
 }
 
+/* Remove native number-input spin buttons globally (EPIC-002 Issue 014) */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 abbr[title] {
   cursor: help;
   text-decoration: underline dotted;

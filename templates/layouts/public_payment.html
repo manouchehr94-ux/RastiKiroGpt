@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{# Dedicated public payment layout — no sidebar, no admin nav, no auth-only controls. #}
+{# Used by anonymous, unauthenticated public payment/checkout pages only. #}
+
+{% block body %}
+<div class="public-shell" dir="rtl">
+
+  {# ===== MINIMAL PUBLIC HEADER — branding only, no nav links, no auth controls ===== #}
+  <nav class="public-nav no-print">
+    <div class="public-nav-inner">
+      <div class="public-nav-brand">
+        <span class="public-nav-brand-name">{% block company_name %}رستی سرویس{% endblock %}</span>
+      </div>
+    </div>
+  </nav>
+
+  {# ===== PAGE CONTENT ===== #}
+  <main class="public-main">
+    <div class="public-container">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  {# ===== MINIMAL FOOTER ===== #}
+  <footer class="public-footer no-print">
+    <div class="public-footer-inner">
+      <p>&copy; رستی سرویس &mdash; سامانه مدیریت خدمات</p>
+    </div>
+  </footer>
+</div>
+{% endblock %}

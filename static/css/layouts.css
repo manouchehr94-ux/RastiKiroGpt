@@ -270,6 +270,81 @@
   flex-shrink: 0;
 }
 
+/* =============================================================================
+   NOTIFICATION BELL / DROPDOWN (topbar)
+
+   Moved here from templates/layouts/dashboard.html's inline {% block
+   extra_head %} so it can never be silently dropped by a page template that
+   overrides extra_head without {{ block.super }} (e.g.
+   templates/tenants/admin_order_create.html did exactly this, which left
+   .notif-dropdown with no `display:none` rule at all — the browser default
+   `display:block` for a <div> — making the dropdown content permanently
+   visible on that page regardless of its .open state). This stylesheet is
+   loaded on every page via theme.css's @import chain, independent of any
+   page's extra_head block.
+   ============================================================================= */
+
+.notif-bell-wrap { position: relative; display: inline-flex; }
+.notif-bell-btn { position: relative; }
+.notif-badge {
+  position: absolute; top: -5px; left: -5px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  background: var(--color-danger, #ef4444); color: #fff;
+  border-radius: 999px; font-size: .67rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; border: 2px solid var(--color-surface-0, #fff);
+  pointer-events: none;
+}
+.notif-dropdown {
+  display: none; position: absolute;
+  top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  width: 320px; max-width: calc(100vw - 2rem);
+  background: var(--color-surface-0, #fff);
+  border: 1px solid var(--color-slate-200, #e2e8f0);
+  border-radius: 14px; box-shadow: 0 8px 32px rgba(0, 0, 0, .12);
+  z-index: 9999; overflow: hidden;
+}
+.notif-dropdown.open { display: block; }
+.notif-dropdown-header {
+  padding: .7rem 1rem .35rem;
+}
+.notif-dropdown-title { font-size: .87rem; font-weight: 700; color: var(--color-slate-800, #1e293b); }
+.notif-dropdown-status {
+  padding: 0 1rem .65rem; margin-top: -.15rem;
+  font-size: .77rem; color: var(--color-slate-500, #64748b);
+  border-bottom: 1px solid var(--color-slate-100, #f1f5f9);
+}
+.notif-dropdown-list { max-height: 320px; overflow-y: auto; }
+.notif-dropdown-item {
+  padding: .65rem 1rem;
+  border-bottom: 1px solid var(--color-slate-100, #f1f5f9);
+  cursor: default;
+}
+.notif-dropdown-item:last-child { border-bottom: none; }
+.notif-item-unread { background: var(--color-brand-50, #eff6ff); }
+.notif-item-title { font-size: .82rem; font-weight: 600; color: var(--color-slate-800, #1e293b); margin: .15rem 0 .2rem; }
+.notif-item-msg { font-size: .77rem; color: var(--color-slate-500, #64748b); line-height: 1.5; margin-bottom: .25rem; direction: rtl; }
+.notif-item-time { font-size: .72rem; color: var(--color-slate-400, #94a3b8); }
+.notif-dropdown-footer {
+  padding: .6rem 1rem; border-top: 1px solid var(--color-slate-100, #f1f5f9);
+  text-align: center;
+}
+.notif-dropdown-all-link {
+  font-size: .8rem; font-weight: 600;
+  color: var(--color-brand-600, #2563eb); text-decoration: none;
+}
+.notif-dropdown-all-link:hover { text-decoration: underline; }
+[data-theme="dark"] .notif-dropdown {
+  background: var(--color-slate-800);
+  border-color: var(--color-slate-700);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+}
+[data-theme="dark"] .notif-item-unread { background: rgba(37, 99, 235, .1); }
+[data-theme="dark"] .notif-item-title { color: var(--color-slate-100); }
+[data-theme="dark"] .notif-dropdown-status, [data-theme="dark"] .notif-dropdown-footer { border-color: var(--color-slate-700); }
+[data-theme="dark"] .notif-dropdown-item { border-color: var(--color-slate-700); }
+[data-theme="dark"] .notif-badge { border-color: var(--color-slate-800); }
+
 
 /* =============================================================================
    PUBLIC SHELL (landing, features, pricing, about, contact)

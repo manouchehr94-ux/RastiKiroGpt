@@ -2,70 +2,6 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="/static/css/jalali_datepicker.css">
-<style>
-.notif-bell-wrap{position:relative;display:inline-flex;}
-.notif-bell-btn{position:relative;}
-.notif-badge{
-  position:absolute;top:-5px;left:-5px;
-  min-width:17px;height:17px;padding:0 4px;
-  background:var(--color-danger,#ef4444);color:#fff;
-  border-radius:999px;font-size:.67rem;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  line-height:1;border:2px solid var(--color-surface-0,#fff);
-  pointer-events:none;
-}
-.notif-dropdown{
-  display:none;position:absolute;
-  top:calc(100% + 8px);left:50%;transform:translateX(-50%);
-  width:320px;max-width:calc(100vw - 2rem);
-  background:var(--color-surface-0,#fff);
-  border:1px solid var(--color-slate-200,#e2e8f0);
-  border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.12);
-  z-index:9999;overflow:hidden;
-}
-.notif-dropdown.open{display:block;}
-.notif-dropdown-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.7rem 1rem;border-bottom:1px solid var(--color-slate-100,#f1f5f9);
-}
-.notif-dropdown-title{font-size:.87rem;font-weight:700;color:var(--color-slate-800,#1e293b);}
-.notif-badge-pill{
-  font-size:.72rem;font-weight:700;
-  background:var(--color-danger,#ef4444);color:#fff;
-  border-radius:999px;padding:.1rem .45rem;
-}
-.notif-dropdown-list{max-height:320px;overflow-y:auto;}
-.notif-dropdown-item{
-  padding:.65rem 1rem;
-  border-bottom:1px solid var(--color-slate-100,#f1f5f9);
-  cursor:default;
-}
-.notif-dropdown-item:last-child{border-bottom:none;}
-.notif-item-unread{background:var(--color-brand-50,#eff6ff);}
-.notif-item-title{font-size:.82rem;font-weight:600;color:var(--color-slate-800,#1e293b);margin-bottom:.2rem;}
-.notif-item-msg{font-size:.77rem;color:var(--color-slate-500,#64748b);line-height:1.5;margin-bottom:.25rem;direction:rtl;}
-.notif-item-time{font-size:.72rem;color:var(--color-slate-400,#94a3b8);}
-.notif-dropdown-empty{padding:1.2rem 1rem;font-size:.82rem;color:var(--color-slate-400,#94a3b8);text-align:center;}
-.notif-dropdown-footer{
-  padding:.6rem 1rem;border-top:1px solid var(--color-slate-100,#f1f5f9);
-  text-align:center;
-}
-.notif-dropdown-all-link{
-  font-size:.8rem;font-weight:600;
-  color:var(--color-brand-600,#2563eb);text-decoration:none;
-}
-.notif-dropdown-all-link:hover{text-decoration:underline;}
-[data-theme="dark"] .notif-dropdown{
-  background:var(--color-slate-800);
-  border-color:var(--color-slate-700);
-  box-shadow:0 8px 32px rgba(0,0,0,.4);
-}
-[data-theme="dark"] .notif-item-unread{background:rgba(37,99,235,.1);}
-[data-theme="dark"] .notif-item-title{color:var(--color-slate-100);}
-[data-theme="dark"] .notif-dropdown-header,[data-theme="dark"] .notif-dropdown-footer{border-color:var(--color-slate-700);}
-[data-theme="dark"] .notif-dropdown-item{border-color:var(--color-slate-700);}
-[data-theme="dark"] .notif-badge{border-color:var(--color-slate-800);}
-</style>
 {% endblock %}
 
 {% load static %}
@@ -163,23 +99,21 @@
           <div class="notif-dropdown" id="notif-dropdown" role="dialog" aria-label="اعلان‌های اخیر">
             <div class="notif-dropdown-header">
               <span class="notif-dropdown-title">اعلان‌ها</span>
-              {% if notif_unread_count > 0 %}
-              <span class="notif-badge-pill">{{ notif_unread_count }} جدید</span>
-              {% endif %}
             </div>
+            <div class="notif-dropdown-status">
+              {% if notif_unread_count > 0 %}{{ notif_unread_count }} اعلان جدید{% else %}هیچ اعلان جدیدی وجود ندارد{% endif %}
+            </div>
+            {% if notif_latest %}
             <div class="notif-dropdown-list">
-              {% if notif_latest %}
               {% for n in notif_latest %}
               <div class="notif-dropdown-item{% if not n.is_read %} notif-item-unread{% endif %}">
+                <div class="notif-item-time">{{ n.created_at|jalali_datetime }}</div>
                 <div class="notif-item-title">{{ n.title }}</div>
                 <div class="notif-item-msg">{{ n.message|truncatechars:70 }}</div>
-                <div class="notif-item-time">{{ n.created_at|jalali_datetime }}</div>
               </div>
               {% endfor %}
-              {% else %}
-              <div class="notif-dropdown-empty">اعلانی وجود ندارد</div>
-              {% endif %}
             </div>
+            {% endif %}
             <div class="notif-dropdown-footer">
               <a href="/{{ request.company.code }}/admin/notifications/" class="notif-dropdown-all-link">مشاهده همه</a>
             </div>

@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from apps.accounts.models import Customer
 
-from .models import Invoice, InvoiceItem, generate_invoice_number
+from .models import Invoice, InvoiceCancellationRequest, InvoiceItem, generate_invoice_number
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +81,38 @@ class InvoiceDuplicateGuard:
             .exclude(status__in=InvoiceDuplicateGuard._CLOSED_STATUSES)
             .exists()
         )
+
+
+class InvoiceCancellationGuard:
+    """
+    Blocks further edits/reissue/settlement on an invoice that has a PENDING
+    cancellation request against it. Mirrors InvoiceDuplicateGuard's shape.
+
+    A PENDING cancellation request means a technician has already asked to
+    cancel this invoice; it must not be silently overwritten, reissued, or
+    cash-settled while that request is awaiting admin review.
+    """
+
+    @staticmethod
+    def has_pending_request(invoice) -> bool:
+        """Check if the given invoice has a PENDING cancellation request."""
+        if invoice is None:
+            return False
+        return InvoiceCancellationRequest.objects.filter(
+            invoice=invoice, status=InvoiceCancellationRequest.Status.PENDING,
+        ).exists()
+
+    @staticmethod
+    def order_blocks_invoice_creation(order) -> bool:
+        """
+        Check if the order's own status should block creating/issuing a new
+        invoice for it (cancel requested or already cancelled).
+        """
+        if order is None:
+            return False
+        from apps.orders.models import Order
+
+        return order.status in (Order.Status.CANCEL_REQUESTED, Order.Status.CANCELLED)
 
 
 class InvoiceCreateService:

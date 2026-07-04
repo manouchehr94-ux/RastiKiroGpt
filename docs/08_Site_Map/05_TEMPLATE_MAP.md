@@ -132,8 +132,8 @@ base.html (نیازمند بررسی بیشتر — پایه اصلی)
 |------|-----|------|--------|-----|
 | `invoices/list.html` | `/<code>/invoices/` | `invoice_list` | `base_dashboard.html` | authenticated |
 | `invoices/detail.html` | `/<code>/invoices/<id>/` | `invoice_detail` | `base_dashboard.html` | authenticated |
-| `invoices/detail.html` | `/<code>/invoices/public/<code>/` | `public_invoice_detail` | `base_dashboard.html` | همه |
-| `invoices/detail.html` | `/i/<public_code>/` | `short_public_invoice_detail` | `base_dashboard.html` | همه |
+| `invoices/public_detail.html` | `/<code>/invoices/public/<code>/` | `public_invoice_detail` | *(standalone — no `{% extends %}`, not `base_dashboard.html`; corrected 2026-07-01, see EPIC-002 Issue 001 audit)* | همه |
+| `invoices/public_detail.html` | `/i/<public_code>/` | `short_public_invoice_detail` | *(standalone — no `{% extends %}`, not `base_dashboard.html`; corrected 2026-07-01, see EPIC-002 Issue 001 audit)* | همه |
 | `invoices/print.html` | `/<code>/invoices/public/<code>/print/` | `invoice_print` | `layouts/invoice_print.html` | همه |
 | `tenants/admin_invoices.html` | `/<code>/admin/invoices/` | `admin_invoice_list` | `base_dashboard.html` | COMPANY_ADMIN, STAFF |
 | `tenants/admin_invoice_detail.html` | `/<code>/admin/invoices/<id>/` | `admin_invoice_detail` | `base_dashboard.html` | COMPANY_ADMIN, STAFF |
@@ -146,7 +146,7 @@ base.html (نیازمند بررسی بیشتر — پایه اصلی)
 
 | قالب | URL | View | Layout | نقش |
 |------|-----|------|--------|-----|
-| `payments/invoice_checkout.html` | `/<code>/invoices/<id>/pay/` | `invoice_pay` | `base_dashboard.html` | authenticated |
+| `payments/invoice_checkout.html` | `/<code>/invoices/<id>/pay/` | `invoice_pay` | `layouts/public_payment.html` (changed 2026-07-01, EPIC-002 Issue 001 — was `layouts/dashboard.html`) | همه (بدون auth — intentionally public) |
 | `payments/list.html` | `/<code>/payments/` | `payment_list` | `base_dashboard.html` | authenticated |
 | `payments/result.html` | `/<code>/payments/callback/` | `payment_callback` | `base_dashboard.html` | همه |
 | `payments/operations_company.html` | `/<code>/admin/payments/operations/` | `company_payment_operations` | `base_dashboard.html` | COMPANY_ADMIN |

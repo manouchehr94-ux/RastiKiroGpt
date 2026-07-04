@@ -1,18 +1,7 @@
 {% extends "layouts/dashboard.html" %}
 
-{% load fa_labels %}
-{% block title %}گزارش‌ها - {{ company.name }}
-<div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm mt-4">
-    <div class="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-            <div class="font-bold mb-1">گزارش هدفمند مشتریان</div>
-            <p class="text-sm text-gray-600">جستجوی ترکیبی بر اساس نام، آدرس، فاکتور، مبلغ، رسته خدمات و تعداد سفارش برای آماده‌سازی کمپین تخفیف.</p>
-        </div>
-        <a href="/{{ company.code }}/admin/reports/customer-segments/" class="btn btn-primary">ورود به گزارش</a>
-    </div>
-</div>
-
-{% endblock %}
+{% load smart_numbers fa_labels %}
+{% block title %}گزارش‌ها - {{ company.name }}{% endblock %}
 {% block page_title %}گزارش‌ها{% endblock %}
 {% block page_description %}خلاصه سفارش‌ها، فاکتورها و عملکرد نیروهای خدماتی{% endblock %}
 {% block sidebar_brand %}{{ company.name }}{% endblock %}
@@ -23,50 +12,128 @@
 
 {% block content %}
 <div class="admin-compact">
-<div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
-    <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div class="text-2xl font-black">{{ order_summary.total }}</div><div class="text-sm text-gray-500 mt-1">کل سفارش‌ها</div></div>
-    <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div class="text-2xl font-black">{{ order_summary.new }}</div><div class="text-sm text-gray-500 mt-1">جدید</div></div>
-    <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div class="text-2xl font-black">{{ order_summary.in_progress }}</div><div class="text-sm text-gray-500 mt-1">در حال انجام</div></div>
-    <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div class="text-2xl font-black">{{ order_summary.done }}</div><div class="text-sm text-gray-500 mt-1">تکمیل شده</div></div>
-    <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div class="text-2xl font-black">{{ order_summary.cancelled }}</div><div class="text-sm text-gray-500 mt-1">لغو شده</div></div>
-</div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-  <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-    <div class="font-bold mb-4">درآمد</div>
-    <div class="space-y-3 text-sm">
-      <div class="flex items-center justify-between"><span class="text-gray-500">درآمد کل فاکتورهای پرداخت‌شده</span><b class="text-green-700">{{ revenue_summary.total_revenue }} ریال</b></div>
-      <div class="flex items-center justify-between"><span class="text-gray-500">تعداد فاکتور پرداخت‌شده</span><b>{{ revenue_summary.paid_invoice_count }}</b></div>
-    </div>
-  </div>
-
-  <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-    <div class="font-bold mb-4">وضعیت فاکتورها</div>
-    <div class="space-y-3 text-sm">
-      <div class="flex items-center justify-between"><span class="text-gray-500">مجموع</span><b>{{ invoice_summary.total }}</b></div>
-      <div class="flex items-center justify-between"><span class="text-gray-500">پیش‌نویس</span><b>{{ invoice_summary.draft }}</b></div>
-      <div class="flex items-center justify-between"><span class="text-gray-500">صادر شده</span><b>{{ invoice_summary.issued }}</b></div>
-      <div class="flex items-center justify-between"><span class="text-gray-500">پرداخت شده</span><b>{{ invoice_summary.paid }}</b></div>
-      <div class="flex items-center justify-between"><span class="text-gray-500">لغو شده</span><b>{{ invoice_summary.cancelled }}</b></div>
-    </div>
+<div class="page-header">
+  <div class="page-header-content">
+    <h1 class="page-header-title">گزارش‌ها</h1>
+    <p class="page-header-subtitle">خلاصه سفارش‌ها، فاکتورها و عملکرد نیروهای خدماتی</p>
   </div>
 </div>
 
-{% if technician_performance %}
-<div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm mt-4 overflow-x-auto">
-    <div class="font-bold mb-4">عملکرد نیروهای خدماتی</div>
-    <table class="w-full text-sm">
-        <thead class="bg-gray-50"><tr><th class="p-3 text-right">نیروی خدماتی</th><th class="p-3 text-right">تکمیل شده</th><th class="p-3 text-right">فعال</th></tr></thead>
-        <tbody>{% for tp in technician_performance %}
-        <tr class="border-t"><td class="p-3">{{ tp.technician.user.get_full_name }}</td><td class="p-3">{{ tp.completed_orders }}</td><td class="p-3">{{ tp.active_orders }}</td></tr>
-        {% endfor %}</tbody>
+{# ── Order summary stat cards (Design System .stat-card markup, matching
+     templates/tenants/financial_reports/summary.html's inline pattern) ── #}
+<div class="stat-grid stat-grid-4">
+  <div class="stat-card">
+    <div class="stat-card-icon blue">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    </div>
+    <span class="stat-card-value">{{ order_summary.total|default:"۰" }}</span>
+    <p class="stat-card-label">کل سفارش‌ها</p>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon indigo">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+    </div>
+    <span class="stat-card-value">{{ order_summary.new|default:"۰" }}</span>
+    <p class="stat-card-label">جدید</p>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon amber">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value">{{ order_summary.in_progress|default:"۰" }}</span>
+    <p class="stat-card-label">در حال انجام</p>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon green">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value">{{ order_summary.done|default:"۰" }}</span>
+    <p class="stat-card-label">تکمیل شده</p>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon red">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    </div>
+    <span class="stat-card-value">{{ order_summary.cancelled|default:"۰" }}</span>
+    <p class="stat-card-label">لغو شده</p>
+  </div>
+</div>
+
+<div class="form-grid-2">
+  {# ── Revenue ── #}
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">درآمد</span></div>
+    <div class="detail-list">
+      <div class="detail-row">
+        <span class="detail-label">درآمد کل فاکتورهای پرداخت‌شده</span>
+        <span class="detail-value-strong ltr-cell">{{ revenue_summary.total_revenue|smart_number }} ریال</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">تعداد فاکتور پرداخت‌شده</span>
+        <span class="detail-value">{{ revenue_summary.paid_invoice_count|smart_number }}</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── Invoice status ── #}
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">وضعیت فاکتورها</span></div>
+    <div class="detail-list">
+      <div class="detail-row"><span class="detail-label">مجموع</span><span class="detail-value">{{ invoice_summary.total|smart_number }}</span></div>
+      <div class="detail-row"><span class="detail-label">پیش‌نویس</span><span class="detail-value">{{ invoice_summary.draft|smart_number }}</span></div>
+      <div class="detail-row"><span class="detail-label">صادر شده</span><span class="detail-value">{{ invoice_summary.issued|smart_number }}</span></div>
+      <div class="detail-row"><span class="detail-label">پرداخت شده</span><span class="detail-value">{{ invoice_summary.paid|smart_number }}</span></div>
+      <div class="detail-row"><span class="detail-label">لغو شده</span><span class="detail-value">{{ invoice_summary.cancelled|smart_number }}</span></div>
+    </div>
+  </div>
+</div>
+
+{# ── Technician performance ── #}
+<div class="card card-compact card-flush">
+  <div class="card-header"><span class="card-header-title">عملکرد نیروهای خدماتی</span></div>
+  {% if technician_performance %}
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>نیروی خدماتی</th><th>تکمیل شده</th><th>فعال</th></tr></thead>
+      <tbody>
+        {% for tp in technician_performance %}
+        <tr>
+          <td>{{ tp.technician.user.get_full_name }}</td>
+          <td>{{ tp.completed_orders|smart_number }}</td>
+          <td>{{ tp.active_orders|smart_number }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h3 class="empty-state-title">عملکردی ثبت نشده</h3>
+    <p class="empty-state-description">هنوز داده‌ای برای عملکرد نیروهای خدماتی موجود نیست.</p>
+  </div>
+  {% endif %}
 </div>
-{% endif %}
 
-<div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm mt-4">
-    <div class="font-bold mb-2">درخواست‌های خدمات</div>
-    <p class="text-sm text-gray-600">مجموع درخواست‌ها: <b>{{ request_summary.total_requests }}</b></p>
+{# ── Service requests ── #}
+<div class="card">
+  <div class="card-header"><span class="card-header-title">درخواست‌های خدمات</span></div>
+  <div class="detail-list">
+    <div class="detail-row">
+      <span class="detail-label">مجموع درخواست‌ها</span>
+      <span class="detail-value-strong">{{ request_summary.total_requests|smart_number }}</span>
+    </div>
+  </div>
 </div>
+
+{# ── Customer segments report teaser ── #}
+<div class="card">
+  <div class="card-header"><span class="card-header-title">گزارش هدفمند مشتریان</span></div>
+  <div class="card-body">
+    <p class="stat-card-hint" style="margin-bottom:var(--space-3);">جستجوی ترکیبی بر اساس نام، آدرس، فاکتور، مبلغ، رسته خدمات و تعداد سفارش برای آماده‌سازی کمپین تخفیف.</p>
+    <a href="/{{ company.code }}/admin/reports/customer-segments/" class="btn btn-primary">ورود به گزارش</a>
+  </div>
+</div>
+
 </div>
 {% endblock %}

@@ -125,6 +125,23 @@ def invoice_print(request: HttpRequest, public_code: str, **kwargs) -> HttpRespo
     })
 
 
+def _pay_redirect(company, invoice, *, error: str | None = None):
+    """Public-safe redirect back to the checkout page.
+
+    Mirrors _invoice_discount_redirect's public branch below: /pay/ is an
+    anonymous page and must not render django.contrib.messages — session
+    messages are not scoped to a page and leak stale admin/tech state onto
+    public pages sharing the same browser session. Errors are surfaced via a
+    URL query param that only this redirect sets; success is self-evident
+    from the updated page state.
+    """
+    url = f"/{company.code}/invoices/{invoice.id}/pay/"
+    if error:
+        from urllib.parse import urlencode
+        return redirect(f"{url}?{urlencode({'pay_err': error})}")
+    return redirect(url)
+
+
 def invoice_pay(request: HttpRequest, invoice_id: int, **kwargs) -> HttpResponse:
     """Public checkout page for an issued invoice.
 
@@ -132,7 +149,6 @@ def invoice_pay(request: HttpRequest, invoice_id: int, **kwargs) -> HttpResponse
     invoice link may pay on behalf of the customer. Tenant isolation is kept by
     the company-prefixed URL and company-scoped invoice lookup.
     """
-    from django.contrib import messages
     from django.utils import timezone
     from apps.payments.models import Payment
     from apps.payments.selectors import PaymentGatewaySelector
@@ -181,18 +197,13 @@ def invoice_pay(request: HttpRequest, invoice_id: int, **kwargs) -> HttpResponse
             from apps.reports.discount_services import DiscountCodeService
 
             if invoice.campaign_discount_amount and invoice.campaign_discount_amount > 0 or getattr(invoice, "discount_code", None):
-                messages.error(request, "کد تخفیف قبلاً اعمال شده است.")
-                return redirect(f"/{company.code}/invoices/{invoice.id}/pay/")
+                return _pay_redirect(company, invoice, error="کد تخفیف قبلاً اعمال شده است.")
 
             ok, message, _amount = DiscountCodeService.apply_to_invoice(
                 company=company,
                 invoice=invoice,
                 raw_code=request.POST.get("discount_code", ""),
             )
-            if ok:
-                messages.success(request, message)
-            else:
-                messages.error(request, message)
 
             invoice.refresh_from_db()
             payment.amount = invoice.total_amount
@@ -202,15 +213,14 @@ def invoice_pay(request: HttpRequest, invoice_id: int, **kwargs) -> HttpResponse
                 "last_discount_apply_message": message,
             }
             payment.save(update_fields=["amount", "metadata", "updated_at"])
-            return redirect(f"/{company.code}/invoices/{invoice.id}/pay/")
+            return _pay_redirect(company, invoice, error=None if ok else message)
 
         if action == "start_gateway":
             from apps.payments.services import PaymentStartService
 
             gateway = PaymentGatewaySelector.get_default_for_company(company=company)
             if gateway is None:
-                messages.error(request, "درگاه پرداخت هنوز برای این شرکت تنظیم نشده است.")
-                return redirect(f"/{company.code}/invoices/{invoice.id}/pay/")
+                return _pay_redirect(company, invoice, error="درگاه پرداخت هنوز برای این شرکت تنظیم نشده است.")
 
             callback_url = request.build_absolute_uri(f"/{company.code}/payments/callback/")
 
@@ -221,14 +231,12 @@ def invoice_pay(request: HttpRequest, invoice_id: int, **kwargs) -> HttpResponse
                     gateway=gateway,
                 )
             except ValueError as exc:
-                messages.error(request, str(exc))
-                return redirect(f"/{company.code}/invoices/{invoice.id}/pay/")
+                return _pay_redirect(company, invoice, error=str(exc))
 
             if redirect_url:
                 return redirect(redirect_url)
 
-            messages.error(request, "اتصال به درگاه ناموفق بود. لطفاً دوباره تلاش کنید.")
-            return redirect(f"/{company.code}/invoices/{invoice.id}/pay/")
+            return _pay_redirect(company, invoice, error="اتصال به درگاه ناموفق بود. لطفاً دوباره تلاش کنید.")
 
     gateway = PaymentGatewaySelector.get_default_for_company(company=company)
 

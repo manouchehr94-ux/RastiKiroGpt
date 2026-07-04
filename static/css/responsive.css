@@ -31,6 +31,11 @@
     grid-template-columns: 1fr;
   }
 
+  /* --- Technician panel: min tap target for small buttons (EPIC-002 Issue 013) --- */
+  .tech-content .btn-sm {
+    min-height: 42px;
+  }
+
   /* --- Table toolbar --- */
   .table-toolbar {
     flex-direction: column;

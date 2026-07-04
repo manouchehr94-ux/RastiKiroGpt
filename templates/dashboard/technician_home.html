@@ -1,4 +1,5 @@
 {% extends "layouts/technician.html" %}
+{% load smart_numbers %}
 
 {% block title %}پنل نیرو - {{ company.name }}{% endblock %}
 
@@ -27,7 +28,32 @@
         <div class="text-2xl font-extrabold text-emerald-600">{{ stats.completed_orders|default:"0" }}</div>
         <p class="text-xs text-gray-500 mt-1">انجام‌شده</p>
     </a>
+    <a href="/{{ company.code }}/tech/orders/my/?status=done" class="col-span-2 flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-smooth">
+        <p class="text-sm font-medium text-gray-700">تکمیل‌شده این ماه</p>
+        <div class="text-2xl font-extrabold text-emerald-600">{{ stats.completed_orders_this_month|default:"0" }}</div>
+    </a>
+    <a href="/{{ company.code }}/tech/orders/my/?status=done" class="col-span-2 flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-smooth">
+        <p class="text-sm font-medium text-gray-700">خدمات انجام‌شده این ماه</p>
+        <div class="text-2xl font-extrabold text-emerald-600">{{ stats.completed_service_items_this_month|default:"0" }}</div>
+    </a>
 </div>
+
+{# Completed item totals this month, grouped by order item title #}
+{% if stats.completed_item_totals_this_month %}
+<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+    <div class="px-4 py-3 border-b border-gray-100">
+        <h3 class="text-sm font-semibold text-gray-800">جزئیات خدمات این ماه</h3>
+    </div>
+    <div class="divide-y divide-gray-50">
+        {% for row in stats.completed_item_totals_this_month %}
+        <div class="flex items-center justify-between px-4 py-3">
+            <p class="text-sm text-gray-700">{{ row.title }}</p>
+            <p class="text-sm font-bold text-emerald-600">{{ row.total|smart_number }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 {# Recent Orders #}
 <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">

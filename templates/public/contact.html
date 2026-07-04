@@ -73,14 +73,6 @@
         <div class="card-body">
           <h2 style="font-size:var(--font-size-base);font-weight:var(--font-weight-bold);color:var(--color-slate-800);margin-bottom:var(--space-5);">ارسال پیام</h2>
 
-          {% if messages %}
-            {% for message in messages %}
-              <div class="alert alert-{{ message.tags }} mb-4">
-                <div class="alert-body">{{ message }}</div>
-              </div>
-            {% endfor %}
-          {% endif %}
-
           <form method="post" action="{% url 'public:contact' %}">
             {% csrf_token %}
             <div class="form-stack">

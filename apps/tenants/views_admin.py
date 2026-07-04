@@ -894,7 +894,10 @@ def admin_order_detail(request: HttpRequest, order_id: int, **kwargs) -> HttpRes
     can_edit_order = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_order_edit")
     can_assign_order = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_order_assign")
     can_force_cancel = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_cancel_request_approve")
-    can_create_invoice = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_create_from_order")
+    can_create_invoice = (
+        (user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_invoice_create_from_order"))
+        and order.status not in (Order.Status.CANCEL_REQUESTED, Order.Status.CANCELLED)
+    )
     can_return_to_cycle = user_is_admin or operator_has_permission(company=company, operator=user, permission_key="admin_order_return_to_cycle")
 
     # Active = DRAFT or ISSUED only. PAID and CANCELLED are closed and must not
@@ -924,6 +927,7 @@ def _parse_invoice_items_from_post(request: HttpRequest) -> list[dict]:
     quantities = request.POST.getlist("item_quantity")
     unit_prices = request.POST.getlist("item_unit_price")
     discounts = request.POST.getlist("item_discount_amount")
+    row_types = request.POST.getlist("item_row_type")
 
     items = []
     max_len = max(len(descriptions), len(quantities), len(unit_prices), len(discounts), 0)
@@ -931,11 +935,17 @@ def _parse_invoice_items_from_post(request: HttpRequest) -> list[dict]:
         description = descriptions[i] if i < len(descriptions) else ""
         if not (description or "").strip():
             continue
+        row_type = row_types[i] if i < len(row_types) else "service"
+        if row_type == "product":
+            row_type = "goods"
+        elif row_type not in ("service", "goods", "travel"):
+            row_type = "service"
         items.append({
             "description": description,
             "quantity": quantities[i] if i < len(quantities) else "1",
             "unit_price": unit_prices[i] if i < len(unit_prices) else "0",
             "discount_amount": discounts[i] if i < len(discounts) else "0",
+            "row_type": row_type,
         })
     return items
 
@@ -976,8 +986,18 @@ def admin_invoice_create_from_order(request: HttpRequest, order_id: int, **kwarg
     if not order:
         raise Http404("سفارش یافت نشد.")
 
+    from django.contrib import messages
+    from apps.invoices.services import InvoiceCancellationGuard
+
+    if InvoiceCancellationGuard.order_blocks_invoice_creation(order):
+        messages.error(request, "این سفارش لغو شده یا در حال بررسی درخواست لغو است و امکان صدور فاکتور برای آن وجود ندارد.")
+        return redirect(f"/{company.code}/admin/orders/{order.id}/")
+
     existing = InvoiceDuplicateGuard.get_active_for_order(company=company, order=order)
     if existing is not None:
+        if InvoiceCancellationGuard.has_pending_request(existing):
+            messages.error(request, "این فاکتور دارای درخواست لغو در حال بررسی است و قابل ویرایش نیست.")
+            return redirect(f"/{company.code}/admin/invoices/{existing.id}/")
         return redirect(f"/{company.code}/admin/invoices/{existing.id}/edit/")
 
     invoice = InvoiceCreateService.create_from_order(order=order, created_by=request.user)

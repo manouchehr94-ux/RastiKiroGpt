@@ -39,7 +39,7 @@ class NotificationSelector:
         """Get latest N notifications for a user — used for the bell dropdown."""
         return Notification.objects.filter(
             company=company, recipient=user
-        ).order_by("-created_at", "-id")[:limit]
+        ).select_related("related_invoice").order_by("-created_at", "-id")[:limit]
 
     @staticmethod
     def get_for_company(*, company) -> QuerySet[Notification]:

@@ -6,7 +6,14 @@
 
 {% block content %}
 <div class="admin-compact">
-<div class="page-header"><h1>نیروهای خدماتی</h1><a href="/{{ company.code }}/admin/technicians/create/" class="btn btn-primary">+ نیروی خدماتی جدید</a></div>
+<div class="page-header">
+  <div class="page-header-content">
+    <h1 class="page-header-title">نیروهای خدماتی</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="/{{ company.code }}/admin/technicians/create/" class="btn btn-primary">+ نیروی خدماتی جدید</a>
+  </div>
+</div>
 {% if technicians %}
 <div class="card"><div class="table-wrapper"><table>
 <thead><tr><th>نام</th><th>نام کاربری</th><th>شماره موبایل</th><th>وضعیت</th><th>عملیات</th></tr></thead>

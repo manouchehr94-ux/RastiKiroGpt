@@ -19,11 +19,14 @@ Reusable Across Projects: No
 
 ```
 templates/
-├── base_dashboard.html         ← Master dashboard layout (role-aware)
+├── base.html                   ← Bare HTML shell (theme CSS, Alpine.js, no chrome)
+├── base_dashboard.html         ← Orphaned/legacy file — 0 templates extend it (verified 2026-07-01). Do not use for new work.
 ├── layouts/
+│   ├── dashboard.html          ← ACTUAL master dashboard layout (role-aware) — 142 templates extend this
 │   ├── public.html             ← Public/marketing pages layout
-│   ├── auth.html               ← Login, registration layout
-│   ├── error.html              ← Error pages layout
+│   ├── public_payment.html     ← Dedicated public payment/checkout layout (no sidebar, no admin nav, no auth-only controls) — added EPIC-002 Issue 001
+│   ├── auth.html                ← Login, registration layout
+│   ├── error.html               ← Error pages layout
 │   └── invoice_print.html      ← Print-optimized invoice layout
 ├── includes/
 │   ├── nav_platform.html       ← Platform owner sidebar navigation
@@ -67,15 +70,21 @@ base_dashboard.html
 
 ## Key Layout Files
 
-### `base_dashboard.html`
+### `layouts/dashboard.html` (verified 2026-07-01 — this is the live master layout, not `base_dashboard.html`)
 
-The master template for all authenticated dashboard pages.
+The master template for all authenticated dashboard pages. Extends `base.html`.
 
-- Checks `request.user.role == "TECHNICIAN"` to choose layout branch
+- Renders sidebar nav via `{% block sidebar_nav %}`, gated by `request.user.role`
 - Shows `pw_change_snoozed` banner if user must change password
-- Imports: `htmx`, Tailwind CSS, `Alpine.js` (or similar)
+- Imports: theme CSS, Jalali datepicker JS, number formatter JS, Alpine.js
 - RTL layout (Persian, right-to-left)
-- Sidebar slides from right side: `fixed inset-y-0 right-0`
+- Sidebar slides from right side
+
+> **Note:** `templates/base_dashboard.html` also exists on disk and was previously documented as the master dashboard layout, but 0 templates currently extend it (verified via repo-wide grep, 2026-07-01). Treat it as orphaned/legacy — do not extend it for new work.
+
+### `layouts/public_payment.html`
+
+Added for EPIC-002 Issue 001 (2026-07-01). Extends `base.html` directly. A minimal public layout for anonymous, unauthenticated payment/checkout pages — branding-only header, single content block, minimal footer. Explicitly excludes: sidebar, admin navigation, logout link, notification bell, dark-mode toggle, and any internal admin URLs. Used by `templates/payments/invoice_checkout.html`.
 
 ### `layouts/public.html`
 
@@ -96,6 +105,10 @@ Used by: 404, 403, 500 error pages
 ---
 
 ## Known Template Issues
+
+### Public Payment Page Used Admin Dashboard Layout (Fixed — EPIC-002 Issue 001)
+
+`templates/payments/invoice_checkout.html` (the anonymous, unauthenticated invoice payment/checkout page at `/<code>/invoices/<id>/pay/`) previously extended `layouts/dashboard.html` and unconditionally force-included `includes/nav_admin.html` (the full internal admin navigation menu) regardless of authentication state. Fixed by introducing `layouts/public_payment.html` and switching the checkout template to extend it. See `docs/12_Epic_002_Product_Polish/ISSUE_001_PUBLIC_PAYMENT_LAYOUT_AUDIT.md` for the full audit and implementation record.
 
 ### Duplicate Component Templates
 
