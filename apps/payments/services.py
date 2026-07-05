@@ -302,6 +302,44 @@ class PaymentVerifyService:
                 "status", "tracking_code", "paid_at", "updated_at"
             ])
 
+            # Create EscrowRecord (HELD) for eligible online platform-gateway
+            # payments (Sprint 3 — Escrow Integration). Non-blocking: escrow
+            # creation failure must never block Payment.status = PAID, mirroring
+            # the existing non-blocking pattern used below for split-snapshot and
+            # direct-settlement. is_eligible_for_escrow() is checked internally by
+            # create_for_payment(), which returns None as a no-op for cash,
+            # manual, card-to-card, or company-owned-gateway payments — so this
+            # call is always safe to make unconditionally.
+            # Duplicate-callback idempotency: this line is unreachable on a
+            # duplicate callback because this method returns early above when
+            # payment.status is already PAID, so create_for_payment() (which is
+            # itself idempotent via EscrowRecord's OneToOneField on payment) is
+            # never invoked twice for the same payment via this call site either.
+            try:
+                from apps.payouts.services_escrow import EscrowRecordService
+                EscrowRecordService.create_for_payment(payment, invoice=payment.invoice)
+            except Exception as exc:
+                logger.critical(
+                    "ESCROW RECORD NOT CREATED for payment %s — manual backfill required.",
+                    payment.id,
+                    exc_info=True,
+                )
+                try:
+                    from apps.payouts.services_backfill import FinancialBackfillService
+                    FinancialBackfillService.create_task(
+                        company=payment.company,
+                        task_type="escrow_record",
+                        payment=payment,
+                        invoice=getattr(payment, "invoice", None),
+                        error_message=str(exc),
+                    )
+                except Exception:
+                    logger.critical(
+                        "Failed to create escrow_record backfill task for payment %s",
+                        payment.id,
+                        exc_info=True,
+                    )
+
             # Mark invoice as paid and freeze settlement
             if payment.invoice and payment.invoice.status == Invoice.Status.ISSUED:
                 InvoiceMarkPaidService.mark_paid(

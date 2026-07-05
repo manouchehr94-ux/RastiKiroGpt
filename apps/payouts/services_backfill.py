@@ -186,6 +186,18 @@ class FinancialBackfillService:
             _retry_payment_split_snapshot(task)
         elif task.task_type == FinancialBackfillTask.TaskType.DIRECT_GATEWAY_SETTLEMENT:
             _retry_direct_gateway_settlement(task)
+        elif task.task_type == "escrow_record":
+            # Sprint 3 — Escrow Integration. Uses a raw string task_type,
+            # following the same precedent already established by
+            # InvoiceMarkPaidService.mark_paid() for "technician_ledger" and
+            # "platform_fee" (both of which also predate their own enum
+            # members being required at the FinancialBackfillTask.TaskType
+            # level for the dispatcher to work — TextChoices does not
+            # enforce membership at the Python/DB level, only in forms).
+            # Adding a real TaskType.ESCROW_RECORD choice would be a purely
+            # cosmetic migration; deferred to avoid an unnecessary migration
+            # in this additive-only sprint.
+            _retry_escrow_record(task)
         else:
             raise ValueError(f"Unknown task_type: {task.task_type!r}")
 
@@ -230,6 +242,31 @@ def _retry_payment_split_snapshot(task) -> None:
     fresh_invoice = invoice.__class__.objects.get(pk=invoice.pk)
     # create_snapshot is idempotent — returns existing snapshot if already present.
     PaymentSplitDecisionService.create_snapshot(payment, fresh_invoice)
+
+
+def _retry_escrow_record(task) -> None:
+    from apps.invoices.services import reserve_and_distribute_escrow_for_invoice
+    from apps.payouts.services_escrow import EscrowRecordService
+
+    if task.invoice is None:
+        raise ValueError(
+            f"BackfillTask #{task.pk} (escrow_record): invoice FK is None."
+        )
+    if task.payment is None:
+        raise ValueError(
+            f"BackfillTask #{task.pk} (escrow_record): payment FK is None."
+        )
+
+    # Cover both possible failure points with one idempotent retry:
+    #   1. EscrowRecordService.create_for_payment() may have failed at
+    #      payment-verification time (no EscrowRecord exists yet at all).
+    #   2. reserve_and_distribute_escrow_for_invoice() may have failed at
+    #      mark_paid() time (EscrowRecord exists but is still HELD or
+    #      RESERVED, never reached DISTRIBUTED).
+    # create_for_payment is idempotent — returns the existing record (or
+    # None for an ineligible payment) rather than duplicating.
+    EscrowRecordService.create_for_payment(task.payment, invoice=task.invoice)
+    reserve_and_distribute_escrow_for_invoice(invoice=task.invoice, payment=task.payment)
 
 
 def _retry_direct_gateway_settlement(task) -> None:
