@@ -707,11 +707,25 @@ class InvoiceAndPaymentStatusCorrectnessTest(TestCase):
         self.assertEqual(invoice.status, Invoice.Status.PAID)
 
     def test_company_gateway_payment_reaches_paid_status_on_both(self):
-        gateway = _company_gateway(self.company)
-        invoice = _issued_invoice(self.company, technician=self.tech)
-        payment = _pending_payment(self.company, invoice, gateway, "SUCCESS-s2")
+        # PaymentGateway has unique_together = ["company", "gateway_type"]
+        # (apps/payments/models.py), and setUp() already created a
+        # gateway_type=FAKE / owner_type=PLATFORM gateway for self.company.
+        # This test needs a gateway_type=FAKE / owner_type=COMPANY gateway
+        # (FAKE is required so the real PaymentVerifyService.verify() flow
+        # can be driven end-to-end; COMPANY is required for this test's own
+        # scenario) — a second FAKE-type gateway cannot coexist for
+        # self.company under that constraint, and reusing self.gateway is
+        # not valid either since it has the wrong owner_type for this test.
+        # Using a fresh, independent company avoids the collision entirely
+        # without touching the constraint, the model, or setUp().
+        company = _company()
+        tech = _technician(company)
+        _financial_policy(company, fee_percent=1)
+        gateway = _company_gateway(company)
+        invoice = _issued_invoice(company, technician=tech)
+        payment = _pending_payment(company, invoice, gateway, "SUCCESS-s2")
 
-        PaymentCallbackService.handle_callback(company=self.company, reference_id="SUCCESS-s2")
+        PaymentCallbackService.handle_callback(company=company, reference_id="SUCCESS-s2")
 
         payment.refresh_from_db()
         invoice.refresh_from_db()
