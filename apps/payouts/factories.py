@@ -118,7 +118,17 @@ def make_payment_gateway(company: Company, **overrides) -> PaymentGateway:
 
 def make_payment(company: Company, invoice: Invoice | None = None, **overrides) -> Payment:
     invoice = invoice or make_invoice(company)
-    gateway = overrides.pop("gateway", None) or make_payment_gateway(company)
+    # Distinguish "gateway not passed at all" (default to a platform
+    # gateway) from "gateway explicitly passed as None" (simulate a
+    # cash/manual/no-gateway payment). The previous `overrides.pop(...)
+    # or make_payment_gateway(...)` pattern could not make this
+    # distinction: an explicit `gateway=None` is falsy, so it was always
+    # silently replaced with a freshly created platform gateway,
+    # defeating every test that passes gateway=None on purpose.
+    if "gateway" in overrides:
+        gateway = overrides.pop("gateway")
+    else:
+        gateway = make_payment_gateway(company)
     defaults = {
         "invoice": invoice,
         "gateway": gateway,
