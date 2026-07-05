@@ -133,14 +133,25 @@ def _issued_invoice(company, technician=None, total=10_000_000) -> Invoice:
 
 
 def _platform_gateway(company) -> PaymentGateway:
-    return PaymentGateway.objects.create(
+    # PaymentGateway has unique_together = ["company", "gateway_type"]
+    # (apps/payments/models.py). Some tests in this file call
+    # _distributed_invoice() more than once for the same company (e.g.
+    # to build multiple invoices in one test), and _distributed_invoice()
+    # calls this helper every time. get_or_create() reuses the existing
+    # gateway_type=FAKE / owner_type=PLATFORM row for that company instead
+    # of attempting to create a duplicate, which would violate the
+    # constraint.
+    gateway, _created = PaymentGateway.objects.get_or_create(
         company=company,
-        name="Platform Test Gateway",
         gateway_type=PaymentGateway.GatewayType.FAKE,
-        owner_type=PaymentGateway.OwnerType.PLATFORM,
-        is_active=True,
-        is_default=True,
+        defaults={
+            "name": "Platform Test Gateway",
+            "owner_type": PaymentGateway.OwnerType.PLATFORM,
+            "is_active": True,
+            "is_default": True,
+        },
     )
+    return gateway
 
 
 def _pending_payment(company, invoice, gateway, reference_id) -> Payment:
@@ -667,9 +678,28 @@ class SafetyTest(TestCase):
         self.assertEqual(before_count, after_count, "no new ledger entry must be created")
 
     def test_no_payment_or_invoice_status_mutation(self):
+        """
+        _distributed_invoice() intentionally drives the real
+        PaymentCallbackService flow, which transitions Payment to PAID
+        and Invoice to PAID before this test ever calls the Batch
+        Builder. The correct expectation is therefore "unchanged relative
+        to whatever state they were actually in immediately before the
+        builder ran" — not a hardcoded PENDING/ISSUED assumption.
+
+        _distributed_invoice() only calls invoice.refresh_from_db()
+        internally (never payment.refresh_from_db()), so the `payment`
+        object it returns still holds a stale in-memory PENDING status
+        even though the real row is already PAID. Refreshing both objects
+        from the database immediately before capturing their status
+        (right before calling the builder) ensures the captured baseline
+        reflects reality, not a stale snapshot.
+        """
         company = _company()
         tech = _technician(company, service_pct=60, goods_pct=10, travel_pct=100)
         invoice, payment = _distributed_invoice(company, tech, total=10_000_000, fee_percent=1)
+
+        invoice.refresh_from_db()
+        payment.refresh_from_db()
         invoice_status_before = invoice.status
         payment_status_before = payment.status
         period_start, period_end = _period()
