@@ -443,6 +443,42 @@ class EscrowCreationFailureBackfillTest(TestCase):
         record = EscrowRecord.objects.get(payment=payment)
         self.assertEqual(record.status, EscrowRecord.Status.DISTRIBUTED)
 
+    def test_backfill_handler_creates_missing_escrow_idempotently(self):
+        """
+        Explicit idempotency test for the backfill handler itself: calling
+        _retry_escrow_record's underlying logic (via process_pending, then
+        directly a second time) never creates a second EscrowRecord and
+        never re-raises once the record is already DISTRIBUTED.
+        """
+        invoice = _issued_invoice(self.company, technician=self.tech)
+        payment = _pending_payment(self.company, invoice, self.gateway, "SUCCESS-f4")
+
+        with patch(
+            "apps.payouts.services_escrow.EscrowRecordService.create_for_payment",
+            side_effect=RuntimeError("escrow DB down"),
+        ):
+            PaymentCallbackService.handle_callback(
+                company=self.company, reference_id="SUCCESS-f4",
+            )
+
+        # First resolution: creates the missing EscrowRecord and distributes it.
+        result1 = FinancialBackfillService.process_pending()
+        self.assertEqual(result1["resolved"], 1)
+        self.assertEqual(EscrowRecord.objects.filter(payment=payment).count(), 1)
+
+        # Directly re-invoke the same idempotent retry path a second time
+        # (simulating a stale/duplicate task or manual re-trigger) — must
+        # not create a second EscrowRecord or raise.
+        from apps.invoices.services import reserve_and_distribute_escrow_for_invoice
+        from apps.payouts.services_escrow import EscrowRecordService
+
+        EscrowRecordService.create_for_payment(payment, invoice=invoice)
+        reserve_and_distribute_escrow_for_invoice(invoice=invoice, payment=payment)
+
+        self.assertEqual(EscrowRecord.objects.filter(payment=payment).count(), 1)
+        record = EscrowRecord.objects.get(payment=payment)
+        self.assertEqual(record.status, EscrowRecord.Status.DISTRIBUTED)
+
 
 class EscrowTransitionFailureBackfillTest(TestCase):
     """Escrow reserve/distribute failure at invoice-mark-paid time is non-blocking."""
@@ -634,3 +670,91 @@ class ExistingLedgerAndFeeBehaviorUnchangedTest(TestCase):
         self.assertEqual(
             EscrowRecord.objects.filter(payment=payment).count(), 1,
         )
+
+
+
+class InvoiceAndPaymentStatusCorrectnessTest(TestCase):
+    """
+    Explicit, dedicated checks that Invoice.status and Payment.status reach
+    their correct terminal values across every escrow scenario (success,
+    ineligible gateway, failure, and escrow-layer exception) — i.e. the
+    escrow wiring never leaves either status field in an unexpected state.
+
+    Each scenario below is already partially covered elsewhere in this file
+    (e.g. test_02_company_gateway_payment_creates_no_escrow already asserts
+    success=True; test_creation_failure_does_not_block_payment_paid already
+    asserts payment.status == PAID under the same mock), but no existing
+    test asserts BOTH Payment.status and Invoice.status together for these
+    scenarios. This class closes that specific gap without duplicating the
+    escrow-specific assertions already made elsewhere.
+    """
+
+    def setUp(self):
+        self.company = _company()
+        self.tech = _technician(self.company)
+        self.policy = _financial_policy(self.company, fee_percent=1)
+        self.gateway = _platform_gateway(self.company)
+
+    def test_successful_platform_payment_reaches_paid_status_on_both(self):
+        invoice = _issued_invoice(self.company, technician=self.tech)
+        payment = _pending_payment(self.company, invoice, self.gateway, "SUCCESS-s1")
+
+        PaymentCallbackService.handle_callback(company=self.company, reference_id="SUCCESS-s1")
+
+        payment.refresh_from_db()
+        invoice.refresh_from_db()
+        self.assertEqual(payment.status, Payment.Status.PAID)
+        self.assertEqual(invoice.status, Invoice.Status.PAID)
+
+    def test_company_gateway_payment_reaches_paid_status_on_both(self):
+        gateway = _company_gateway(self.company)
+        invoice = _issued_invoice(self.company, technician=self.tech)
+        payment = _pending_payment(self.company, invoice, gateway, "SUCCESS-s2")
+
+        PaymentCallbackService.handle_callback(company=self.company, reference_id="SUCCESS-s2")
+
+        payment.refresh_from_db()
+        invoice.refresh_from_db()
+        self.assertEqual(payment.status, Payment.Status.PAID)
+        self.assertEqual(invoice.status, Invoice.Status.PAID)
+
+    def test_failed_payment_leaves_payment_failed_and_invoice_issued(self):
+        invoice = _issued_invoice(self.company, technician=self.tech)
+        payment = _pending_payment(self.company, invoice, self.gateway, "FAIL-s3")
+
+        PaymentCallbackService.handle_callback(company=self.company, reference_id="FAIL-s3")
+
+        payment.refresh_from_db()
+        invoice.refresh_from_db()
+        self.assertEqual(payment.status, Payment.Status.FAILED)
+        self.assertEqual(invoice.status, Invoice.Status.ISSUED)
+
+    def test_escrow_creation_exception_still_reaches_paid_status_on_both(self):
+        invoice = _issued_invoice(self.company, technician=self.tech)
+        payment = _pending_payment(self.company, invoice, self.gateway, "SUCCESS-s4")
+
+        with patch(
+            "apps.payouts.services_escrow.EscrowRecordService.create_for_payment",
+            side_effect=RuntimeError("escrow DB down"),
+        ):
+            PaymentCallbackService.handle_callback(company=self.company, reference_id="SUCCESS-s4")
+
+        payment.refresh_from_db()
+        invoice.refresh_from_db()
+        self.assertEqual(payment.status, Payment.Status.PAID)
+        self.assertEqual(invoice.status, Invoice.Status.PAID)
+
+    def test_escrow_transition_exception_still_reaches_paid_status_on_both(self):
+        invoice = _issued_invoice(self.company, technician=self.tech)
+        payment = _pending_payment(self.company, invoice, self.gateway, "SUCCESS-s5")
+
+        with patch(
+            "apps.payouts.services_escrow.EscrowRecordService.reserve_for_invoice",
+            side_effect=RuntimeError("db down mid-transition"),
+        ):
+            PaymentCallbackService.handle_callback(company=self.company, reference_id="SUCCESS-s5")
+
+        payment.refresh_from_db()
+        invoice.refresh_from_db()
+        self.assertEqual(payment.status, Payment.Status.PAID)
+        self.assertEqual(invoice.status, Invoice.Status.PAID)
