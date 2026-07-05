@@ -198,7 +198,10 @@ Platform revenue = CompanyPlatformFeeEntry DEBIT entries only. No other revenue 
 
 **Evidence:**
 
-- File: `apps/payouts/services_platform_fee.py`, line 171 — condition: `gateway.owner_type != PaymentGateway.OwnerType.PLATFORM` → return None. Cash payments never have platform gateway → commission never created. Default behavior correct.
+- File: `apps/payouts/services_platform_fee.py`, line 171 — condition:
+  `gateway.owner_type != PaymentGateway.OwnerType.PLATFORM` → return None.
+  Cash payments never have platform gateway → commission never created.
+  Default behavior correct.
 - File: `apps/invoices/services.py`, line 425 — outer check: only calls `PlatformFeeService` when `_gw.owner_type == PaymentGateway.OwnerType.PLATFORM`.
 - No `charge_commission_on_cash` field anywhere in codebase (grep confirmed: zero results).
 
