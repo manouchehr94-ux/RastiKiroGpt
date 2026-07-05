@@ -332,6 +332,98 @@ class InvoiceCancelService:
         return invoice
 
 
+def reserve_and_distribute_escrow_for_invoice(*, invoice: Invoice, payment) -> None:
+    """
+    Escrow reserve + distribute (Sprint 3 — Escrow Integration).
+
+    Idempotent and side-effect-free unless there is actual work to do:
+      - No-op if `payment` is None (cash/manual mark_paid calls).
+      - No-op if no EscrowRecord exists for `payment` (cash, manual,
+        card-to-card, or company-owned-gateway payments never get one —
+        EscrowRecordService.is_eligible_for_escrow() already gates that).
+      - HELD -> RESERVED only if currently HELD.
+      - RESERVED -> DISTRIBUTED only if currently RESERVED (so calling
+        this twice, e.g. once live and once via backfill retry, safely
+        does nothing the second time once DISTRIBUTED has been reached).
+
+    Called from InvoiceMarkPaidService.mark_paid() immediately after the
+    invoice is saved as PAID and settlement is frozen (so
+    invoice.settled_technician_wage is already available), and reused
+    unchanged by the escrow_record backfill retry handler.
+
+    Raises on failure (including the OI-03 split-overflow guard below) so
+    that the caller's non-blocking try/except + backfill-task pattern can
+    catch it uniformly. Never mutates Invoice or Payment; only transitions
+    EscrowRecord state.
+    """
+    if payment is None:
+        return
+
+    from apps.payouts.models import EscrowRecord
+    from apps.payouts.services_escrow import EscrowRecordService
+
+    escrow_record = EscrowRecord.objects.filter(payment=payment).first()
+    if escrow_record is None:
+        return
+
+    if escrow_record.status == EscrowRecord.Status.HELD:
+        escrow_record = EscrowRecordService.reserve_for_invoice(escrow_record, invoice)
+
+    if escrow_record.status != EscrowRecord.Status.RESERVED:
+        return
+
+    from apps.payouts.services_platform_fee import PlatformFeeService
+
+    # Platform commission: identical formula PlatformFeeService independently
+    # charges via record_invoice_fee() below (R09 — commission is always
+    # calculated on the total invoice amount, never only the Organization's
+    # share). Reusing compute_fee_for_invoice() guarantees these two numbers
+    # can never silently drift apart.
+    platform_commission_rial = PlatformFeeService.compute_fee_for_invoice(invoice)
+
+    # Provider (technician) share: the settlement value already frozen by
+    # InvoiceSettlementService.settle() above, already policy-aware per the
+    # company's configured discount-absorption rules (R27, R28).
+    provider_share_rial = int(invoice.settled_technician_wage or 0)
+
+    # Organization is the residual claimant: whatever remains of the
+    # escrowed amount after the platform's commission and the provider's
+    # already-computed share. This composes two already-Locked-Rule /
+    # already-implemented formulas; it does not invent a new split policy.
+    organization_share_rial = (
+        escrow_record.amount_rial - platform_commission_rial - provider_share_rial
+    )
+    if organization_share_rial < 0:
+        # [OPEN-ISSUE: OI-03] Discount distribution between Platform /
+        # Organization / Provider is not yet finalized by the Product
+        # Owner. In this edge case the already-sanctioned platform
+        # commission and provider share together exceed the escrowed
+        # amount. This can happen e.g. when the technician wage percentage
+        # is high and the company's configured discount-absorption policy
+        # (R31, CompanyFinancialPolicy.extra_discount_policy /
+        # campaign_discount_policy) leaves the technician's gross wage
+        # share untouched while total_amount is reduced by the discount —
+        # or when tax_amount is nonzero. Composing a corrected figure here
+        # would require inventing a proportional-reduction policy this
+        # sprint must not invent, so this is escalated for manual review
+        # via the caller's backfill-task pattern instead of silently
+        # clamping any value.
+        raise ValueError(
+            f"EscrowRecord #{escrow_record.pk}: computed split "
+            f"(commission={platform_commission_rial} + "
+            f"provider_share={provider_share_rial}) exceeds escrowed "
+            f"amount ({escrow_record.amount_rial}); blocked by "
+            "[OPEN-ISSUE: OI-03]."
+        )
+
+    EscrowRecordService.mark_distributed(
+        escrow_record,
+        platform_commission_rial=platform_commission_rial,
+        organization_share_rial=organization_share_rial,
+        provider_share_rial=provider_share_rial,
+    )
+
+
 class InvoiceMarkPaidService:
     """Mark issued invoices as paid and freeze financial settlement."""
 
@@ -390,6 +482,39 @@ class InvoiceMarkPaidService:
         invoice.status = Invoice.Status.PAID
         invoice.paid_at = timezone.now()
         invoice.save(update_fields=["status", "paid_at", "updated_at"])
+
+        # Escrow reserve + distribute (Sprint 3 — Escrow Integration).
+        # Non-blocking: escrow transition failure must never block
+        # Invoice.status = PAID, mirroring the existing non-blocking pattern
+        # used below for the technician ledger and platform fee writes.
+        # reserve_and_distribute_escrow_for_invoice() is a no-op for cash,
+        # manual, company-gateway payments, or payment=None.
+        try:
+            reserve_and_distribute_escrow_for_invoice(invoice=invoice, payment=payment)
+        except Exception as exc:
+            logger.critical(
+                "ESCROW TRANSITION NOT COMPLETED for invoice %s / payment %s — "
+                "manual backfill required.",
+                getattr(invoice, "id", None),
+                getattr(payment, "id", None),
+                exc_info=True,
+            )
+            try:
+                from apps.payouts.services_backfill import FinancialBackfillService
+                FinancialBackfillService.create_task(
+                    company=invoice.company,
+                    task_type="escrow_record",
+                    invoice=invoice,
+                    payment=payment,
+                    error_message=str(exc),
+                )
+            except Exception as backfill_exc:
+                logger.critical(
+                    "Failed to create escrow_record backfill task for invoice %s: %s",
+                    getattr(invoice, "id", None),
+                    backfill_exc,
+                    exc_info=True,
+                )
 
         # Create technician ledger entries after settlement is frozen.
         # Import is deferred to avoid circular import; this call is idempotent.
