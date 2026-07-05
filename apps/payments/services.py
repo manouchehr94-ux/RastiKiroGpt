@@ -325,11 +325,10 @@ class PaymentVerifyService:
                     exc_info=True,
                 )
                 try:
-                    from apps.payouts.models import FinancialBackfillTask
                     from apps.payouts.services_backfill import FinancialBackfillService
                     FinancialBackfillService.create_task(
                         company=payment.company,
-                        task_type=FinancialBackfillTask.TaskType.ESCROW_RECORD,
+                        task_type="escrow_record",
                         payment=payment,
                         invoice=getattr(payment, "invoice", None),
                         error_message=str(exc),

@@ -410,7 +410,7 @@ class EscrowCreationFailureBackfillTest(TestCase):
             )
 
         tasks = FinancialBackfillTask.objects.filter(
-            company=self.company, task_type=FinancialBackfillTask.TaskType.ESCROW_RECORD, payment=payment,
+            company=self.company, task_type="escrow_record", payment=payment,
         )
         self.assertEqual(tasks.count(), 1)
         self.assertEqual(tasks.first().status, FinancialBackfillTask.Status.PENDING)
@@ -434,7 +434,7 @@ class EscrowCreationFailureBackfillTest(TestCase):
 
         self.assertEqual(result["resolved"], 1)
         task = FinancialBackfillTask.objects.get(
-            company=self.company, task_type=FinancialBackfillTask.TaskType.ESCROW_RECORD, payment=payment,
+            company=self.company, task_type="escrow_record", payment=payment,
         )
         self.assertEqual(task.status, FinancialBackfillTask.Status.RESOLVED)
         # The retry re-runs create_for_payment (now unmocked) AND the
@@ -509,7 +509,7 @@ class EscrowTransitionFailureBackfillTest(TestCase):
         self.assertEqual(record.status, EscrowRecord.Status.HELD)  # never advanced
 
         tasks = FinancialBackfillTask.objects.filter(
-            company=self.company, task_type=FinancialBackfillTask.TaskType.ESCROW_RECORD, invoice=invoice,
+            company=self.company, task_type="escrow_record", invoice=invoice,
         )
         self.assertEqual(tasks.count(), 1)
 
@@ -581,7 +581,7 @@ class EscrowOI03SplitOverflowGuardTest(TestCase):
 
         # A backfill task exists so a human can resolve OI-03 and retry.
         task = FinancialBackfillTask.objects.get(
-            company=self.company, task_type=FinancialBackfillTask.TaskType.ESCROW_RECORD, invoice=invoice,
+            company=self.company, task_type="escrow_record", invoice=invoice,
         )
         self.assertEqual(task.status, FinancialBackfillTask.Status.PENDING)
         self.assertIn("OI-03", task.error_message)
@@ -605,7 +605,7 @@ class EscrowOI03SplitOverflowGuardTest(TestCase):
         self.assertEqual(result["failed"], 1)
 
         task = FinancialBackfillTask.objects.get(
-            company=self.company, task_type=FinancialBackfillTask.TaskType.ESCROW_RECORD, invoice=invoice,
+            company=self.company, task_type="escrow_record", invoice=invoice,
         )
         self.assertEqual(task.status, FinancialBackfillTask.Status.PENDING)
         self.assertEqual(task.attempts, 1)

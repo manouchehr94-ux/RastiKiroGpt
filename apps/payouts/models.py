@@ -310,7 +310,23 @@ class FinancialBackfillTask(CompanyOwnedModel):
         PLATFORM_FEE = "platform_fee", "Platform Fee"
         PAYMENT_SPLIT_SNAPSHOT = "payment_split_snapshot", "Payment Split Snapshot"
         DIRECT_GATEWAY_SETTLEMENT = "direct_gateway_settlement", "Direct Gateway Settlement"
-        ESCROW_RECORD = "escrow_record", "Escrow Record"
+        # NOTE: escrow_record (Sprint 3) is intentionally NOT added as a
+        # TaskType choice member here. Adding it would require a migration,
+        # and `python manage.py makemigrations --check` could not be run in
+        # this sandbox to confirm Django would actually generate one (no
+        # Django install is available). Per explicit instruction: never
+        # hand-write a migration for TextChoices metadata without Django
+        # itself generating it. The escrow backfill task type is therefore
+        # passed as the raw string "escrow_record" at every call site
+        # (apps/payments/services.py, apps/invoices/services.py,
+        # apps/payouts/services_backfill.py) rather than as an enum member.
+        # This is safe: task_type is a plain CharField(choices=...) and
+        # Django does NOT enforce choices membership at the DB/save level
+        # (only in ModelForm/full_clean validation) - confirmed by direct
+        # inspection of this field's definition below. If/when Django is
+        # available, run `python manage.py makemigrations --check` after
+        # adding ESCROW_RECORD here; only commit the migration it generates
+        # (if any) rather than a hand-authored one.
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"

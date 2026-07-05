@@ -500,11 +500,10 @@ class InvoiceMarkPaidService:
                 exc_info=True,
             )
             try:
-                from apps.payouts.models import FinancialBackfillTask
                 from apps.payouts.services_backfill import FinancialBackfillService
                 FinancialBackfillService.create_task(
                     company=invoice.company,
-                    task_type=FinancialBackfillTask.TaskType.ESCROW_RECORD,
+                    task_type="escrow_record",
                     invoice=invoice,
                     payment=payment,
                     error_message=str(exc),

@@ -186,11 +186,25 @@ class FinancialBackfillService:
             _retry_payment_split_snapshot(task)
         elif task.task_type == FinancialBackfillTask.TaskType.DIRECT_GATEWAY_SETTLEMENT:
             _retry_direct_gateway_settlement(task)
-        elif task.task_type == FinancialBackfillTask.TaskType.ESCROW_RECORD:
-            # Sprint 3 — Escrow Integration. TaskType.ESCROW_RECORD was added
-            # via migration 0010 (choices-only AlterField, following the
-            # exact precedent set by migration 0007) so this dispatches on
-            # the real enum member, consistent with every other task type.
+        elif task.task_type == "escrow_record":
+            # Sprint 3 — Escrow Integration. Uses a raw string task_type
+            # rather than a real FinancialBackfillTask.TaskType enum member,
+            # following the same precedent already established elsewhere in
+            # this codebase by "technician_ledger" and "platform_fee" (both
+            # of which also predate a corresponding enum member being
+            # required for this dispatcher to work). task_type is a plain
+            # CharField(choices=...); Django does not enforce choices
+            # membership at the DB/save level, only in ModelForm/full_clean
+            # validation, so this raw string is fully functional without a
+            # migration. Adding a real TaskType.ESCROW_RECORD choice was
+            # deliberately NOT done in this sprint: `python manage.py
+            # makemigrations --check` could not be run in this sandbox (no
+            # Django install available) to confirm Django would actually
+            # generate a migration for it, and hand-writing one without that
+            # confirmation is explicitly disallowed. If Django becomes
+            # available, add ESCROW_RECORD to TaskType in apps/payouts/models.py
+            # and commit only the migration `makemigrations` itself generates
+            # (if any).
             _retry_escrow_record(task)
         else:
             raise ValueError(f"Unknown task_type: {task.task_type!r}")
