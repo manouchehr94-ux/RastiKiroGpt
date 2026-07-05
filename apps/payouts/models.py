@@ -433,3 +433,348 @@ class TechnicianServiceRate(CompanyOwnedModel):
 
         if errors:
             raise ValidationError(errors)
+
+
+# ---------------------------------------------------------------------------
+# Financial Foundation Models (Sprint 1)
+#
+# These four models are purely additive scaffolding for the Financial Engine
+# target architecture documented in:
+#   docs/13_Financial_Core/target_architecture/04_DOMAIN_MODEL.md
+#   docs/13_Financial_Core/target_architecture/19_DATA_MODEL.md
+#
+# They introduce NO new behavior. No existing service reads or writes to
+# these models yet. No signal, no view, no API references them. They exist
+# so that Sprint 2+ services (EscrowService, SettlementService,
+# RefundService) have a stable schema to build on, without any change to
+# the current payment, invoice, or payout flows.
+# ---------------------------------------------------------------------------
+
+
+class EscrowRecord(CompanyOwnedModel):
+    """
+    Explicit ownership tracking of customer funds held by the Platform.
+
+    Materializes the Money Ownership Lifecycle described in
+    target_architecture/05_MONEY_OWNERSHIP_LIFECYCLE.md. Not yet populated
+    by any service — this model is schema-only in Sprint 1.
+
+    Invariant (enforced by future EscrowService, not by this model):
+        platform_commission_rial + organization_share_rial
+        + provider_share_rial == amount_rial
+    """
+
+    class Status(models.TextChoices):
+        HELD = "held", "نگهداری"
+        RESERVED = "reserved", "رزرو شده"
+        DISTRIBUTED = "distributed", "تخصیص یافته"
+        PENDING_SETTLEMENT = "pending_settlement", "در انتظار تسویه"
+        SETTLED = "settled", "تسویه شده"
+        CLOSED = "closed", "بسته شده"
+
+    payment = models.OneToOneField(
+        "payments.Payment",
+        on_delete=models.CASCADE,
+        related_name="escrow_record",
+    )
+    invoice = models.ForeignKey(
+        "invoices.Invoice",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="escrow_records",
+    )
+
+    amount_rial = models.PositiveBigIntegerField(
+        help_text="Total customer payment amount held in escrow.",
+    )
+    platform_commission_rial = models.PositiveBigIntegerField(default=0)
+    organization_share_rial = models.PositiveBigIntegerField(default=0)
+    provider_share_rial = models.PositiveBigIntegerField(default=0)
+
+    status = models.CharField(
+        max_length=25,
+        choices=Status.choices,
+        default=Status.HELD,
+        db_index=True,
+    )
+
+    held_at = models.DateTimeField(auto_now_add=True)
+    distributed_at = models.DateTimeField(null=True, blank=True)
+    settled_at = models.DateTimeField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    settlement_batch = models.ForeignKey(
+        "payouts.SettlementBatch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="escrow_records",
+    )
+
+    class Meta:
+        ordering = ["-held_at"]
+        indexes = [
+            models.Index(
+                fields=["company", "status"],
+                name="escrow_company_status_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"EscrowRecord #{self.pk} [{self.status}] payment={self.payment_id}"
+
+
+class SettlementBatch(CompanyOwnedModel):
+    """
+    A batch of invoices (or ledger entries) settled together in one
+    net-position transfer.
+
+    Materializes the Net Position Settlement design described in
+    target_architecture/13_SETTLEMENT_NETTING_ENGINE.md. Not yet populated
+    or executed by any service — this model is schema-only in Sprint 1.
+    No `process_settlements` command exists yet; that is deferred to a
+    later sprint.
+    """
+
+    class Level(models.TextChoices):
+        PLATFORM_TO_ORG = "platform_to_org", "پلتفرم به شرکت"
+        ORG_TO_PROVIDER = "org_to_provider", "شرکت به تکنسین"
+
+    class Status(models.TextChoices):
+        CALCULATING = "calculating", "در حال محاسبه"
+        READY = "ready", "آماده اجرا"
+        EXECUTING = "executing", "در حال اجرا"
+        COMPLETED = "completed", "تکمیل شده"
+        FAILED = "failed", "ناموفق"
+
+    level = models.CharField(
+        max_length=20,
+        choices=Level.choices,
+        db_index=True,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.CALCULATING,
+        db_index=True,
+    )
+
+    period_start = models.DateTimeField()
+    period_end = models.DateTimeField()
+
+    net_amount_rial = models.BigIntegerField(
+        default=0,
+        help_text="Signed: positive = platform owes org, negative = org owes platform.",
+    )
+    total_credits = models.PositiveBigIntegerField(default=0)
+    total_debits = models.PositiveBigIntegerField(default=0)
+    items_count = models.PositiveIntegerField(default=0)
+
+    executed_at = models.DateTimeField(null=True, blank=True)
+    bank_reference = models.CharField(max_length=200, blank=True)
+    failure_reason = models.TextField(blank=True)
+
+    created_by = models.ForeignKey(
+        "accounts.CompanyUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_settlement_batches",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["company", "level", "status"],
+                name="settlement_batch_idx",
+            ),
+            models.Index(
+                fields=["company", "period_start", "period_end"],
+                name="settlement_period_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"SettlementBatch #{self.pk} [{self.level}/{self.status}]"
+
+
+class SettlementItem(CompanyOwnedModel):
+    """
+    One invoice (or ledger entry) included in a SettlementBatch's net
+    position calculation.
+
+    Schema-only in Sprint 1 — no service creates these rows yet.
+    """
+
+    batch = models.ForeignKey(
+        SettlementBatch,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    invoice = models.ForeignKey(
+        "invoices.Invoice",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="settlement_items",
+    )
+    ledger_entry = models.ForeignKey(
+        "payouts.TechnicianLedgerEntry",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    platform_fee_entry = models.ForeignKey(
+        "payouts.CompanyPlatformFeeEntry",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    amount_rial = models.BigIntegerField(
+        help_text="Signed contribution to the batch net position.",
+    )
+    description = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["id"]
+        indexes = [
+            models.Index(
+                fields=["batch", "invoice"],
+                name="settlement_item_batch_inv_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"SettlementItem #{self.pk} batch={self.batch_id} amount={self.amount_rial:,}"
+
+
+class AdjustmentDocument(CompanyOwnedModel):
+    """
+    Formal correction document for a PAID invoice (Credit Note, Debit Note,
+    Full/Partial Refund, Manual Adjustment).
+
+    Satisfies R52 (corrections must happen via a separate document, never
+    by editing a PAID invoice or an existing ledger entry).
+
+    Schema-only in Sprint 1. No RefundExecutionService exists yet — no
+    code path creates, approves, or applies these documents. The
+    `technician_ledger_entry` and `platform_fee_entry` FKs remain unused
+    until that service is built, per
+    target_architecture/26_REFUND_REVERSAL_ENGINE_SPECIFICATION.md.
+
+    [OPEN-ISSUE: OI-07] — Full/Partial Refund definitions and reversal
+    proportionality formulas are not yet finalized by the Product Owner.
+    This model only reserves the schema; it does not implement any
+    reversal logic.
+    """
+
+    class DocumentType(models.TextChoices):
+        FULL_REFUND = "full_refund", "بازپرداخت کامل"
+        PARTIAL_REFUND = "partial_refund", "بازپرداخت جزئی"
+        CREDIT_NOTE = "credit_note", "اعتبارنامه"
+        DEBIT_NOTE = "debit_note", "بدهکاری"
+        MANUAL_ADJUSTMENT = "manual_adjustment", "اصلاح دستی"
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", "پیش‌نویس"
+        PENDING_APPROVAL = "pending_approval", "در انتظار تأیید"
+        APPROVED = "approved", "تأییدشده"
+        APPLIED = "applied", "اعمال‌شده"
+        REJECTED = "rejected", "رد شده"
+        CANCELLED = "cancelled", "لغو شده"
+
+    document_type = models.CharField(
+        max_length=30,
+        choices=DocumentType.choices,
+        db_index=True,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT,
+        db_index=True,
+    )
+
+    original_invoice = models.ForeignKey(
+        "invoices.Invoice",
+        on_delete=models.CASCADE,
+        related_name="adjustment_documents",
+    )
+
+    amount_rial = models.PositiveBigIntegerField()
+    reason = models.TextField(
+        help_text="Mandatory justification for this correction.",
+    )
+
+    # Financial reversal tracking (populated by a future service when APPLIED).
+    technician_wage_reversal = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        null=True,
+        blank=True,
+    )
+    platform_fee_reversal = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        null=True,
+        blank=True,
+    )
+    company_share_reversal = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        null=True,
+        blank=True,
+    )
+
+    created_by = models.ForeignKey(
+        "accounts.CompanyUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_adjustments",
+    )
+    approved_by = models.ForeignKey(
+        "accounts.CompanyUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_adjustments",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    applied_at = models.DateTimeField(null=True, blank=True)
+
+    technician_ledger_entry = models.ForeignKey(
+        "payouts.TechnicianLedgerEntry",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="adjustment_documents",
+    )
+    platform_fee_entry = models.ForeignKey(
+        "payouts.CompanyPlatformFeeEntry",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="adjustment_documents",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["company", "status", "document_type"],
+                name="adj_doc_status_type_idx",
+            ),
+            models.Index(
+                fields=["company", "original_invoice"],
+                name="adj_doc_invoice_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return (
+            f"AdjustmentDocument #{self.pk} [{self.document_type}/{self.status}] "
+            f"invoice={self.original_invoice_id}"
+        )
