@@ -217,19 +217,34 @@ class PlatformFeeService:
         description: str = "",
         idempotency_key: str | None = None,
         created_by=None,
+        *,
+        source: str | None = None,
     ):
         """
-        Record a CREDIT (settlement) entry — company paid its platform fee.
-        idempotency_key must be supplied by caller for manual entries.
+        Record a CREDIT entry — by default, "company paid its platform
+        fee" (source=PLATFORM_FEE_SETTLEMENT, the historical, unchanged
+        default). idempotency_key must be supplied by caller for manual
+        entries.
+
+        `source` (Sprint 5 — Refund & Adjustment Execution, additive,
+        backward-compatible): callers may now pass an explicit source
+        (e.g. CompanyPlatformFeeEntry.Source.REFUND) to correctly
+        classify a CREDIT that is NOT a routine fee settlement — for
+        example, a platform-commission reversal issued when a refund is
+        executed. This parameter is keyword-only and defaults to the
+        exact value this method already hardcoded before this change, so
+        every existing call site (which never passes `source`) continues
+        to produce byte-for-byte identical behavior.
         """
         from .models import CompanyPlatformFeeEntry
         import uuid
         key = idempotency_key or f"platform_fee_settlement:{uuid.uuid4().hex}"
+        resolved_source = source or CompanyPlatformFeeEntry.Source.PLATFORM_FEE_SETTLEMENT
 
         return PlatformFeeService._write_entry(
             company=company,
             entry_type=CompanyPlatformFeeEntry.EntryType.CREDIT,
-            source=CompanyPlatformFeeEntry.Source.PLATFORM_FEE_SETTLEMENT,
+            source=resolved_source,
             amount_rial=amount_rial,
             idempotency_key=key,
             description=description or "تسویه کارمزد پلتفرم",
