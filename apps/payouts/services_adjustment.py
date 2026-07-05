@@ -37,7 +37,7 @@ from .models import AdjustmentDocument
 # Re-exported for backward compatibility: existing call sites and tests that
 # do `from apps.payouts.services_adjustment import AdjustmentTransitionError`
 # must keep working unchanged. The canonical definition now lives in
-# apps/payouts/exceptions.py as part of the shared FinancialServiceError
+# apps/payouts/exceptions.py as part of the shared FinancialError
 # hierarchy.
 __all__ = ["AdjustmentDocumentService", "AdjustmentTransitionError"]
 

@@ -11,24 +11,24 @@ codebase changes behavior as a result of this hierarchy.
 
 Hierarchy:
 
-    FinancialServiceError (ValueError)
-        EscrowServiceError
+    FinancialError (ValueError)
+        EscrowError
             EscrowTransitionError
-        SettlementServiceError
+        SettlementError
             SettlementBatchTransitionError
             SettlementItemNotAllowedError
-        AdjustmentServiceError
+        AdjustmentError
             AdjustmentTransitionError
 
 This module introduces no new behavior: it only organizes existing
 exception classes into a shared base so callers may catch broadly
-(`except FinancialServiceError`) or narrowly
+(`except FinancialError`) or narrowly
 (`except EscrowTransitionError`) as needed by future Sprint 3+ services.
 """
 from __future__ import annotations
 
 
-class FinancialServiceError(ValueError):
+class FinancialError(ValueError):
     """
     Base class for every exception raised by a Sprint 2 (or later)
     financial foundation service.
@@ -38,29 +38,29 @@ class FinancialServiceError(ValueError):
     """
 
 
-class EscrowServiceError(FinancialServiceError):
+class EscrowError(FinancialError):
     """Base class for EscrowRecordService-related errors."""
 
 
-class EscrowTransitionError(EscrowServiceError):
+class EscrowTransitionError(EscrowError):
     """Raised when an EscrowRecord state transition is not allowed."""
 
 
-class SettlementServiceError(FinancialServiceError):
+class SettlementError(FinancialError):
     """Base class for SettlementBatchService / SettlementItemService errors."""
 
 
-class SettlementBatchTransitionError(SettlementServiceError):
+class SettlementBatchTransitionError(SettlementError):
     """Raised when a SettlementBatch state transition is not allowed."""
 
 
-class SettlementItemNotAllowedError(SettlementServiceError):
+class SettlementItemNotAllowedError(SettlementError):
     """Raised when adding a SettlementItem to a non-CALCULATING batch."""
 
 
-class AdjustmentServiceError(FinancialServiceError):
+class AdjustmentError(FinancialError):
     """Base class for AdjustmentDocumentService-related errors."""
 
 
-class AdjustmentTransitionError(AdjustmentServiceError):
+class AdjustmentTransitionError(AdjustmentError):
     """Raised when an AdjustmentDocument state transition is not allowed."""

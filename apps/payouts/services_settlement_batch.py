@@ -29,7 +29,7 @@ from .models import SettlementBatch, SettlementItem
 # do `from apps.payouts.services_settlement_batch import
 # SettlementBatchTransitionError` (or SettlementItemNotAllowedError) must
 # keep working unchanged. The canonical definitions now live in
-# apps/payouts/exceptions.py as part of the shared FinancialServiceError
+# apps/payouts/exceptions.py as part of the shared FinancialError
 # hierarchy.
 __all__ = [
     "SettlementBatchService",

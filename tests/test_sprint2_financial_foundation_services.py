@@ -36,14 +36,14 @@ from apps.payouts.factories import (
     make_settlement_item,
 )
 from apps.payouts.exceptions import (
-    AdjustmentServiceError,
+    AdjustmentError,
     AdjustmentTransitionError,
-    EscrowServiceError,
+    EscrowError,
     EscrowTransitionError,
-    FinancialServiceError,
+    FinancialError,
     SettlementBatchTransitionError,
     SettlementItemNotAllowedError,
-    SettlementServiceError,
+    SettlementError,
 )
 from apps.payouts.models import (
     AdjustmentDocument,
@@ -76,13 +76,13 @@ class FinancialExceptionHierarchyTest(TestCase):
     Verifies the shared exception hierarchy in apps/payouts/exceptions.py
     has exactly the structure required by the Sprint 2 review:
 
-        FinancialServiceError (ValueError)
-            EscrowServiceError
+        FinancialError (ValueError)
+            EscrowError
                 EscrowTransitionError
-            SettlementServiceError
+            SettlementError
                 SettlementBatchTransitionError
                 SettlementItemNotAllowedError
-            AdjustmentServiceError
+            AdjustmentError
                 AdjustmentTransitionError
 
     Behavior (raising / catching) is verified per-service in the sections
@@ -90,42 +90,42 @@ class FinancialExceptionHierarchyTest(TestCase):
     """
 
     def test_01_financial_service_error_is_a_value_error(self):
-        self.assertTrue(issubclass(FinancialServiceError, ValueError))
+        self.assertTrue(issubclass(FinancialError, ValueError))
 
     def test_02_escrow_service_error_is_a_financial_service_error(self):
-        self.assertTrue(issubclass(EscrowServiceError, FinancialServiceError))
+        self.assertTrue(issubclass(EscrowError, FinancialError))
 
     def test_03_settlement_service_error_is_a_financial_service_error(self):
-        self.assertTrue(issubclass(SettlementServiceError, FinancialServiceError))
+        self.assertTrue(issubclass(SettlementError, FinancialError))
 
     def test_04_adjustment_service_error_is_a_financial_service_error(self):
-        self.assertTrue(issubclass(AdjustmentServiceError, FinancialServiceError))
+        self.assertTrue(issubclass(AdjustmentError, FinancialError))
 
     def test_05_escrow_transition_error_is_an_escrow_service_error(self):
-        self.assertTrue(issubclass(EscrowTransitionError, EscrowServiceError))
+        self.assertTrue(issubclass(EscrowTransitionError, EscrowError))
 
     def test_06_settlement_batch_transition_error_is_a_settlement_service_error(self):
         self.assertTrue(
-            issubclass(SettlementBatchTransitionError, SettlementServiceError)
+            issubclass(SettlementBatchTransitionError, SettlementError)
         )
 
     def test_07_settlement_item_not_allowed_error_is_a_settlement_service_error(self):
         self.assertTrue(
-            issubclass(SettlementItemNotAllowedError, SettlementServiceError)
+            issubclass(SettlementItemNotAllowedError, SettlementError)
         )
 
     def test_08_adjustment_transition_error_is_an_adjustment_service_error(self):
-        self.assertTrue(issubclass(AdjustmentTransitionError, AdjustmentServiceError))
+        self.assertTrue(issubclass(AdjustmentTransitionError, AdjustmentError))
 
     def test_09_every_leaf_exception_is_catchable_as_financial_service_error(self):
-        """A caller catching FinancialServiceError catches all four leaf types."""
+        """A caller catching FinancialError catches all four leaf types."""
         for exc_cls in (
             EscrowTransitionError,
             SettlementBatchTransitionError,
             SettlementItemNotAllowedError,
             AdjustmentTransitionError,
         ):
-            with self.assertRaises(FinancialServiceError):
+            with self.assertRaises(FinancialError):
                 raise exc_cls("test")
 
     def test_10_every_leaf_exception_is_still_catchable_as_value_error(self):
@@ -142,11 +142,11 @@ class FinancialExceptionHierarchyTest(TestCase):
 
     def test_11_escrow_error_does_not_catch_settlement_error(self):
         """Sibling branches must not catch each other's exceptions."""
-        with self.assertRaises(SettlementServiceError):
+        with self.assertRaises(SettlementError):
             try:
                 raise SettlementBatchTransitionError("test")
-            except EscrowServiceError:
-                self.fail("EscrowServiceError must not catch a settlement exception")
+            except EscrowError:
+                self.fail("EscrowError must not catch a settlement exception")
 
     def test_12_services_module_reexports_match_exceptions_module(self):
         """
