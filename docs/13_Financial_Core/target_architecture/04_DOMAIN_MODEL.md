@@ -321,7 +321,8 @@ Created → active/deactivated → read at order completion → snapshot in meta
 `apps/payouts/models.py`, line 367 — `TechnicianServiceRate`. Fully implemented.
 
 ### Required Extension
-Phase 2 (ADR-005): `pricing_type`, `effective_from/to`, `created_by`, `notes`. All nullable/default — backward-compatible.
+Phase 2 (ADR-005): `pricing_type`, `effective_from/to`, `created_by`, `notes`. All nullable/default —
+backward-compatible.
 
 ### Open Issue Impact
 None.
@@ -331,7 +332,8 @@ None.
 ## 9. EscrowRecord (TARGET — NEW MODEL)
 
 ### Purpose
-Explicit ownership tracking of customer funds held by Platform. Materializes the Money Ownership Lifecycle (Section 3.2).
+Explicit ownership tracking of customer funds held by Platform.
+Materializes the Money Ownership Lifecycle (Section 3.2).
 
 ### Ownership
 Platform (holds) on behalf of Organization + Provider.
@@ -437,7 +439,8 @@ Organization (via batch).
 Created with batch → immutable.
 
 ### Invariants
-- Each invoice appears in at most one batch (enforced by service logic, not DB constraint — some invoices may be excluded from batching).
+- Each invoice appears in at most one batch (enforced by service logic, not DB constraint —
+  some invoices may be excluded from batching).
 
 ### Existing Implementation
 None.
@@ -447,7 +450,8 @@ None.
 ## 12. AdjustmentDocument (TARGET — NEW MODEL)
 
 ### Purpose
-Formal correction document for PAID invoices (Credit Note, Debit Note, Refund). Satisfies R52 (corrections via separate documents).
+Formal correction document for PAID invoices (Credit Note, Debit Note, Refund).
+Satisfies R52 (corrections via separate documents).
 
 ### Ownership
 Organization (Company).

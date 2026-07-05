@@ -224,7 +224,12 @@ class SettlementBatch(CompanyOwnedModel):
 
 **Migration safety:** CREATE TABLE — zero-downtime.
 **Backward compatibility:** Additive. Existing manual settlements unchanged.
-**Business rules satisfied:** R41 (configurable timing), R43 (automatic), R44 (no approval default), R55 (settlement reporting).
+**Business rules satisfied:**
+
+- R41 (configurable timing)
+- R43 (automatic)
+- R44 (no approval default)
+- R55 (settlement reporting)
 
 ---
 
@@ -356,7 +361,8 @@ class AdjustmentDocument(CompanyOwnedModel):
 ```
 
 **Migration safety:** CREATE TABLE — zero-downtime.
-**Backward compatibility:** Additive. Existing `record_manual_settlement(ADJUSTMENT_*)` continues working for simple technician-level adjustments.
+**Backward compatibility:** Additive.
+Existing `record_manual_settlement(ADJUSTMENT_*)` continues working for simple technician-level adjustments.
 **Business rules satisfied:** R46 (customer adjustments), R52 (correction via separate document).
 **Open Issue Impact:** Blocked on OI-07 (refund definitions). Document type choices finalized after PO decision.
 

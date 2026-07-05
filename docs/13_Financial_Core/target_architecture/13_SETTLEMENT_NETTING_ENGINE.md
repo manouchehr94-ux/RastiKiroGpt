@@ -85,7 +85,8 @@ to actual payment (bank transfer, cash, card-to-card).
 Currently only manual + direct split exist:
 - `apps/payouts/views.py:technician_settlement()`: Admin records manual settlement
 - `apps/payouts/services.py:TechnicianLedgerService.record_manual_settlement()`: Creates DEBIT entry
-- `apps/payouts/services_direct_settlement.py:TechnicianDirectSettlementService.post_for_payment()`: Automatic DEBIT for Shaparak split
+- `apps/payouts/services_direct_settlement.py:TechnicianDirectSettlementService.post_for_payment()`:
+  Automatic DEBIT for Shaparak split
 
 ### Target Extension
 
@@ -191,7 +192,9 @@ class SettlementCalculationService:
   - Second call finds zero eligible invoices → creates empty batch → skipped
 
 ### Item Assignment Idempotency
-- SettlementItem has no UNIQUE constraint on invoice (an invoice could theoretically be in a FAILED batch and then a new batch)
+- SettlementItem has no UNIQUE constraint on invoice.
+  (An invoice could theoretically be in a FAILED batch,
+  then be reassigned to a new batch.)
 - Selection query filters `si.id IS NULL` only for non-FAILED batches
 - A FAILED batch's items are "released" — eligible for re-inclusion in next batch
 

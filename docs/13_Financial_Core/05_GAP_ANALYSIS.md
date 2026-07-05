@@ -27,8 +27,12 @@
 
 **Evidence:**
 
-- File: `apps/payments/models.py`, line 32 — `PaymentGateway.OwnerType` with `PLATFORM = "platform"` distinguishes platform-held funds.
-- File: `apps/payouts/services_split.py`, line 28 — `PaymentSplitDecisionService.compute()` calculates `company_deposit_amount` vs `technician_direct_amount`, implying platform holds remainder.
+- File: `apps/payments/models.py`, line 32 —
+  `PaymentGateway.OwnerType` with `PLATFORM = "platform"` distinguishes platform-held funds.
+- File: `apps/payouts/services_split.py`, line 28 —
+  `PaymentSplitDecisionService.compute()` calculates
+  `company_deposit_amount` vs `technician_direct_amount`,
+  implying platform holds remainder.
 - File: `apps/payouts/models.py`, line 137 — `PaymentSplitSnapshot` records amounts per party.
 
 **Classification reason:**
@@ -51,7 +55,8 @@ Populate on payment verification when gateway is platform-owned.
 **Evidence:**
 
 - File: `apps/invoices/models.py`, line 21 — `Invoice` has mandatory `company` FK.
-- File: `apps/invoices/models.py`, line 181 — `footer_text` default: `"مسئولیت فاکتور صادره بر عهده ارائه‌دهنده خدمت می‌باشد."`
+- File: `apps/invoices/models.py`, line 181 —
+  `footer_text` default: `"مسئولیت فاکتور صادره بر عهده ارائه‌دهنده خدمت می‌باشد."`
 - Public invoice URL `/<code>/invoices/<id>/` uses company code, not platform name.
 
 **Classification reason:**
@@ -89,7 +94,9 @@ Invoice is always scoped to company. Technician info is secondary.
 **Evidence:**
 
 - File: `apps/payments/models.py`, line 32 — `PaymentGateway.OwnerType.PLATFORM`.
-- When `owner_type == "platform"`, the gateway `merchant_id` is the platform's Shaparak merchant, so the PSP receipt displays the platform legal name.
+- When `owner_type == "platform"`, the gateway `merchant_id`
+  is the platform's Shaparak merchant.
+  So the PSP receipt displays the platform legal name.
 
 **Classification reason:**
 Gateway merchant identity is controlled by `owner_type`.
@@ -107,7 +114,8 @@ Gateway merchant identity is controlled by `owner_type`.
 **Evidence:**
 
 - File: `apps/payouts/models.py`, line 189 — `CompanyPlatformFeeEntry` records only commission.
-- File: `apps/payouts/services_platform_fee.py`, line 150 — `record_invoice_fee()` creates entry only when 4-condition gate passes.
+- File: `apps/payouts/services_platform_fee.py`, line 150 —
+  `record_invoice_fee()` creates entry only when 4-condition gate passes.
 - File: `apps/billing/models.py`, line 11 — `BillingRecord` is a separate SaaS subscription model.
 
 **Classification reason:**
@@ -162,7 +170,8 @@ Platform revenue = CompanyPlatformFeeEntry DEBIT entries only. No other revenue 
 
 **Evidence:**
 
-- File: `apps/tenants/models.py`, line 94 — `platform_fee_percent = DecimalField(max_digits=5, decimal_places=2, default=0)`.
+- File: `apps/tenants/models.py`, line 94 —
+  `platform_fee_percent = DecimalField(max_digits=5, decimal_places=2, default=0)`.
 
 **Classification reason:** Per-company percentage controlled by platform.
 
@@ -202,7 +211,8 @@ Platform revenue = CompanyPlatformFeeEntry DEBIT entries only. No other revenue 
   `gateway.owner_type != PaymentGateway.OwnerType.PLATFORM` → return None.
   Cash payments never have platform gateway → commission never created.
   Default behavior correct.
-- File: `apps/invoices/services.py`, line 425 — outer check: only calls `PlatformFeeService` when `_gw.owner_type == PaymentGateway.OwnerType.PLATFORM`.
+- File: `apps/invoices/services.py`, line 425 —
+  outer check: only calls `PlatformFeeService` when `_gw.owner_type == PaymentGateway.OwnerType.PLATFORM`.
 - No `charge_commission_on_cash` field anywhere in codebase (grep confirmed: zero results).
 
 **Classification reason:**
@@ -227,7 +237,8 @@ Modify `InvoiceMarkPaidService.mark_paid()` to check this flag for cash paths.
 
 - File: `apps/payments/models.py`, line 32 — `OwnerType.PLATFORM`.
 - File: `apps/tenants/models.py`, line 563 — `PaymentMode.PLATFORM_GATEWAY`.
-- File: `apps/payments/services.py`, line 90 — `PaymentStartService.start()` routes to company's gateway, which may be platform-owned.
+- File: `apps/payments/services.py`, line 90 —
+  `PaymentStartService.start()` routes to company's gateway, which may be platform-owned.
 
 **Classification reason:** When mode=platform_gateway, funds go to platform account first.
 
@@ -244,7 +255,9 @@ Modify `InvoiceMarkPaidService.mark_paid()` to check this flag for cash paths.
 **Evidence:**
 
 - Model A (Platform→Settlement→Org): Implied by platform gateway + future batch settlement.
-- Model C (Split with Provider): `apps/tenants/models.py`, line 66 — `PayoutStrategy.SPLIT_WITH_TECHNICIAN`; `apps/payouts/services_split.py`, line 68–86 — `can_split` logic.
+- Model C (Split with Provider): `apps/tenants/models.py`, line 66 —
+  `PayoutStrategy.SPLIT_WITH_TECHNICIAN`; `apps/payouts/services_split.py`, line 68–86 —
+  `can_split` logic.
 - No explicit `collection_model` choice field (A/B/C selector) exists.
 
 **Classification reason:**
@@ -299,7 +312,8 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 
 - File: `apps/tenants/models.py`, line 353 — `CompanyMerchantProfile.company = OneToOneField(Company)`.
 - File: `apps/tenants/models.py`, line 386 — single `shaba_number` field.
-- File: `apps/tenants/models.py`, line 464 — `CompanyMerchantProfileChangeRequest` for modifications requiring re-approval.
+- File: `apps/tenants/models.py`, line 464 —
+  `CompanyMerchantProfileChangeRequest` for modifications requiring re-approval.
 
 **Classification reason:** OneToOne enforces single profile. Change requires approval.
 
@@ -318,7 +332,9 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 
 **Evidence:**
 
-- File: `apps/accounts/models.py`, line 118 — `class Technician(CompanyOwnedModel)` — inherits mandatory `company` FK.
+- File: `apps/accounts/models.py`, line 118 —
+  `class Technician(CompanyOwnedModel)` —
+  inherits mandatory `company` FK.
 
 **Next action:** None.
 
@@ -334,7 +350,9 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 
 - File: `apps/accounts/models.py`, line 118 — Each `Technician` record is company-scoped.
 - A human working for 2 companies has 2 separate `Technician` objects.
-- File: `apps/payouts/models.py`, line 43 — `TechnicianLedgerEntry.technician` FK — ledger per Technician instance.
+- File: `apps/payouts/models.py`, line 43 —
+  `TechnicianLedgerEntry.technician` FK —
+  ledger per Technician instance.
 
 **Classification reason:** Financially independent per company per ADR-006 §4.
 
@@ -411,7 +429,8 @@ Document that models are emergent from settings. Consider explicit choice if PO 
   technician_direct_amount = 0
   technician_ledger_amount = tech_wage  # company owes technician
   ```
-- File: `apps/payouts/services.py`, line 141 — `create_invoice_entries()` always creates CREDIT regardless of split outcome.
+- File: `apps/payouts/services.py`, line 141 —
+  `create_invoice_entries()` always creates CREDIT regardless of split outcome.
 
 **Classification reason:** Technician always gets credited. Funds never suspended.
 
@@ -431,7 +450,13 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 **Evidence:**
 
 - File: `apps/invoices/models.py`, line 298 — `InvoiceItem` model.
-- Fields: `row_type` (line 314), `description` (line 319), `quantity` (line 320), `unit_price` (line 321), `discount_amount` (line 322), `total_price` (line 323).
+- Fields:
+  - `row_type` (line 314)
+  - `description` (line 319)
+  - `quantity` (line 320)
+  - `unit_price` (line 321)
+  - `discount_amount` (line 322)
+  - `total_price` (line 323)
 
 **Next action:** None.
 
@@ -497,7 +522,8 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 
 **Evidence:**
 
-- File: `apps/invoices/services_wage.py`, line 72 — `_collect_category_totals()` returns `(service_total, goods_total, travel_total)`.
+- File: `apps/invoices/services_wage.py`, line 72 —
+  `_collect_category_totals()` returns `(service_total, goods_total, travel_total)`.
 - Line 154 — called before wage calculation in `_calculate_policy_aware_wage()`.
 
 **Next action:** None.
@@ -512,7 +538,8 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 
 **Evidence:**
 
-- File: `apps/accounts/models.py`, lines 135/139/143 — `service_wage_percent`, `goods_wage_percent`, `travel_wage_percent`.
+- File: `apps/accounts/models.py`, lines 135/139/143 —
+  `service_wage_percent`, `goods_wage_percent`, `travel_wage_percent`.
 - File: `apps/invoices/services_wage.py`, lines 161–163:
   ```python
   service_wage = _money(service_total * service_pct / Decimal("100"))
@@ -536,7 +563,8 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 **Evidence:**
 
 - File: `apps/invoices/models.py`, line 338 — `InvoiceItem.net_price` = `gross_price - discount_amount`.
-- File: `apps/invoices/services_wage.py`, line 72 — `_collect_category_totals()` uses `item.total_price` (post-row-discount).
+- File: `apps/invoices/services_wage.py`, line 72 —
+  `_collect_category_totals()` uses `item.total_price` (post-row-discount).
 - Lines 175–181 — extra/campaign discounts allocated via `_allocate_discount()`.
 
 **Next action:** None.
@@ -556,7 +584,8 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 
 **Classification reason:** Completely absent.
 
-**Next action:** Add `rounding_discount_enabled`, `max_rounding_discount_rial` to `CompanyFinancialPolicy`. Add `rounding_discount_amount` to `Invoice`.
+**Next action:** Add `rounding_discount_enabled`, `max_rounding_discount_rial` to `CompanyFinancialPolicy`.
+Add `rounding_discount_amount` to `Invoice`.
 
 ---
 
@@ -682,7 +711,8 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 - Grep `SettlementBatch`: zero results.
 - No timing configuration in `CompanyFinancialPolicy`.
 
-**Next action:** Add `settlement_frequency` and `settlement_delay_hours` to `CompanyFinancialPolicy`. Create `SettlementBatch` + `SettlementItem` models.
+**Next action:** Add `settlement_frequency` and `settlement_delay_hours` to `CompanyFinancialPolicy`.
+Create `SettlementBatch` + `SettlementItem` models.
 
 ---
 
@@ -944,7 +974,7 @@ Document that models are emergent from settings. Consider explicit choice if PO 
 
 | OI | Existing Architectural Clue |
 |----|------------------------------|
-| OI-01 | `PaymentSplitSnapshot.technician_direct_amount` + `Technician.sub_merchant_id` + `PaymentSplitDecisionService.compute()` → split infrastructure designed. |
+| OI-01 | `PaymentSplitSnapshot`, `sub_merchant_id`, `PaymentSplitDecisionService.compute()` → split infra designed. |
 | OI-02 | `InvoiceItem.RowType.TRAVEL` exists as line item. |
 | OI-03 | 4 discount policies in `CompanyFinancialPolicy`. Separate per extra vs campaign. |
 | OI-04 | `get_balance()` = SUM(credits) - SUM(debits). Negative = technician owes. |
