@@ -310,6 +310,7 @@ class FinancialBackfillTask(CompanyOwnedModel):
         PLATFORM_FEE = "platform_fee", "Platform Fee"
         PAYMENT_SPLIT_SNAPSHOT = "payment_split_snapshot", "Payment Split Snapshot"
         DIRECT_GATEWAY_SETTLEMENT = "direct_gateway_settlement", "Direct Gateway Settlement"
+        ESCROW_RECORD = "escrow_record", "Escrow Record"
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"

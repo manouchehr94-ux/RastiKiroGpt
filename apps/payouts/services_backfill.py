@@ -186,17 +186,11 @@ class FinancialBackfillService:
             _retry_payment_split_snapshot(task)
         elif task.task_type == FinancialBackfillTask.TaskType.DIRECT_GATEWAY_SETTLEMENT:
             _retry_direct_gateway_settlement(task)
-        elif task.task_type == "escrow_record":
-            # Sprint 3 — Escrow Integration. Uses a raw string task_type,
-            # following the same precedent already established by
-            # InvoiceMarkPaidService.mark_paid() for "technician_ledger" and
-            # "platform_fee" (both of which also predate their own enum
-            # members being required at the FinancialBackfillTask.TaskType
-            # level for the dispatcher to work — TextChoices does not
-            # enforce membership at the Python/DB level, only in forms).
-            # Adding a real TaskType.ESCROW_RECORD choice would be a purely
-            # cosmetic migration; deferred to avoid an unnecessary migration
-            # in this additive-only sprint.
+        elif task.task_type == FinancialBackfillTask.TaskType.ESCROW_RECORD:
+            # Sprint 3 — Escrow Integration. TaskType.ESCROW_RECORD was added
+            # via migration 0010 (choices-only AlterField, following the
+            # exact precedent set by migration 0007) so this dispatches on
+            # the real enum member, consistent with every other task type.
             _retry_escrow_record(task)
         else:
             raise ValueError(f"Unknown task_type: {task.task_type!r}")
