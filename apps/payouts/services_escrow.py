@@ -19,9 +19,17 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
+from apps.payments.models import PaymentGateway
 
-class EscrowTransitionError(ValueError):
-    """Raised when an EscrowRecord state transition is not allowed."""
+from .exceptions import EscrowTransitionError
+from .models import EscrowRecord
+
+# Re-exported for backward compatibility: existing call sites and tests that
+# do `from apps.payouts.services_escrow import EscrowTransitionError` must
+# keep working unchanged. The canonical definition now lives in
+# apps/payouts/exceptions.py as part of the shared FinancialServiceError
+# hierarchy.
+__all__ = ["EscrowRecordService", "EscrowTransitionError"]
 
 
 class EscrowRecordService:
@@ -46,8 +54,6 @@ class EscrowRecordService:
         gateway create escrow. Cash, manual, and company-owned-gateway
         payments are never eligible.
         """
-        from apps.payments.models import PaymentGateway
-
         gateway = getattr(payment, "gateway", None)
         if gateway is None:
             return False
@@ -67,8 +73,6 @@ class EscrowRecordService:
         card-to-card, manual, or company-owned-gateway payments) per
         is_eligible_for_escrow().
         """
-        from .models import EscrowRecord
-
         existing = EscrowRecord.objects.filter(payment=payment).first()
         if existing is not None:
             return existing
@@ -95,8 +99,6 @@ class EscrowRecordService:
         Links the escrow to a specific invoice and marks it reserved.
         Raises EscrowTransitionError if escrow_record.status is not HELD.
         """
-        from .models import EscrowRecord
-
         locked = EscrowRecord.objects.select_for_update().get(pk=escrow_record.pk)
 
         if locked.status != EscrowRecord.Status.HELD:
@@ -130,8 +132,6 @@ class EscrowRecordService:
         Raises ValueError on a mismatch (no state change occurs) and
         EscrowTransitionError if escrow_record.status is not RESERVED.
         """
-        from .models import EscrowRecord
-
         locked = EscrowRecord.objects.select_for_update().get(pk=escrow_record.pk)
 
         if locked.status != EscrowRecord.Status.RESERVED:
@@ -176,8 +176,6 @@ class EscrowRecordService:
         Links the escrow to a SettlementBatch. Raises EscrowTransitionError
         if escrow_record.status is not DISTRIBUTED.
         """
-        from .models import EscrowRecord
-
         locked = EscrowRecord.objects.select_for_update().get(pk=escrow_record.pk)
 
         if locked.status != EscrowRecord.Status.DISTRIBUTED:
@@ -202,8 +200,6 @@ class EscrowRecordService:
         EscrowTransitionError if escrow_record.status is not
         PENDING_SETTLEMENT.
         """
-        from .models import EscrowRecord
-
         locked = EscrowRecord.objects.select_for_update().get(pk=escrow_record.pk)
 
         if locked.status != EscrowRecord.Status.PENDING_SETTLEMENT:
@@ -237,8 +233,6 @@ class EscrowRecordService:
         `closed_reason` field (adding one would be a schema change, out of
         scope for this sprint).
         """
-        from .models import EscrowRecord
-
         locked = EscrowRecord.objects.select_for_update().get(pk=escrow_record.pk)
 
         allowed_from = {

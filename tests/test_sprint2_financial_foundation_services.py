@@ -35,6 +35,16 @@ from apps.payouts.factories import (
     make_settlement_batch,
     make_settlement_item,
 )
+from apps.payouts.exceptions import (
+    AdjustmentServiceError,
+    AdjustmentTransitionError,
+    EscrowServiceError,
+    EscrowTransitionError,
+    FinancialServiceError,
+    SettlementBatchTransitionError,
+    SettlementItemNotAllowedError,
+    SettlementServiceError,
+)
 from apps.payouts.models import (
     AdjustmentDocument,
     CompanyPlatformFeeEntry,
@@ -43,15 +53,10 @@ from apps.payouts.models import (
     SettlementItem,
     TechnicianLedgerEntry,
 )
-from apps.payouts.services_adjustment import (
-    AdjustmentDocumentService,
-    AdjustmentTransitionError,
-)
-from apps.payouts.services_escrow import EscrowRecordService, EscrowTransitionError
+from apps.payouts.services_adjustment import AdjustmentDocumentService
+from apps.payouts.services_escrow import EscrowRecordService
 from apps.payouts.services_settlement_batch import (
     SettlementBatchService,
-    SettlementBatchTransitionError,
-    SettlementItemNotAllowedError,
     SettlementItemService,
 )
 
@@ -61,6 +66,113 @@ _counter = itertools.count(1)
 def _n():
     return next(_counter)
 
+
+# ---------------------------------------------------------------------------
+# Exception hierarchy structure
+# ---------------------------------------------------------------------------
+
+class FinancialExceptionHierarchyTest(TestCase):
+    """
+    Verifies the shared exception hierarchy in apps/payouts/exceptions.py
+    has exactly the structure required by the Sprint 2 review:
+
+        FinancialServiceError (ValueError)
+            EscrowServiceError
+                EscrowTransitionError
+            SettlementServiceError
+                SettlementBatchTransitionError
+                SettlementItemNotAllowedError
+            AdjustmentServiceError
+                AdjustmentTransitionError
+
+    Behavior (raising / catching) is verified per-service in the sections
+    below; this class only checks the class relationships themselves.
+    """
+
+    def test_01_financial_service_error_is_a_value_error(self):
+        self.assertTrue(issubclass(FinancialServiceError, ValueError))
+
+    def test_02_escrow_service_error_is_a_financial_service_error(self):
+        self.assertTrue(issubclass(EscrowServiceError, FinancialServiceError))
+
+    def test_03_settlement_service_error_is_a_financial_service_error(self):
+        self.assertTrue(issubclass(SettlementServiceError, FinancialServiceError))
+
+    def test_04_adjustment_service_error_is_a_financial_service_error(self):
+        self.assertTrue(issubclass(AdjustmentServiceError, FinancialServiceError))
+
+    def test_05_escrow_transition_error_is_an_escrow_service_error(self):
+        self.assertTrue(issubclass(EscrowTransitionError, EscrowServiceError))
+
+    def test_06_settlement_batch_transition_error_is_a_settlement_service_error(self):
+        self.assertTrue(
+            issubclass(SettlementBatchTransitionError, SettlementServiceError)
+        )
+
+    def test_07_settlement_item_not_allowed_error_is_a_settlement_service_error(self):
+        self.assertTrue(
+            issubclass(SettlementItemNotAllowedError, SettlementServiceError)
+        )
+
+    def test_08_adjustment_transition_error_is_an_adjustment_service_error(self):
+        self.assertTrue(issubclass(AdjustmentTransitionError, AdjustmentServiceError))
+
+    def test_09_every_leaf_exception_is_catchable_as_financial_service_error(self):
+        """A caller catching FinancialServiceError catches all four leaf types."""
+        for exc_cls in (
+            EscrowTransitionError,
+            SettlementBatchTransitionError,
+            SettlementItemNotAllowedError,
+            AdjustmentTransitionError,
+        ):
+            with self.assertRaises(FinancialServiceError):
+                raise exc_cls("test")
+
+    def test_10_every_leaf_exception_is_still_catchable_as_value_error(self):
+        """Backward compatibility: existing `except ValueError` call sites
+        must continue to catch these exceptions unchanged."""
+        for exc_cls in (
+            EscrowTransitionError,
+            SettlementBatchTransitionError,
+            SettlementItemNotAllowedError,
+            AdjustmentTransitionError,
+        ):
+            with self.assertRaises(ValueError):
+                raise exc_cls("test")
+
+    def test_11_escrow_error_does_not_catch_settlement_error(self):
+        """Sibling branches must not catch each other's exceptions."""
+        with self.assertRaises(SettlementServiceError):
+            try:
+                raise SettlementBatchTransitionError("test")
+            except EscrowServiceError:
+                self.fail("EscrowServiceError must not catch a settlement exception")
+
+    def test_12_services_module_reexports_match_exceptions_module(self):
+        """
+        Each service module re-exports its exception classes for backward
+        compatibility (e.g. `from apps.payouts.services_escrow import
+        EscrowTransitionError` must keep working). Verify the re-exported
+        class is the *same* class object as the canonical one in
+        apps.payouts.exceptions, not an accidental duplicate definition.
+        """
+        from apps.payouts.services_adjustment import (
+            AdjustmentTransitionError as ReexportedAdjustmentError,
+        )
+        from apps.payouts.services_escrow import (
+            EscrowTransitionError as ReexportedEscrowError,
+        )
+        from apps.payouts.services_settlement_batch import (
+            SettlementBatchTransitionError as ReexportedBatchError,
+        )
+        from apps.payouts.services_settlement_batch import (
+            SettlementItemNotAllowedError as ReexportedItemError,
+        )
+
+        self.assertIs(ReexportedEscrowError, EscrowTransitionError)
+        self.assertIs(ReexportedBatchError, SettlementBatchTransitionError)
+        self.assertIs(ReexportedItemError, SettlementItemNotAllowedError)
+        self.assertIs(ReexportedAdjustmentError, AdjustmentTransitionError)
 
 
 # ---------------------------------------------------------------------------
@@ -269,7 +381,6 @@ class EscrowRecordServiceTransitionTest(TestCase):
         self.assertEqual(closed.status, EscrowRecord.Status.CLOSED)
 
 
-
 # ---------------------------------------------------------------------------
 # SettlementBatchService
 # ---------------------------------------------------------------------------
@@ -371,7 +482,6 @@ class SettlementBatchServiceTest(TestCase):
         batch = make_settlement_batch(company=self.company, status=SettlementBatch.Status.COMPLETED)
         with self.assertRaises(SettlementBatchTransitionError):
             SettlementBatchService.mark_executing(batch)
-
 
 
 # ---------------------------------------------------------------------------
@@ -478,7 +588,6 @@ def _make_bare_technician(company):
         role=UserRole.TECHNICIAN,
     )
     return Technician.objects.create(company=company, user=user)
-
 
 
 # ---------------------------------------------------------------------------

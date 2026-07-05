@@ -22,13 +22,21 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
+from .exceptions import SettlementBatchTransitionError, SettlementItemNotAllowedError
+from .models import SettlementBatch, SettlementItem
 
-class SettlementBatchTransitionError(ValueError):
-    """Raised when a SettlementBatch state transition is not allowed."""
-
-
-class SettlementItemNotAllowedError(ValueError):
-    """Raised when adding a SettlementItem to a non-CALCULATING batch."""
+# Re-exported for backward compatibility: existing call sites and tests that
+# do `from apps.payouts.services_settlement_batch import
+# SettlementBatchTransitionError` (or SettlementItemNotAllowedError) must
+# keep working unchanged. The canonical definitions now live in
+# apps/payouts/exceptions.py as part of the shared FinancialServiceError
+# hierarchy.
+__all__ = [
+    "SettlementBatchService",
+    "SettlementItemService",
+    "SettlementBatchTransitionError",
+    "SettlementItemNotAllowedError",
+]
 
 
 class SettlementBatchService:
@@ -52,8 +60,6 @@ class SettlementBatchService:
         responsibility via SettlementItemService, and remains manual in
         this sprint (no automatic invoice/ledger selection exists yet).
         """
-        from .models import SettlementBatch
-
         return SettlementBatch.objects.create(
             company=company,
             level=level,
@@ -72,8 +78,6 @@ class SettlementBatchService:
         CALCULATING. Does not validate or recompute item totals in this
         sprint — that belongs to the future SettlementCalculationService.
         """
-        from .models import SettlementBatch
-
         locked = SettlementBatch.objects.select_for_update().get(pk=batch.pk)
 
         if locked.status != SettlementBatch.Status.CALCULATING:
@@ -95,8 +99,6 @@ class SettlementBatchService:
         Raises SettlementBatchTransitionError if batch.status is not
         READY. Does not perform any bank transfer.
         """
-        from .models import SettlementBatch
-
         locked = SettlementBatch.objects.select_for_update().get(pk=batch.pk)
 
         if locked.status != SettlementBatch.Status.READY:
@@ -120,8 +122,6 @@ class SettlementBatchService:
         sprint (per Document 25 §4 Postconditions, that belongs to a
         future SettlementExecutionService).
         """
-        from .models import SettlementBatch
-
         locked = SettlementBatch.objects.select_for_update().get(pk=batch.pk)
 
         if locked.status != SettlementBatch.Status.EXECUTING:
@@ -150,8 +150,6 @@ class SettlementBatchService:
         if batch.status is not EXECUTING, or ValueError if failure_reason
         is empty.
         """
-        from .models import SettlementBatch
-
         if not failure_reason:
             raise ValueError("failure_reason is required when marking a batch FAILED.")
 
@@ -174,8 +172,6 @@ class SettlementBatchService:
         Return True if batch.status is COMPLETED or FAILED — i.e. no further
         transition is allowed (Document 25 §4 Forbidden Transitions).
         """
-        from .models import SettlementBatch
-
         return batch.status in (
             SettlementBatch.Status.COMPLETED,
             SettlementBatch.Status.FAILED,
@@ -194,8 +190,6 @@ class SettlementItemService:
 
     @staticmethod
     def _assert_batch_is_calculating(batch) -> None:
-        from .models import SettlementBatch
-
         if batch.status != SettlementBatch.Status.CALCULATING:
             raise SettlementItemNotAllowedError(
                 f"SettlementBatch #{batch.pk}: cannot add items while status "
@@ -216,8 +210,6 @@ class SettlementItemService:
         Raises SettlementItemNotAllowedError if batch.status is not
         CALCULATING.
         """
-        from .models import SettlementBatch, SettlementItem
-
         locked_batch = SettlementBatch.objects.select_for_update().get(pk=batch.pk)
         SettlementItemService._assert_batch_is_calculating(locked_batch)
 
@@ -243,8 +235,6 @@ class SettlementItemService:
         Raises SettlementItemNotAllowedError if batch.status is not
         CALCULATING.
         """
-        from .models import SettlementBatch, SettlementItem
-
         locked_batch = SettlementBatch.objects.select_for_update().get(pk=batch.pk)
         SettlementItemService._assert_batch_is_calculating(locked_batch)
 
@@ -269,8 +259,6 @@ class SettlementItemService:
         Raises SettlementItemNotAllowedError if batch.status is not
         CALCULATING.
         """
-        from .models import SettlementBatch, SettlementItem
-
         locked_batch = SettlementBatch.objects.select_for_update().get(pk=batch.pk)
         SettlementItemService._assert_batch_is_calculating(locked_batch)
 

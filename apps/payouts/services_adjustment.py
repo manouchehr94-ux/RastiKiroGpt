@@ -29,9 +29,17 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
+from apps.invoices.models import Invoice
 
-class AdjustmentTransitionError(ValueError):
-    """Raised when an AdjustmentDocument state transition is not allowed."""
+from .exceptions import AdjustmentTransitionError
+from .models import AdjustmentDocument
+
+# Re-exported for backward compatibility: existing call sites and tests that
+# do `from apps.payouts.services_adjustment import AdjustmentTransitionError`
+# must keep working unchanged. The canonical definition now lives in
+# apps/payouts/exceptions.py as part of the shared FinancialServiceError
+# hierarchy.
+__all__ = ["AdjustmentDocumentService", "AdjustmentTransitionError"]
 
 
 class AdjustmentDocumentService:
@@ -46,8 +54,6 @@ class AdjustmentDocumentService:
 
     @staticmethod
     def _refund_document_types():
-        from .models import AdjustmentDocument
-
         return {
             AdjustmentDocument.DocumentType.FULL_REFUND,
             AdjustmentDocument.DocumentType.PARTIAL_REFUND,
@@ -70,10 +76,6 @@ class AdjustmentDocumentService:
         Raises ValueError if any precondition fails. No reversal ledger
         entry is created. No customer balance is touched.
         """
-        from apps.invoices.models import Invoice
-
-        from .models import AdjustmentDocument
-
         if original_invoice.status != Invoice.Status.PAID:
             raise ValueError(
                 f"AdjustmentDocument can only be created for a PAID invoice "
@@ -113,8 +115,6 @@ class AdjustmentDocumentService:
 
         Raises AdjustmentTransitionError if document.status is not DRAFT.
         """
-        from .models import AdjustmentDocument
-
         locked = AdjustmentDocument.objects.select_for_update().get(pk=document.pk)
 
         if locked.status != AdjustmentDocument.Status.DRAFT:
@@ -141,8 +141,6 @@ class AdjustmentDocumentService:
         additionally required for certain adjustment types is not decided.
         This method implements single-step approval only.
         """
-        from .models import AdjustmentDocument
-
         locked = AdjustmentDocument.objects.select_for_update().get(pk=document.pk)
 
         if locked.status != AdjustmentDocument.Status.PENDING_APPROVAL:
@@ -172,8 +170,6 @@ class AdjustmentDocumentService:
         Raises AdjustmentTransitionError if document.status is not
         PENDING_APPROVAL.
         """
-        from .models import AdjustmentDocument
-
         locked = AdjustmentDocument.objects.select_for_update().get(pk=document.pk)
 
         if locked.status != AdjustmentDocument.Status.PENDING_APPROVAL:
@@ -198,8 +194,6 @@ class AdjustmentDocumentService:
 
         Raises AdjustmentTransitionError if document.status is not DRAFT.
         """
-        from .models import AdjustmentDocument
-
         locked = AdjustmentDocument.objects.select_for_update().get(pk=document.pk)
 
         if locked.status != AdjustmentDocument.Status.DRAFT:
@@ -235,8 +229,6 @@ class AdjustmentDocumentService:
         [OPEN-ISSUE: OI-07]). Raises AdjustmentTransitionError if
         document.status is not APPROVED.
         """
-        from .models import AdjustmentDocument
-
         locked = AdjustmentDocument.objects.select_for_update().get(pk=document.pk)
 
         if locked.status != AdjustmentDocument.Status.APPROVED:
