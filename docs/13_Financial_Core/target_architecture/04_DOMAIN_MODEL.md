@@ -50,7 +50,7 @@ ISSUED → CANCELLED (via CancellationRequest approval)
 - `invoice_number` unique per company (DB constraint)
 
 ### Existing Implementation
-`apps/invoices/models.py:Invoice` (line ~21). Fully implemented with 17 `settled_*` fields.
+`apps/invoices/models.py`, line 21 — `Invoice`. Fully implemented with 17 `settled_*` fields.
 
 ### Required Extension
 None for the model itself. New RowType choices for `InvoiceItem` (R23).
@@ -84,7 +84,7 @@ No explicit status. Immutability inherited from parent Invoice status.
 - Cannot be modified when Invoice is PAID
 
 ### Existing Implementation
-`apps/invoices/models.py:InvoiceItem` (line ~298). RowType: service/goods/travel.
+`apps/invoices/models.py`, line 298 — `InvoiceItem`. RowType: service/goods/travel.
 
 ### Required Extension
 Add RowType choices: `ADDITIONAL_DISCOUNT`, `LOYALTY_DISCOUNT` (R23).
@@ -138,7 +138,7 @@ INITIATED → CANCELLED
 - `select_for_update()` prevents concurrent verification
 
 ### Existing Implementation
-`apps/payments/models.py:Payment` (line ~70). Fully implemented.
+`apps/payments/models.py`, line 60 — `Payment`. Fully implemented.
 
 ### Required Extension
 None to the model. Gateway integration for refund API (target Sprint 6).
@@ -179,7 +179,7 @@ None — entries are born and live forever.
 - `get_balance()` = SUM(credits) - SUM(debits) — always recomputed, not cached
 
 ### Existing Implementation
-`apps/payouts/models.py:TechnicianLedgerEntry` (line ~16). Fully implemented with 8 Source choices.
+`apps/payouts/models.py`, line 16 — `TechnicianLedgerEntry`. Fully implemented with 8 Source choices.
 
 ### Required Extension
 None to model. New Source choices may be added in future (bonus, penalty).
@@ -210,7 +210,7 @@ Created → immutable forever.
 Same as TechnicianLedgerEntry: immutable amount, balance, no delete, unique idempotency_key.
 
 ### Existing Implementation
-`apps/payouts/models.py:CompanyPlatformFeeEntry` (line ~145). Fully implemented.
+`apps/payouts/models.py`, line 189 — `CompanyPlatformFeeEntry`. Fully implemented.
 
 ### Required Extension
 None. Future `SettlementBatch` will create CREDIT entries on this ledger.
@@ -242,7 +242,7 @@ Created once at payment verification → immutable forever.
 - `technician_direct_amount` is the sole authoritative source for DEBIT amount
 
 ### Existing Implementation
-`apps/payouts/models.py:PaymentSplitSnapshot` (line ~115). Fully implemented.
+`apps/payouts/models.py`, line 137 — `PaymentSplitSnapshot`. Fully implemented.
 
 ### Required Extension
 None.
@@ -286,7 +286,7 @@ PENDING → PROCESSING → (rollback) → PENDING (attempts++)
 - Each task processed in its own transaction
 
 ### Existing Implementation
-`apps/payouts/models.py:FinancialBackfillTask` (line ~215). Fully implemented.
+`apps/payouts/models.py`, line 296 — `FinancialBackfillTask`. Fully implemented.
 
 ### Required Extension
 None. Consider alerting integration (notify platform owner when attempts > threshold).
@@ -318,7 +318,7 @@ Created → active/deactivated → read at order completion → snapshot in meta
 - Rate read at completion time, never retroactively applied (ADR-005)
 
 ### Existing Implementation
-`apps/payouts/models.py:TechnicianServiceRate` (line ~273). Fully implemented.
+`apps/payouts/models.py`, line 367 — `TechnicianServiceRate`. Fully implemented.
 
 ### Required Extension
 Phase 2 (ADR-005): `pricing_type`, `effective_from/to`, `created_by`, `notes`. All nullable/default — backward-compatible.
