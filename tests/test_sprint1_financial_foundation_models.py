@@ -379,8 +379,29 @@ class AdjustmentDocumentModelTest(TestCase):
 
         self.assertFalse(AdjustmentDocument.objects.filter(pk=doc_id).exists())
 
-    def test_06_technician_ledger_entry_set_null_on_delete(self):
-        """Deleting a referenced TechnicianLedgerEntry must not delete the document."""
+    def test_06_technician_ledger_entry_fk_is_nullable_set_null(self):
+        """
+        AdjustmentDocument.technician_ledger_entry must be a nullable FK to
+        TechnicianLedgerEntry with on_delete=SET_NULL.
+
+        TechnicianLedgerEntry.delete() intentionally raises PermissionError
+        (ledger entries are immutable — see apps/payouts/models.py). This
+        test must NOT call entry.delete(), since that would incorrectly
+        exercise ledger deletion rather than the FK's SET_NULL behavior.
+        Instead, it verifies the field's relation target and null=True
+        directly via the model field definition, and confirms the document
+        can be created and read with a live entry attached.
+        """
+        field = AdjustmentDocument._meta.get_field("technician_ledger_entry")
+
+        self.assertIs(field.related_model, TechnicianLedgerEntry)
+        self.assertTrue(field.null, "technician_ledger_entry must allow NULL")
+        self.assertEqual(
+            field.remote_field.on_delete.__name__,
+            "SET_NULL",
+            "technician_ledger_entry must use on_delete=SET_NULL",
+        )
+
         company = make_company()
         entry = TechnicianLedgerEntry.objects.create(
             company=company,
@@ -394,11 +415,9 @@ class AdjustmentDocumentModelTest(TestCase):
         doc = make_adjustment_document(
             company=company, technician_ledger_entry=entry,
         )
-
-        entry.delete()
         doc.refresh_from_db()
 
-        self.assertIsNone(doc.technician_ledger_entry_id)
+        self.assertEqual(doc.technician_ledger_entry_id, entry.pk)
 
     def test_07_amount_rial_is_positive_big_integer(self):
         """amount_rial rejects negative values at full_clean() validation."""
