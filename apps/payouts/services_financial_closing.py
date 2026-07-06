@@ -535,8 +535,6 @@ class FinancialClosingEngine:
         ).order_by("id")
 
         for invoice in paid_invoices:
-            issues_found = False
-
             # Check: paid_at must be set (redundant given filter, but
             # guards against NULL slipping through in edge cases)
             if invoice.paid_at is None:
@@ -549,20 +547,6 @@ class FinancialClosingEngine:
                         "but has no paid_at timestamp."
                     ),
                 ))
-                issues_found = True
-
-            # Check: total_amount must be positive
-            if int(invoice.total_amount) <= 0:
-                blocking_issues.append(ClosingBlockingIssue(
-                    reason=BlockingReason.INVALID_INVOICE_FINANCIAL_STATE,
-                    model="Invoice",
-                    object_id=invoice.id,
-                    message=(
-                        f"Invoice #{invoice.id} ({invoice.invoice_number}) is PAID "
-                        f"but total_amount is {int(invoice.total_amount)} (expected > 0)."
-                    ),
-                ))
-                issues_found = True
 
             # Check: at least one PAID payment must exist
             has_paid_payment = Payment.objects.filter(
