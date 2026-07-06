@@ -11,7 +11,7 @@ from decimal import Decimal
 from django.test import TestCase, Client
 from django.utils import timezone
 
-from apps.accounts.models import CompanyUser, Technician, UserRole
+from apps.accounts.models import CompanyUser, OperatorPermission, Technician, UserRole
 from apps.invoices.models import Invoice, InvoiceItem
 from apps.orders.models import Order
 from apps.payments.models import Payment, PaymentGateway
@@ -56,12 +56,35 @@ def _admin_user(company):
 
 
 def _staff_user(company):
-    return CompanyUser.objects.create_user(
+    user = CompanyUser.objects.create_user(
         username=f"portalstaff{_n()}",
         password="testpass123",
         company=company,
         role=UserRole.COMPANY_STAFF,
     )
+    # Grant operator permissions for all financial portal pages.
+    # The OperatorPermissionMiddleware requires explicit permission records
+    # for COMPANY_STAFF users accessing /<code>/admin/ routes.
+    portal_permission_keys = [
+        "dashboard",
+        "technician_list",
+        "technician_detail",
+        "settlement_list",
+        "settlement_detail",
+        "escrow_list",
+        "adjustment_list",
+        "reconciliation",
+        "closing",
+        "reports",
+    ]
+    for key in portal_permission_keys:
+        OperatorPermission.objects.create(
+            company=company,
+            operator=user,
+            permission_key=key,
+            is_allowed=True,
+        )
+    return user
 
 
 def _technician_user(company):
