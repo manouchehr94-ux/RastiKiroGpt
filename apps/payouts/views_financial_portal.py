@@ -12,7 +12,6 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 
-from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -79,7 +78,6 @@ def _parse_period(request: HttpRequest):
 # 1. Financial Dashboard
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_dashboard(request: HttpRequest, **kwargs) -> HttpResponse:
     """Financial portal dashboard with overview cards."""
@@ -110,7 +108,6 @@ def financial_portal_dashboard(request: HttpRequest, **kwargs) -> HttpResponse:
 # 2. Technician Settlement Statements (list)
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_technician_list(request: HttpRequest, **kwargs) -> HttpResponse:
     """List technicians with financial summary."""
@@ -167,7 +164,6 @@ def financial_portal_technician_list(request: HttpRequest, **kwargs) -> HttpResp
 # 3. Technician Statement Detail
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_technician_detail(request: HttpRequest, technician_id: int, **kwargs) -> HttpResponse:
     """Detailed financial statement for one technician."""
@@ -207,7 +203,6 @@ def financial_portal_technician_detail(request: HttpRequest, technician_id: int,
 # 4. Settlement Batch List
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_settlement_list(request: HttpRequest, **kwargs) -> HttpResponse:
     """List settlement batches for the company."""
@@ -238,7 +233,6 @@ def financial_portal_settlement_list(request: HttpRequest, **kwargs) -> HttpResp
 # 5. Settlement Batch Detail
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_settlement_detail(request: HttpRequest, batch_id: int, **kwargs) -> HttpResponse:
     """Settlement batch detail with items."""
@@ -263,7 +257,6 @@ def financial_portal_settlement_detail(request: HttpRequest, batch_id: int, **kw
 # 6. Escrow List
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_escrow_list(request: HttpRequest, **kwargs) -> HttpResponse:
     """List escrow records for the company."""
@@ -294,7 +287,6 @@ def financial_portal_escrow_list(request: HttpRequest, **kwargs) -> HttpResponse
 # 7. Adjustment List
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_adjustment_list(request: HttpRequest, **kwargs) -> HttpResponse:
     """List adjustment/refund documents for the company."""
@@ -325,7 +317,6 @@ def financial_portal_adjustment_list(request: HttpRequest, **kwargs) -> HttpResp
 # 8. Reconciliation Page
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_reconciliation(request: HttpRequest, **kwargs) -> HttpResponse:
     """Reconciliation status page using Sprint 6 service."""
@@ -359,7 +350,6 @@ def financial_portal_reconciliation(request: HttpRequest, **kwargs) -> HttpRespo
 # 9. Closing Readiness Page
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_closing(request: HttpRequest, **kwargs) -> HttpResponse:
     """Period closing readiness page using Sprint 7 engine."""
@@ -394,7 +384,6 @@ def financial_portal_closing(request: HttpRequest, **kwargs) -> HttpResponse:
 # 10. Financial Reports Page
 # =============================================================================
 
-@login_required
 @require_tenant_role("COMPANY_ADMIN", "COMPANY_STAFF")
 def financial_portal_reports(request: HttpRequest, **kwargs) -> HttpResponse:
     """Full structured period report using Sprint 8 service."""
