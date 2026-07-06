@@ -1,0 +1,12 @@
+{% comment %}Period date filter — reused across all portal pages{% endcomment %}
+<form method="get" class="filter-form" dir="rtl">
+  <div class="filter-row">
+    <label class="filter-label">از تاریخ:
+      <input type="text" name="from_date" value="{{ filters.from_date }}" placeholder="۱۴۰۳/۰۱/۰۱" class="input input-sm jalali-datepicker">
+    </label>
+    <label class="filter-label">تا تاریخ:
+      <input type="text" name="to_date" value="{{ filters.to_date }}" placeholder="۱۴۰۳/۱۲/۲۹" class="input input-sm jalali-datepicker">
+    </label>
+    <button type="submit" class="btn btn-primary btn-sm">اعمال فیلتر</button>
+  </div>
+</form>

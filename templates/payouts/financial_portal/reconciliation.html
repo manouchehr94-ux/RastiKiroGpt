@@ -1,0 +1,82 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}مغایرت‌گیری مالی — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>مغایرت‌گیری مالی</h1>
+    <p class="page-header-subtitle">بررسی خودکار سلامت داده‌های مالی شرکت</p>
+  </div>
+  {% if is_clean %}<span class="badge badge-success" style="font-size:1rem;">سالم ✓</span>{% endif %}
+</div>
+
+{% include "payouts/financial_portal/_nav.html" %}
+
+<div class="stat-grid stat-grid-3" dir="rtl">
+  <div class="stat-card"><span class="stat-card-value stat-value-danger">{{ error_count }}</span><div class="stat-card-label">خطا (Error)</div></div>
+  <div class="stat-card"><span class="stat-card-value stat-value-warning">{{ warning_count }}</span><div class="stat-card-label">هشدار (Warning)</div></div>
+  <div class="stat-card"><span class="stat-card-value">{{ blocked_count }}</span><div class="stat-card-label">مسدود (Blocked)</div></div>
+</div>
+
+{% if errors %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header"><span class="card-header-title" style="color:var(--color-danger);">خطاها</span></div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>کد</th><th>مدل</th><th>شناسه</th><th>شرح</th></tr></thead>
+      <tbody>
+        {% for issue in errors %}
+        <tr><td><code>{{ issue.code }}</code></td><td>{{ issue.model }}</td><td>{{ issue.object_id|default:"—" }}</td><td class="audit-meta">{{ issue.message }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if blocked %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header"><span class="card-header-title">موارد مسدود</span></div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>کد</th><th>مدل</th><th>شناسه</th><th>شرح</th></tr></thead>
+      <tbody>
+        {% for issue in blocked %}
+        <tr><td><code>{{ issue.code }}</code></td><td>{{ issue.model }}</td><td>{{ issue.object_id|default:"—" }}</td><td class="audit-meta">{{ issue.message }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if warnings %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header"><span class="card-header-title" style="color:var(--color-warning);">هشدارها</span></div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>کد</th><th>مدل</th><th>شناسه</th><th>شرح</th></tr></thead>
+      <tbody>
+        {% for issue in warnings %}
+        <tr><td><code>{{ issue.code }}</code></td><td>{{ issue.model }}</td><td>{{ issue.object_id|default:"—" }}</td><td class="audit-meta">{{ issue.message }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if is_clean %}
+<div class="card empty-state" dir="rtl">
+  <div class="empty-state-icon">✅</div>
+  <p class="empty-state-title">هیچ مغایرتی یافت نشد</p>
+  <p class="empty-state-description">تمامی داده‌های مالی سازگار و صحیح هستند.</p>
+</div>
+{% endif %}
+</div>
+{% endblock %}
