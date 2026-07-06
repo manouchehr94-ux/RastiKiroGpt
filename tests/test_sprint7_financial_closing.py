@@ -176,6 +176,52 @@ def _distributed_invoice(company, technician, *, total=10_000_000, fee_percent=1
     return invoice, payment
 
 
+def _fully_settled_invoice(company, technician, *, total=10_000_000, fee_percent=1):
+    """
+    Build a PAID invoice with a fully settled escrow — the escrow is linked
+    to a COMPLETED SettlementBatch with a matching SettlementItem.
+
+    This produces a state that passes all Sprint 6 reconciliation checks
+    (no ESCROW_SETTLEMENT_LINK_MISSING or ESCROW_SETTLEMENT_ITEM_MISSING
+    errors), so it is safe for use in "clean period" tests.
+    """
+    from apps.payouts.services_escrow import EscrowRecordService
+    from apps.payouts.services_settlement_batch import SettlementBatchService
+
+    invoice, payment = _distributed_invoice(
+        company, technician, total=total, fee_percent=fee_percent,
+    )
+    escrow = EscrowRecord.objects.get(company=company, payment=payment)
+
+    # Create a settlement batch and drive it through the proper flow
+    now = timezone.now()
+    batch = SettlementBatchService.create_batch(
+        company=company,
+        level="platform_to_org",
+        period_start=now - timedelta(days=1),
+        period_end=now + timedelta(days=1),
+    )
+    batch = SettlementBatchService.mark_ready(batch)
+    escrow = EscrowRecordService.mark_pending_settlement(escrow, batch)
+    EscrowRecordService.mark_settled(escrow)
+
+    # Create the SettlementItem that links invoice to batch (required by
+    # check_escrow_settlement_consistency for SETTLED escrows)
+    SettlementItem.objects.create(
+        company=company,
+        batch=batch,
+        invoice=invoice,
+        amount_rial=int(invoice.total_amount),
+    )
+
+    # Mark batch as COMPLETED so it doesn't block closing
+    SettlementBatch.objects.filter(pk=batch.pk).update(
+        status=SettlementBatch.Status.COMPLETED,
+    )
+
+    return invoice, payment
+
+
 
 def _period():
     """Return a broad period window encompassing 'now'."""
@@ -192,12 +238,7 @@ class CleanPeriodTest(TestCase):
     def test_clean_period_returns_can_close(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        # Mark escrow as SETTLED so it's not "open"
-        escrow = EscrowRecord.objects.get(payment=payment)
-        EscrowRecord.objects.filter(pk=escrow.pk).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         period_start, period_end = _period()
 
         result = FinancialClosingEngine.evaluate(
@@ -216,18 +257,13 @@ class CleanPeriodTest(TestCase):
     def test_clean_period_reconciliation_summary_is_clean(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         period_start, period_end = _period()
 
         result = FinancialClosingEngine.evaluate(
             company=company, period_start=period_start, period_end=period_end,
         )
 
-        # Reconciliation may have warnings (distributed without settlement
-        # item) but no errors/blocked after marking settled
         self.assertEqual(result.reconciliation_summary.errors, 0)
         self.assertEqual(result.reconciliation_summary.blocked, 0)
 
@@ -269,11 +305,7 @@ class ReconciliationBlockedBlocksTest(TestCase):
         """An APPROVED partial refund causes reconciliation BLOCKED severity."""
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        # Mark escrow settled to avoid open-escrow blocking
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         # Create a PARTIAL_REFUND in APPROVED state — this triggers
         # reconciliation's ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE (BLOCKED severity)
         from apps.payouts.services_adjustment import AdjustmentDocumentService
@@ -308,10 +340,7 @@ class PendingBackfillTaskBlocksTest(TestCase):
     def test_pending_backfill_task_blocks_closing(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         FinancialBackfillTask.objects.create(
             company=company,
             task_type=FinancialBackfillTask.TaskType.TECHNICIAN_LEDGER,
@@ -331,10 +360,7 @@ class PendingBackfillTaskBlocksTest(TestCase):
     def test_resolved_backfill_task_does_not_block(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         FinancialBackfillTask.objects.create(
             company=company,
             task_type=FinancialBackfillTask.TaskType.TECHNICIAN_LEDGER,
@@ -472,10 +498,7 @@ class PendingAdjustmentDocumentBlocksTest(TestCase):
     def test_draft_adjustment_blocks_closing(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         AdjustmentDocument.objects.create(
             company=company,
             original_invoice=invoice,
@@ -497,10 +520,7 @@ class PendingAdjustmentDocumentBlocksTest(TestCase):
     def test_pending_approval_adjustment_blocks_closing(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         AdjustmentDocument.objects.create(
             company=company,
             original_invoice=invoice,
@@ -519,14 +539,10 @@ class PendingAdjustmentDocumentBlocksTest(TestCase):
         reasons = [i.reason for i in result.blocking_issues]
         self.assertIn(BlockingReason.PENDING_ADJUSTMENT_DOCUMENT, reasons)
 
-
     def test_approved_adjustment_blocks_closing(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         AdjustmentDocument.objects.create(
             company=company,
             original_invoice=invoice,
@@ -548,10 +564,7 @@ class PendingAdjustmentDocumentBlocksTest(TestCase):
     def test_applied_adjustment_does_not_block(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         AdjustmentDocument.objects.create(
             company=company,
             original_invoice=invoice,
@@ -572,14 +585,10 @@ class PendingAdjustmentDocumentBlocksTest(TestCase):
         ]
         self.assertEqual(adj_blocking, [])
 
-
     def test_rejected_adjustment_does_not_block(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         AdjustmentDocument.objects.create(
             company=company,
             original_invoice=invoice,
@@ -603,10 +612,7 @@ class PendingAdjustmentDocumentBlocksTest(TestCase):
     def test_cancelled_adjustment_does_not_block(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         AdjustmentDocument.objects.create(
             company=company,
             original_invoice=invoice,
@@ -670,10 +676,8 @@ class OpenEscrowRecordBlocksTest(TestCase):
     def test_settled_escrow_does_not_block(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        # Use _fully_settled_invoice which properly links escrow → batch → item
+        invoice, payment = _fully_settled_invoice(company, tech)
         period_start, period_end = _period()
 
         result = FinancialClosingEngine.evaluate(
@@ -689,7 +693,8 @@ class OpenEscrowRecordBlocksTest(TestCase):
     def test_closed_escrow_does_not_block(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
+        # Use _fully_settled_invoice then mark CLOSED (CLOSED is terminal)
+        invoice, payment = _fully_settled_invoice(company, tech)
         EscrowRecord.objects.filter(payment=payment).update(
             status=EscrowRecord.Status.CLOSED,
         )
@@ -729,10 +734,7 @@ class DurablePeriodLockTest(TestCase):
         """Even for a completely clean period, no durable lock is available."""
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         period_start, period_end = _period()
 
         result = FinancialClosingEngine.evaluate(
@@ -757,10 +759,7 @@ class TenantIsolationTest(TestCase):
         tech_b = _technician(company_b)
 
         # company_a has a blocking issue: pending backfill task
-        invoice_a, payment_a = _distributed_invoice(company_a, tech_a)
-        EscrowRecord.objects.filter(payment=payment_a).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice_a, payment_a = _fully_settled_invoice(company_a, tech_a)
         FinancialBackfillTask.objects.create(
             company=company_a,
             task_type=FinancialBackfillTask.TaskType.TECHNICIAN_LEDGER,
@@ -768,11 +767,8 @@ class TenantIsolationTest(TestCase):
             invoice=invoice_a,
         )
 
-        # company_b is clean
-        invoice_b, payment_b = _distributed_invoice(company_b, tech_b)
-        EscrowRecord.objects.filter(payment=payment_b).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        # company_b is clean (fully settled, no issues)
+        invoice_b, payment_b = _fully_settled_invoice(company_b, tech_b)
         period_start, period_end = _period()
 
         result_a = FinancialClosingEngine.evaluate(
@@ -786,7 +782,8 @@ class TenantIsolationTest(TestCase):
         self.assertEqual(result_a.status, ClosingStatus.BLOCKED)
         self.assertEqual(result_a.company_id, company_a.id)
 
-        # company_b should NOT see company_a's issues
+        # company_b should be CAN_CLOSE and NOT see company_a's issues
+        self.assertEqual(result_b.status, ClosingStatus.CAN_CLOSE)
         backfill_blocking_b = [
             i for i in result_b.blocking_issues
             if i.reason == BlockingReason.PENDING_BACKFILL_TASK
@@ -945,10 +942,7 @@ class RefundAdjustmentSummaryTest(TestCase):
     def test_refund_adjustment_summary_counts(self):
         company = _company()
         tech = _technician(company)
-        invoice, payment = _distributed_invoice(company, tech)
-        EscrowRecord.objects.filter(payment=payment).update(
-            status=EscrowRecord.Status.SETTLED,
-        )
+        invoice, payment = _fully_settled_invoice(company, tech)
         # Create documents in various states
         AdjustmentDocument.objects.create(
             company=company,
