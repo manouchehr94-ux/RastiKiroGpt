@@ -194,6 +194,18 @@ TITLE_MAP = {
 
     "report_dashboard": "داشبورد گزارش‌ها",
     "admin_report_dashboard": "داشبورد گزارش‌ها",
+
+    # Financial Portal (Phase 1)
+    "dashboard": "داشبورد پرتال مالی",
+    "technician_list": "لیست تسویه نیروهای خدماتی",
+    "technician_detail": "جزئیات صورتحساب نیرو",
+    "settlement_list": "لیست دسته‌های تسویه",
+    "settlement_detail": "جزئیات دسته تسویه",
+    "escrow_list": "لیست امانات مالی",
+    "adjustment_list": "لیست تعدیلات و بازگشت‌ها",
+    "reconciliation": "مغایرت‌گیری مالی",
+    "closing": "بستن دوره مالی",
+    "reports": "گزارش کامل دوره مالی",
 }
 
 
@@ -238,6 +250,18 @@ DESCRIPTION_MAP = {
     "admin_order_item_create": "اپراتور بتواند آیتم سفارش جدید برای رسته‌ها بسازد.",
     "admin_order_item_edit": "اپراتور بتواند آیتم‌های سفارش را ویرایش کند.",
     "admin_order_item_delete": "اپراتور بتواند آیتم سفارش را غیرفعال کند.",
+
+    # Financial Portal (Phase 1)
+    "dashboard": "اپراتور بتواند داشبورد پرتال مالی را مشاهده کند.",
+    "technician_list": "اپراتور بتواند لیست تسویه نیروهای خدماتی را ببیند.",
+    "technician_detail": "اپراتور بتواند جزئیات صورتحساب هر نیروی خدماتی را ببیند.",
+    "settlement_list": "اپراتور بتواند لیست دسته‌های تسویه را مشاهده کند.",
+    "settlement_detail": "اپراتور بتواند جزئیات هر دسته تسویه را مشاهده کند.",
+    "escrow_list": "اپراتور بتواند لیست امانات مالی (Escrow) را مشاهده کند.",
+    "adjustment_list": "اپراتور بتواند لیست تعدیلات و بازگشت وجه را مشاهده کند.",
+    "reconciliation": "اپراتور بتواند صفحه مغایرت‌گیری مالی را مشاهده کند.",
+    "closing": "اپراتور بتواند وضعیت آمادگی بستن دوره مالی را مشاهده کند.",
+    "reports": "اپراتور بتواند گزارش کامل دوره مالی را مشاهده کند.",
 }
 
 
@@ -371,6 +395,8 @@ def group_for_route(route: str, name: str) -> str:
         return "فاکتورها"
     if "payment" in text:
         return "پرداخت‌ها"
+    if "financial" in text or "settlement" in text or "escrow" in text or "reconciliation" in text or "closing" in text or "adjustment" in text:
+        return "پرتال مالی"
     if "sms" in text:
         return "پیامک"
     if "notification" in text:
