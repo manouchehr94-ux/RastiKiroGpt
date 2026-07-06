@@ -100,12 +100,61 @@ class ReconciliationSeverity(str, Enum):
     BLOCKED = "blocked"
 
 
+class IssueCode(str, Enum):
+    """
+    Stable, permanent, language-independent identifiers for every
+    reconciliation issue this service can report.
+
+    CONTRACT (must never be violated):
+      - A code, once assigned, keeps its exact meaning forever. It must
+        never be reassigned, renumbered, or reused for a different check,
+        even if that check's logic or wording changes later.
+      - A code never depends on language. The `message` on a
+        ReconciliationIssue is free text and may be translated (e.g. into
+        Persian) in the future without affecting `code` in any way.
+      - New issue types always receive the next unused FIN-XXXX number;
+        existing numbers are append-only and never rearranged.
+      - `.name` (e.g. "INVOICE_PAID_WITHOUT_PAYMENT") is a human-readable
+        mnemonic kept for debugging and log readability. It is informative
+        only — the canonical, contractual identifier is `.value`
+        (e.g. "FIN-0001").
+    """
+
+    INVOICE_PAID_WITHOUT_PAYMENT = "FIN-0001"
+    DUPLICATE_PAID_PAYMENT = "FIN-0002"
+    PAYMENT_INVOICE_AMOUNT_MISMATCH = "FIN-0003"
+    INVOICE_PAID_WITHOUT_ESCROW = "FIN-0004"
+    ESCROW_DISTRIBUTED_WITHOUT_SETTLEMENT_ITEM = "FIN-0005"
+    ESCROW_SETTLEMENT_LINK_MISSING = "FIN-0006"
+    ESCROW_SETTLEMENT_ITEM_MISSING = "FIN-0007"
+    SETTLEMENT_ITEM_ORPHAN_SOURCE = "FIN-0008"
+    TECHNICIAN_LEDGER_BALANCE_MISMATCH = "FIN-0009"
+    PLATFORM_FEE_BALANCE_MISMATCH = "FIN-0010"
+    ORPHAN_BACKFILL_TASK = "FIN-0011"
+    ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE = "FIN-0012"
+    ADJUSTMENT_BLOCKED_AFTER_SETTLEMENT = "FIN-0013"
+    ADJUSTMENT_BLOCKED_DIRECT_SPLIT = "FIN-0014"
+
+
 @dataclass(frozen=True)
 class ReconciliationIssue:
-    """One machine-readable finding. Never represents a write — detection only."""
+    """
+    One machine-readable finding. Never represents a write — detection only.
+
+    `code` is the stable, permanent, language-independent identifier
+    (e.g. "FIN-0001") — see IssueCode above. This is the field external
+    consumers should key off of; it will never change meaning.
+
+    `code_name` is the human-readable mnemonic (e.g.
+    "INVOICE_PAID_WITHOUT_PAYMENT") kept purely for log/debug readability.
+
+    `message` is a free-text explanation and may be translated in the
+    future without affecting either code field.
+    """
 
     severity: ReconciliationSeverity
     code: str
+    code_name: str
     model: str
     object_id: Optional[int]
     company_id: int
@@ -169,7 +218,8 @@ class FinancialReconciliationService:
             if not paid_payments:
                 issues.append(ReconciliationIssue(
                     severity=ReconciliationSeverity.ERROR,
-                    code="INVOICE_PAID_WITHOUT_PAYMENT",
+                    code=IssueCode.INVOICE_PAID_WITHOUT_PAYMENT.value,
+                    code_name=IssueCode.INVOICE_PAID_WITHOUT_PAYMENT.name,
                     model="Invoice",
                     object_id=invoice.id,
                     company_id=company.id,
@@ -183,7 +233,8 @@ class FinancialReconciliationService:
             if len(paid_payments) > 1:
                 issues.append(ReconciliationIssue(
                     severity=ReconciliationSeverity.ERROR,
-                    code="DUPLICATE_PAID_PAYMENT",
+                    code=IssueCode.DUPLICATE_PAID_PAYMENT.value,
+                    code_name=IssueCode.DUPLICATE_PAID_PAYMENT.name,
                     model="Invoice",
                     object_id=invoice.id,
                     company_id=company.id,
@@ -198,7 +249,8 @@ class FinancialReconciliationService:
                 if int(payment.amount) != int(invoice.total_amount):
                     issues.append(ReconciliationIssue(
                         severity=ReconciliationSeverity.ERROR,
-                        code="PAYMENT_INVOICE_AMOUNT_MISMATCH",
+                        code=IssueCode.PAYMENT_INVOICE_AMOUNT_MISMATCH.value,
+                        code_name=IssueCode.PAYMENT_INVOICE_AMOUNT_MISMATCH.name,
                         model="Payment",
                         object_id=payment.id,
                         company_id=company.id,
@@ -243,7 +295,8 @@ class FinancialReconciliationService:
             if not escrow_exists:
                 issues.append(ReconciliationIssue(
                     severity=ReconciliationSeverity.ERROR,
-                    code="INVOICE_PAID_WITHOUT_ESCROW",
+                    code=IssueCode.INVOICE_PAID_WITHOUT_ESCROW.value,
+                    code_name=IssueCode.INVOICE_PAID_WITHOUT_ESCROW.name,
                     model="Invoice",
                     object_id=invoice.id,
                     company_id=company.id,
@@ -287,7 +340,8 @@ class FinancialReconciliationService:
                 if not has_item and escrow.settlement_batch_id is None:
                     issues.append(ReconciliationIssue(
                         severity=ReconciliationSeverity.WARNING,
-                        code="ESCROW_DISTRIBUTED_WITHOUT_SETTLEMENT_ITEM",
+                        code=IssueCode.ESCROW_DISTRIBUTED_WITHOUT_SETTLEMENT_ITEM.value,
+                        code_name=IssueCode.ESCROW_DISTRIBUTED_WITHOUT_SETTLEMENT_ITEM.name,
                         model="EscrowRecord",
                         object_id=escrow.id,
                         company_id=company.id,
@@ -305,7 +359,8 @@ class FinancialReconciliationService:
             if escrow.settlement_batch_id is None:
                 issues.append(ReconciliationIssue(
                     severity=ReconciliationSeverity.ERROR,
-                    code="ESCROW_SETTLEMENT_LINK_MISSING",
+                    code=IssueCode.ESCROW_SETTLEMENT_LINK_MISSING.value,
+                    code_name=IssueCode.ESCROW_SETTLEMENT_LINK_MISSING.name,
                     model="EscrowRecord",
                     object_id=escrow.id,
                     company_id=company.id,
@@ -317,7 +372,8 @@ class FinancialReconciliationService:
             elif not has_item:
                 issues.append(ReconciliationIssue(
                     severity=ReconciliationSeverity.ERROR,
-                    code="ESCROW_SETTLEMENT_ITEM_MISSING",
+                    code=IssueCode.ESCROW_SETTLEMENT_ITEM_MISSING.value,
+                    code_name=IssueCode.ESCROW_SETTLEMENT_ITEM_MISSING.name,
                     model="EscrowRecord",
                     object_id=escrow.id,
                     company_id=company.id,
@@ -349,7 +405,8 @@ class FinancialReconciliationService:
         for item in orphans:
             issues.append(ReconciliationIssue(
                 severity=ReconciliationSeverity.ERROR,
-                code="SETTLEMENT_ITEM_ORPHAN_SOURCE",
+                code=IssueCode.SETTLEMENT_ITEM_ORPHAN_SOURCE.value,
+                code_name=IssueCode.SETTLEMENT_ITEM_ORPHAN_SOURCE.name,
                 model="SettlementItem",
                 object_id=item.id,
                 company_id=company.id,
@@ -395,7 +452,8 @@ class FinancialReconciliationService:
                 if running_balance != int(entry.balance_after):
                     issues.append(ReconciliationIssue(
                         severity=ReconciliationSeverity.ERROR,
-                        code="TECHNICIAN_LEDGER_BALANCE_MISMATCH",
+                        code=IssueCode.TECHNICIAN_LEDGER_BALANCE_MISMATCH.value,
+                        code_name=IssueCode.TECHNICIAN_LEDGER_BALANCE_MISMATCH.name,
                         model="TechnicianLedgerEntry",
                         object_id=entry.id,
                         company_id=company.id,
@@ -436,7 +494,8 @@ class FinancialReconciliationService:
             if running_balance != int(entry.balance_after):
                 issues.append(ReconciliationIssue(
                     severity=ReconciliationSeverity.ERROR,
-                    code="PLATFORM_FEE_BALANCE_MISMATCH",
+                    code=IssueCode.PLATFORM_FEE_BALANCE_MISMATCH.value,
+                    code_name=IssueCode.PLATFORM_FEE_BALANCE_MISMATCH.name,
                     model="CompanyPlatformFeeEntry",
                     object_id=entry.id,
                     company_id=company.id,
@@ -471,7 +530,8 @@ class FinancialReconciliationService:
         for task in orphans:
             issues.append(ReconciliationIssue(
                 severity=ReconciliationSeverity.WARNING,
-                code="ORPHAN_BACKFILL_TASK",
+                code=IssueCode.ORPHAN_BACKFILL_TASK.value,
+                code_name=IssueCode.ORPHAN_BACKFILL_TASK.name,
                 model="FinancialBackfillTask",
                 object_id=task.id,
                 company_id=company.id,
@@ -503,7 +563,8 @@ class FinancialReconciliationService:
             if document.document_type != AdjustmentDocument.DocumentType.FULL_REFUND:
                 issues.append(ReconciliationIssue(
                     severity=ReconciliationSeverity.BLOCKED,
-                    code="ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE",
+                    code=IssueCode.ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE.value,
+                    code_name=IssueCode.ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE.name,
                     model="AdjustmentDocument",
                     object_id=document.id,
                     company_id=company.id,
@@ -528,7 +589,8 @@ class FinancialReconciliationService:
             ):
                 issues.append(ReconciliationIssue(
                     severity=ReconciliationSeverity.BLOCKED,
-                    code="ADJUSTMENT_BLOCKED_AFTER_SETTLEMENT",
+                    code=IssueCode.ADJUSTMENT_BLOCKED_AFTER_SETTLEMENT.value,
+                    code_name=IssueCode.ADJUSTMENT_BLOCKED_AFTER_SETTLEMENT.name,
                     model="AdjustmentDocument",
                     object_id=document.id,
                     company_id=company.id,
@@ -549,7 +611,8 @@ class FinancialReconciliationService:
                 if snapshot is not None and snapshot.should_split_with_technician:
                     issues.append(ReconciliationIssue(
                         severity=ReconciliationSeverity.BLOCKED,
-                        code="ADJUSTMENT_BLOCKED_DIRECT_SPLIT",
+                        code=IssueCode.ADJUSTMENT_BLOCKED_DIRECT_SPLIT.value,
+                        code_name=IssueCode.ADJUSTMENT_BLOCKED_DIRECT_SPLIT.name,
                         model="AdjustmentDocument",
                         object_id=document.id,
                         company_id=company.id,

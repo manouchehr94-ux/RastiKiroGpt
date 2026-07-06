@@ -35,6 +35,7 @@ from apps.payouts.services_adjustment import AdjustmentDocumentService
 from apps.payouts.services_escrow import EscrowRecordService
 from apps.payouts.services_reconciliation import (
     FinancialReconciliationService,
+    IssueCode,
     ReconciliationReport,
     ReconciliationSeverity,
 )
@@ -206,10 +207,16 @@ class PaymentInvoiceConsistencyTest(TestCase):
         issues = FinancialReconciliationService.check_payment_invoice_consistency(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("INVOICE_PAID_WITHOUT_PAYMENT", codes)
-        matching = [i for i in issues if i.code == "INVOICE_PAID_WITHOUT_PAYMENT"]
+        self.assertIn(IssueCode.INVOICE_PAID_WITHOUT_PAYMENT.value, codes)
+        matching = [
+            i for i in issues if i.code == IssueCode.INVOICE_PAID_WITHOUT_PAYMENT.value
+        ]
         self.assertEqual(matching[0].object_id, invoice.id)
         self.assertEqual(matching[0].severity, ReconciliationSeverity.ERROR)
+        self.assertEqual(matching[0].code_name, "INVOICE_PAID_WITHOUT_PAYMENT")
+        # Stable code contract: must always be the literal "FIN-0001", never
+        # a language-dependent string, and never renumbered.
+        self.assertEqual(matching[0].code, "FIN-0001")
 
     def test_clean_paid_invoice_produces_no_issue(self):
         company = _company()
@@ -242,7 +249,8 @@ class PaymentInvoiceConsistencyTest(TestCase):
         issues = FinancialReconciliationService.check_payment_invoice_consistency(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("DUPLICATE_PAID_PAYMENT", codes)
+        self.assertIn(IssueCode.DUPLICATE_PAID_PAYMENT.value, codes)
+        self.assertIn("FIN-0002", codes)
 
     def test_payment_amount_mismatch_is_detected(self):
         company = _company()
@@ -256,8 +264,10 @@ class PaymentInvoiceConsistencyTest(TestCase):
         issues = FinancialReconciliationService.check_payment_invoice_consistency(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("PAYMENT_INVOICE_AMOUNT_MISMATCH", codes)
-        matching = [i for i in issues if i.code == "PAYMENT_INVOICE_AMOUNT_MISMATCH"]
+        self.assertIn(IssueCode.PAYMENT_INVOICE_AMOUNT_MISMATCH.value, codes)
+        matching = [
+            i for i in issues if i.code == IssueCode.PAYMENT_INVOICE_AMOUNT_MISMATCH.value
+        ]
         self.assertEqual(matching[0].object_id, payment.id)
 
 
@@ -288,8 +298,10 @@ class InvoiceEscrowConsistencyTest(TestCase):
         issues = FinancialReconciliationService.check_invoice_escrow_consistency(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("INVOICE_PAID_WITHOUT_ESCROW", codes)
-        matching = [i for i in issues if i.code == "INVOICE_PAID_WITHOUT_ESCROW"]
+        self.assertIn(IssueCode.INVOICE_PAID_WITHOUT_ESCROW.value, codes)
+        matching = [
+            i for i in issues if i.code == IssueCode.INVOICE_PAID_WITHOUT_ESCROW.value
+        ]
         self.assertEqual(matching[0].object_id, invoice.id)
         self.assertEqual(matching[0].severity, ReconciliationSeverity.ERROR)
 
@@ -323,8 +335,11 @@ class EscrowSettlementConsistencyTest(TestCase):
         issues = FinancialReconciliationService.check_escrow_settlement_consistency(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("ESCROW_DISTRIBUTED_WITHOUT_SETTLEMENT_ITEM", codes)
-        matching = [i for i in issues if i.code == "ESCROW_DISTRIBUTED_WITHOUT_SETTLEMENT_ITEM"]
+        self.assertIn(IssueCode.ESCROW_DISTRIBUTED_WITHOUT_SETTLEMENT_ITEM.value, codes)
+        matching = [
+            i for i in issues
+            if i.code == IssueCode.ESCROW_DISTRIBUTED_WITHOUT_SETTLEMENT_ITEM.value
+        ]
         self.assertEqual(matching[0].severity, ReconciliationSeverity.WARNING)
 
     def test_pending_settlement_without_batch_link_is_error(self):
@@ -342,8 +357,10 @@ class EscrowSettlementConsistencyTest(TestCase):
         issues = FinancialReconciliationService.check_escrow_settlement_consistency(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("ESCROW_SETTLEMENT_LINK_MISSING", codes)
-        matching = [i for i in issues if i.code == "ESCROW_SETTLEMENT_LINK_MISSING"]
+        self.assertIn(IssueCode.ESCROW_SETTLEMENT_LINK_MISSING.value, codes)
+        matching = [
+            i for i in issues if i.code == IssueCode.ESCROW_SETTLEMENT_LINK_MISSING.value
+        ]
         self.assertEqual(matching[0].severity, ReconciliationSeverity.ERROR)
 
     def test_settled_with_batch_but_no_item_is_error(self):
@@ -366,7 +383,7 @@ class EscrowSettlementConsistencyTest(TestCase):
         issues = FinancialReconciliationService.check_escrow_settlement_consistency(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("ESCROW_SETTLEMENT_ITEM_MISSING", codes)
+        self.assertIn(IssueCode.ESCROW_SETTLEMENT_ITEM_MISSING.value, codes)
 
     def test_settled_with_batch_and_item_produces_no_issue(self):
         company = _company()
@@ -420,8 +437,10 @@ class SettlementItemIntegrityTest(TestCase):
         issues = FinancialReconciliationService.check_settlement_item_integrity(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("SETTLEMENT_ITEM_ORPHAN_SOURCE", codes)
-        matching = [i for i in issues if i.code == "SETTLEMENT_ITEM_ORPHAN_SOURCE"]
+        self.assertIn(IssueCode.SETTLEMENT_ITEM_ORPHAN_SOURCE.value, codes)
+        matching = [
+            i for i in issues if i.code == IssueCode.SETTLEMENT_ITEM_ORPHAN_SOURCE.value
+        ]
         self.assertEqual(matching[0].object_id, item.id)
 
     def test_settlement_item_with_invoice_produces_no_issue(self):
@@ -476,8 +495,11 @@ class TechnicianLedgerBalanceTest(TestCase):
         issues = FinancialReconciliationService.check_technician_ledger_balances(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("TECHNICIAN_LEDGER_BALANCE_MISMATCH", codes)
-        matching = [i for i in issues if i.code == "TECHNICIAN_LEDGER_BALANCE_MISMATCH"]
+        self.assertIn(IssueCode.TECHNICIAN_LEDGER_BALANCE_MISMATCH.value, codes)
+        matching = [
+            i for i in issues
+            if i.code == IssueCode.TECHNICIAN_LEDGER_BALANCE_MISMATCH.value
+        ]
         self.assertEqual(matching[0].object_id, entry.id)
         self.assertEqual(matching[0].severity, ReconciliationSeverity.ERROR)
 
@@ -509,8 +531,10 @@ class PlatformFeeBalanceTest(TestCase):
         issues = FinancialReconciliationService.check_platform_fee_balances(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("PLATFORM_FEE_BALANCE_MISMATCH", codes)
-        matching = [i for i in issues if i.code == "PLATFORM_FEE_BALANCE_MISMATCH"]
+        self.assertIn(IssueCode.PLATFORM_FEE_BALANCE_MISMATCH.value, codes)
+        matching = [
+            i for i in issues if i.code == IssueCode.PLATFORM_FEE_BALANCE_MISMATCH.value
+        ]
         self.assertEqual(matching[0].object_id, entry.id)
 
 
@@ -532,8 +556,10 @@ class OrphanBackfillTaskTest(TestCase):
         issues = FinancialReconciliationService.check_orphan_backfill_tasks(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("ORPHAN_BACKFILL_TASK", codes)
-        matching = [i for i in issues if i.code == "ORPHAN_BACKFILL_TASK"]
+        self.assertIn(IssueCode.ORPHAN_BACKFILL_TASK.value, codes)
+        matching = [
+            i for i in issues if i.code == IssueCode.ORPHAN_BACKFILL_TASK.value
+        ]
         self.assertEqual(matching[0].object_id, task.id)
         self.assertEqual(matching[0].severity, ReconciliationSeverity.WARNING)
 
@@ -589,8 +615,11 @@ class BlockedAdjustmentDocumentTest(TestCase):
         issues = FinancialReconciliationService.check_blocked_adjustment_documents(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE", codes)
-        matching = [i for i in issues if i.code == "ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE"]
+        self.assertIn(IssueCode.ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE.value, codes)
+        matching = [
+            i for i in issues
+            if i.code == IssueCode.ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE.value
+        ]
         self.assertEqual(matching[0].severity, ReconciliationSeverity.BLOCKED)
         self.assertEqual(matching[0].object_id, document.id)
 
@@ -614,7 +643,7 @@ class BlockedAdjustmentDocumentTest(TestCase):
         issues = FinancialReconciliationService.check_blocked_adjustment_documents(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("ADJUSTMENT_BLOCKED_AFTER_SETTLEMENT", codes)
+        self.assertIn(IssueCode.ADJUSTMENT_BLOCKED_AFTER_SETTLEMENT.value, codes)
 
     def test_direct_split_full_refund_is_flagged_blocked(self):
         company = _company()
@@ -629,7 +658,7 @@ class BlockedAdjustmentDocumentTest(TestCase):
         issues = FinancialReconciliationService.check_blocked_adjustment_documents(company)
 
         codes = [i.code for i in issues]
-        self.assertIn("ADJUSTMENT_BLOCKED_DIRECT_SPLIT", codes)
+        self.assertIn(IssueCode.ADJUSTMENT_BLOCKED_DIRECT_SPLIT.value, codes)
 
     def test_clean_approved_full_refund_is_not_flagged(self):
         company = _company()
@@ -664,7 +693,8 @@ class TenantIsolationTest(TestCase):
         report_b = FinancialReconciliationService.reconcile_company(company_b)
 
         self.assertTrue(any(
-            i.code == "INVOICE_PAID_WITHOUT_PAYMENT" and i.company_id == company_a.id
+            i.code == IssueCode.INVOICE_PAID_WITHOUT_PAYMENT.value
+            and i.company_id == company_a.id
             for i in report_a.issues
         ))
         # company_b's report must never contain an issue whose company_id
@@ -673,7 +703,8 @@ class TenantIsolationTest(TestCase):
         for issue in report_b.issues:
             self.assertEqual(issue.company_id, company_b.id)
         self.assertFalse(any(
-            i.code == "INVOICE_PAID_WITHOUT_PAYMENT" for i in report_b.issues
+            i.code == IssueCode.INVOICE_PAID_WITHOUT_PAYMENT.value
+            for i in report_b.issues
         ))
 
 
@@ -782,5 +813,96 @@ class NoDatabaseWriteTest(TestCase):
         report2 = FinancialReconciliationService.reconcile_company(company)
 
         # Same single issue reported both times — nothing accumulated.
-        matching = [i for i in report2.issues if i.code == "INVOICE_PAID_WITHOUT_ESCROW"]
+        matching = [
+            i for i in report2.issues
+            if i.code == IssueCode.INVOICE_PAID_WITHOUT_ESCROW.value
+        ]
         self.assertEqual(len(matching), 1)
+
+
+# =============================================================================
+# Stable, machine-readable, language-independent issue codes (FIN-XXXX)
+# =============================================================================
+
+class IssueCodeContractTest(TestCase):
+    """
+    Every reconciliation issue must carry a stable, language-independent
+    machine-readable code (FIN-XXXX). These tests pin down the contract
+    itself, independent of any single check's business logic.
+    """
+
+    def test_every_issue_has_a_fin_prefixed_code(self):
+        company = _company()
+        tech = _technician(company)
+        invoice, payment = _distributed_invoice(company, tech)
+        EscrowRecord.objects.filter(payment=payment).delete()
+        FinancialBackfillTask.objects.create(
+            company=company,
+            task_type=FinancialBackfillTask.TaskType.PLATFORM_FEE,
+            status=FinancialBackfillTask.Status.PENDING,
+        )
+
+        report = FinancialReconciliationService.reconcile_company(company)
+
+        self.assertTrue(len(report.issues) > 0, "setup failed: expected at least one issue")
+        for issue in report.issues:
+            self.assertRegex(issue.code, r"^FIN-\d{4}$")
+            self.assertTrue(issue.code_name)
+            self.assertIsInstance(issue.code_name, str)
+
+    def test_all_issue_codes_are_unique(self):
+        """No two distinct issue types may ever share the same FIN-XXXX code."""
+        values = [member.value for member in IssueCode]
+        self.assertEqual(len(values), len(set(values)))
+
+    def test_specific_codes_are_pinned_forever(self):
+        """
+        Regression guard: once assigned, a code's value must never change.
+        If this test ever needs editing to make it pass again, that itself
+        is a violation of the stability contract and must be rejected.
+        """
+        self.assertEqual(IssueCode.INVOICE_PAID_WITHOUT_PAYMENT.value, "FIN-0001")
+        self.assertEqual(IssueCode.DUPLICATE_PAID_PAYMENT.value, "FIN-0002")
+        self.assertEqual(IssueCode.PAYMENT_INVOICE_AMOUNT_MISMATCH.value, "FIN-0003")
+        self.assertEqual(IssueCode.INVOICE_PAID_WITHOUT_ESCROW.value, "FIN-0004")
+        self.assertEqual(
+            IssueCode.ESCROW_DISTRIBUTED_WITHOUT_SETTLEMENT_ITEM.value, "FIN-0005",
+        )
+        self.assertEqual(IssueCode.ESCROW_SETTLEMENT_LINK_MISSING.value, "FIN-0006")
+        self.assertEqual(IssueCode.ESCROW_SETTLEMENT_ITEM_MISSING.value, "FIN-0007")
+        self.assertEqual(IssueCode.SETTLEMENT_ITEM_ORPHAN_SOURCE.value, "FIN-0008")
+        self.assertEqual(
+            IssueCode.TECHNICIAN_LEDGER_BALANCE_MISMATCH.value, "FIN-0009",
+        )
+        self.assertEqual(IssueCode.PLATFORM_FEE_BALANCE_MISMATCH.value, "FIN-0010")
+        self.assertEqual(IssueCode.ORPHAN_BACKFILL_TASK.value, "FIN-0011")
+        self.assertEqual(
+            IssueCode.ADJUSTMENT_BLOCKED_UNSUPPORTED_TYPE.value, "FIN-0012",
+        )
+        self.assertEqual(
+            IssueCode.ADJUSTMENT_BLOCKED_AFTER_SETTLEMENT.value, "FIN-0013",
+        )
+        self.assertEqual(IssueCode.ADJUSTMENT_BLOCKED_DIRECT_SPLIT.value, "FIN-0014")
+
+    def test_code_is_independent_of_message_language(self):
+        """
+        The code must remain identical even though `message` is currently
+        English free text that may be translated (e.g. to Persian) later
+        without any change to `code`.
+        """
+        company = _company()
+        tech = _technician(company)
+        invoice = _issued_invoice(company, technician=tech)
+        invoice.status = Invoice.Status.PAID
+        invoice.paid_at = timezone.now()
+        invoice.save(update_fields=["status", "paid_at"])
+
+        issues = FinancialReconciliationService.check_payment_invoice_consistency(company)
+        matching = [
+            i for i in issues if i.code == IssueCode.INVOICE_PAID_WITHOUT_PAYMENT.value
+        ]
+        self.assertEqual(len(matching), 1)
+        # The code is a plain str value (not a translatable object) — this
+        # is what makes it safe to serialize, log, and match on forever.
+        self.assertIsInstance(matching[0].code, str)
+        self.assertEqual(matching[0].code, "FIN-0001")
