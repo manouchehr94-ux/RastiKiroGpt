@@ -978,3 +978,41 @@ class RefundAdjustmentSummaryTest(TestCase):
         self.assertEqual(result.refund_adjustment_summary.draft, 1)
         self.assertEqual(result.refund_adjustment_summary.applied, 1)
         self.assertEqual(result.refund_adjustment_summary.cancelled, 1)
+
+
+# =============================================================================
+# 13. PAID invoice with paid_at=None blocks closing
+# =============================================================================
+
+class InvalidInvoiceFinancialStateTest(TestCase):
+
+    def test_paid_invoice_with_null_paid_at_blocks_closing(self):
+        """
+        A PAID invoice with paid_at=None is an invalid financial state.
+        The closing engine must detect it even though it cannot be found
+        via a paid_at date-range filter alone.
+        """
+        company = _company()
+        tech = _technician(company)
+        invoice = _issued_invoice(company, technician=tech)
+        # Force PAID status without setting paid_at — simulates a data
+        # inconsistency (e.g. a bug in a past migration or manual DB edit).
+        Invoice.objects.filter(pk=invoice.pk).update(
+            status=Invoice.Status.PAID,
+            # paid_at intentionally left NULL
+        )
+        invoice.refresh_from_db()
+        period_start, period_end = _period()
+
+        result = FinancialClosingEngine.evaluate(
+            company=company, period_start=period_start, period_end=period_end,
+        )
+
+        self.assertEqual(result.status, ClosingStatus.BLOCKED)
+        invalid_state_issues = [
+            i for i in result.blocking_issues
+            if i.reason == BlockingReason.INVALID_INVOICE_FINANCIAL_STATE
+            and i.object_id == invoice.id
+        ]
+        self.assertEqual(len(invalid_state_issues), 1)
+        self.assertIn("no paid_at", invalid_state_issues[0].message)

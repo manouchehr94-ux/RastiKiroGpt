@@ -520,23 +520,27 @@ class FinancialClosingEngine:
         """
         Check for paid invoices within the period that have invalid or
         incomplete financial state:
-        - PAID invoice with no Payment row at all
-        - PAID invoice with total_amount <= 0
         - PAID invoice with no paid_at timestamp
+        - PAID invoice with no PAID Payment and no recognized cash/manual settlement
         """
+        from django.db.models import Q
+
         from apps.invoices.models import Invoice
         from apps.payments.models import Payment
 
+        # Include PAID invoices where:
+        # - paid_at falls within the period, OR
+        # - paid_at is NULL but the invoice was created within the period
+        #   (these are the broken ones we specifically want to catch)
         paid_invoices = Invoice.objects.filter(
+            Q(paid_at__gte=period_start, paid_at__lte=period_end)
+            | Q(paid_at__isnull=True, created_at__gte=period_start, created_at__lte=period_end),
             company=company,
             status=Invoice.Status.PAID,
-            paid_at__gte=period_start,
-            paid_at__lte=period_end,
         ).order_by("id")
 
         for invoice in paid_invoices:
-            # Check: paid_at must be set (redundant given filter, but
-            # guards against NULL slipping through in edge cases)
+            # Check: paid_at must be set
             if invoice.paid_at is None:
                 blocking_issues.append(ClosingBlockingIssue(
                     reason=BlockingReason.INVALID_INVOICE_FINANCIAL_STATE,
@@ -547,6 +551,7 @@ class FinancialClosingEngine:
                         "but has no paid_at timestamp."
                     ),
                 ))
+                continue
 
             # Check: at least one PAID payment must exist
             has_paid_payment = Payment.objects.filter(
