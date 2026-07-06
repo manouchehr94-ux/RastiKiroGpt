@@ -481,17 +481,31 @@ class BlockedScenarioTest(TestCase):
         invoice, payment = _distributed_invoice(company, tech, total=10_000_000, fee_percent=1)
         document = _approved_full_refund(company, invoice)
 
-        PaymentSplitSnapshot.objects.create(
-            company=company,
-            payment=payment,
-            invoice=invoice,
-            total_amount=10_000_000,
-            platform_fee_amount=100_000,
-            company_deposit_amount=3_900_000,
-            technician_direct_amount=6_000_000,
-            technician_ledger_amount=0,
-            should_split_with_technician=True,
-        )
+        # _distributed_invoice() drives the real PaymentCallbackService
+        # flow, which internally calls PaymentVerifyService.verify() ->
+        # PaymentSplitDecisionService.create_snapshot(), a non-blocking
+        # side effect that already creates a PaymentSplitSnapshot for
+        # this payment. PaymentSplitSnapshot.payment is a OneToOneField
+        # ("Written once per payment", per the model's own docstring) —
+        # a second .create() for the same payment violates that
+        # constraint (exactly the same defect pattern already fixed in
+        # Sprint 4's test suite). Fetch and update the existing row
+        # instead of creating a duplicate.
+        snapshot = PaymentSplitSnapshot.objects.get(payment=payment)
+        snapshot.total_amount = 10_000_000
+        snapshot.platform_fee_amount = 100_000
+        snapshot.company_deposit_amount = 3_900_000
+        snapshot.technician_direct_amount = 6_000_000
+        snapshot.technician_ledger_amount = 0
+        snapshot.should_split_with_technician = True
+        snapshot.save(update_fields=[
+            "total_amount",
+            "platform_fee_amount",
+            "company_deposit_amount",
+            "technician_direct_amount",
+            "technician_ledger_amount",
+            "should_split_with_technician",
+        ])
 
         with self.assertRaises(RefundExecutionBlockedError):
             RefundExecutionService.execute(document)

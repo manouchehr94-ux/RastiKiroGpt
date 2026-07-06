@@ -353,6 +353,15 @@ class RefundExecutionService:
         if entry is not None:
             document.platform_fee_reversal = amount
             document.platform_fee_entry = entry
+            # PERSIST before mark_applied() runs. mark_applied() re-fetches
+            # the document from the database
+            # (AdjustmentDocument.objects.select_for_update().get(...)),
+            # which would silently discard these attribute assignments if
+            # they were left in-memory only — this was the exact root
+            # cause of platform_fee_reversal being observed as None after
+            # execution. update_fields is scoped to only these two fields;
+            # no other column is touched.
+            document.save(update_fields=["platform_fee_reversal", "platform_fee_entry"])
         return entry is not None
 
     @staticmethod
@@ -384,6 +393,13 @@ class RefundExecutionService:
         if entry is not None:
             document.technician_wage_reversal = wage
             document.technician_ledger_entry = entry
+            # PERSIST before mark_applied() runs — same rationale as
+            # _reverse_platform_fee() above: without this explicit save,
+            # mark_applied()'s internal re-fetch discards the in-memory
+            # assignment, leaving technician_wage_reversal as None on the
+            # object ultimately returned to the caller. update_fields is
+            # scoped to only these two fields.
+            document.save(update_fields=["technician_wage_reversal", "technician_ledger_entry"])
         return entry is not None
 
     @staticmethod
