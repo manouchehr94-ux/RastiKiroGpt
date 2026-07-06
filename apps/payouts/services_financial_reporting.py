@@ -51,6 +51,16 @@ class InvoiceSummary:
 
 
 @dataclass(frozen=True)
+class GatewayTypeBreakdown:
+    """Payment breakdown for a single gateway type."""
+
+    gateway_type: str
+    count: int
+    paid_count: int
+    paid_amount: Decimal
+
+
+@dataclass(frozen=True)
 class PaymentSummary:
     """Period payment summary."""
 
@@ -61,6 +71,7 @@ class PaymentSummary:
     pending_payments: int
     needs_reconciliation_payments: int
     total_paid_amount: Decimal
+    by_gateway_type: tuple[GatewayTypeBreakdown, ...]
 
 
 @dataclass(frozen=True)
@@ -269,9 +280,9 @@ class FinancialReportingService:
         company, period_start: datetime, period_end: datetime,
     ) -> PaymentSummary:
         """Build payment summary for the period using created_at as period anchor."""
-        from django.db.models import Sum
+        from django.db.models import Count, Q, Sum
 
-        from apps.payments.models import Payment
+        from apps.payments.models import Payment, PaymentGateway
 
         base_qs = Payment.objects.filter(
             company=company,
@@ -294,6 +305,44 @@ class FinancialReportingService:
             status=Payment.Status.PAID,
         ).aggregate(total=Sum("amount"))["total"] or Decimal("0")
 
+        # Gateway type breakdown
+        gateway_breakdown: list[GatewayTypeBreakdown] = []
+        gateway_types = (
+            base_qs
+            .exclude(gateway__isnull=True)
+            .values_list("gateway__gateway_type", flat=True)
+            .distinct()
+            .order_by("gateway__gateway_type")
+        )
+        for gw_type in gateway_types:
+            gw_qs = base_qs.filter(gateway__gateway_type=gw_type)
+            gw_count = gw_qs.count()
+            gw_paid_count = gw_qs.filter(status=Payment.Status.PAID).count()
+            gw_paid_amount = gw_qs.filter(
+                status=Payment.Status.PAID,
+            ).aggregate(total=Sum("amount"))["total"] or Decimal("0")
+            gateway_breakdown.append(GatewayTypeBreakdown(
+                gateway_type=gw_type,
+                count=gw_count,
+                paid_count=gw_paid_count,
+                paid_amount=Decimal(str(gw_paid_amount)),
+            ))
+
+        # Include payments with no gateway (NULL)
+        null_gw_qs = base_qs.filter(gateway__isnull=True)
+        if null_gw_qs.exists():
+            null_count = null_gw_qs.count()
+            null_paid_count = null_gw_qs.filter(status=Payment.Status.PAID).count()
+            null_paid_amount = null_gw_qs.filter(
+                status=Payment.Status.PAID,
+            ).aggregate(total=Sum("amount"))["total"] or Decimal("0")
+            gateway_breakdown.append(GatewayTypeBreakdown(
+                gateway_type="none",
+                count=null_count,
+                paid_count=null_paid_count,
+                paid_amount=Decimal(str(null_paid_amount)),
+            ))
+
         return PaymentSummary(
             total_payments=total,
             paid_payments=paid,
@@ -302,6 +351,7 @@ class FinancialReportingService:
             pending_payments=pending,
             needs_reconciliation_payments=needs_recon,
             total_paid_amount=Decimal(str(total_paid_amount)),
+            by_gateway_type=tuple(gateway_breakdown),
         )
 
     @staticmethod

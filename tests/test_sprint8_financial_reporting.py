@@ -37,6 +37,7 @@ from apps.payouts.services_financial_reporting import (
     EscrowSummary,
     FinancialPeriodReport,
     FinancialReportingService,
+    GatewayTypeBreakdown,
     InvoiceSummary,
     PaymentSummary,
     ReconReportSummary,
@@ -828,3 +829,164 @@ class NoDatabaseWriteTest(TestCase):
         # Report is still valid — nothing new was created
         self.assertIsInstance(report2, FinancialPeriodReport)
         self.assertEqual(report2.invoice_summary.paid_invoices, 1)
+
+
+
+# =============================================================================
+# 13. Payment gateway_type breakdown
+# =============================================================================
+
+class PaymentGatewayBreakdownTest(TestCase):
+
+    def test_gateway_type_breakdown_for_platform_gateway(self):
+        """Payments through a platform (fake) gateway appear in breakdown."""
+        company = _company()
+        tech = _technician(company)
+        invoice, payment = _distributed_invoice(company, tech, total=5_000_000)
+        period_start, period_end = _period()
+
+        report = FinancialReportingService.generate_period_report(
+            company=company, period_start=period_start, period_end=period_end,
+        )
+
+        breakdown = report.payment_summary.by_gateway_type
+        self.assertIsInstance(breakdown, tuple)
+        self.assertGreater(len(breakdown), 0)
+
+        # Find the 'fake' gateway type entry
+        fake_entries = [e for e in breakdown if e.gateway_type == "fake"]
+        self.assertEqual(len(fake_entries), 1)
+        self.assertIsInstance(fake_entries[0], GatewayTypeBreakdown)
+        self.assertGreaterEqual(fake_entries[0].count, 1)
+        self.assertGreaterEqual(fake_entries[0].paid_count, 1)
+        self.assertEqual(fake_entries[0].paid_amount, Decimal("5000000"))
+
+    def test_multiple_gateway_types_in_breakdown(self):
+        """Multiple gateway types produce separate breakdown entries."""
+        company = _company()
+        tech = _technician(company)
+        _financial_policy(company)
+
+        # Create payment via platform (fake) gateway
+        invoice1, payment1 = _distributed_invoice(company, tech, total=3_000_000)
+
+        # Create a manual gateway and a payment through it
+        manual_gw, _ = PaymentGateway.objects.get_or_create(
+            company=company,
+            gateway_type=PaymentGateway.GatewayType.MANUAL,
+            defaults={
+                "name": "Manual Gateway",
+                "owner_type": PaymentGateway.OwnerType.COMPANY,
+                "is_active": True,
+            },
+        )
+        invoice2 = _issued_invoice(company, technician=tech, total=2_000_000)
+        Payment.objects.create(
+            company=company,
+            invoice=invoice2,
+            gateway=manual_gw,
+            amount=invoice2.total_amount,
+            status=Payment.Status.PAID,
+            reference_id=f"MANUAL-rpt-{_n()}",
+            paid_at=timezone.now(),
+        )
+        period_start, period_end = _period()
+
+        report = FinancialReportingService.generate_period_report(
+            company=company, period_start=period_start, period_end=period_end,
+        )
+
+        breakdown = report.payment_summary.by_gateway_type
+        gateway_types = [e.gateway_type for e in breakdown]
+        self.assertIn("fake", gateway_types)
+        self.assertIn("manual", gateway_types)
+
+        fake_entry = [e for e in breakdown if e.gateway_type == "fake"][0]
+        manual_entry = [e for e in breakdown if e.gateway_type == "manual"][0]
+        self.assertEqual(fake_entry.paid_amount, Decimal("3000000"))
+        self.assertEqual(manual_entry.paid_amount, Decimal("2000000"))
+        self.assertEqual(manual_entry.paid_count, 1)
+
+    def test_breakdown_is_deterministically_ordered(self):
+        """Gateway breakdown is ordered by gateway_type for determinism."""
+        company = _company()
+        tech = _technician(company)
+        _financial_policy(company)
+
+        # Create payments through multiple gateway types
+        invoice1, payment1 = _distributed_invoice(company, tech, total=1_000_000)
+        manual_gw, _ = PaymentGateway.objects.get_or_create(
+            company=company,
+            gateway_type=PaymentGateway.GatewayType.MANUAL,
+            defaults={
+                "name": "Manual Gateway",
+                "owner_type": PaymentGateway.OwnerType.COMPANY,
+                "is_active": True,
+            },
+        )
+        invoice2 = _issued_invoice(company, technician=tech, total=1_000_000)
+        Payment.objects.create(
+            company=company,
+            invoice=invoice2,
+            gateway=manual_gw,
+            amount=invoice2.total_amount,
+            status=Payment.Status.PAID,
+            reference_id=f"MANUAL-order-{_n()}",
+            paid_at=timezone.now(),
+        )
+        period_start, period_end = _period()
+
+        report1 = FinancialReportingService.generate_period_report(
+            company=company, period_start=period_start, period_end=period_end,
+        )
+        report2 = FinancialReportingService.generate_period_report(
+            company=company, period_start=period_start, period_end=period_end,
+        )
+
+        self.assertEqual(
+            [(e.gateway_type, e.count, e.paid_count, e.paid_amount)
+             for e in report1.payment_summary.by_gateway_type],
+            [(e.gateway_type, e.count, e.paid_count, e.paid_amount)
+             for e in report2.payment_summary.by_gateway_type],
+        )
+
+    def test_empty_period_has_empty_breakdown(self):
+        """A period with no payments has an empty gateway breakdown."""
+        company = _company()
+        period_start, period_end = _period()
+
+        report = FinancialReportingService.generate_period_report(
+            company=company, period_start=period_start, period_end=period_end,
+        )
+
+        self.assertEqual(report.payment_summary.by_gateway_type, ())
+
+    def test_failed_payments_appear_in_gateway_breakdown_count(self):
+        """Failed payments contribute to count but not paid_count/paid_amount."""
+        company = _company()
+        tech = _technician(company)
+        _financial_policy(company)
+        gateway = _platform_gateway(company)
+        invoice = _issued_invoice(company, technician=tech, total=4_000_000)
+        Payment.objects.create(
+            company=company,
+            invoice=invoice,
+            gateway=gateway,
+            amount=invoice.total_amount,
+            status=Payment.Status.FAILED,
+            reference_id=f"FAIL-gw-{_n()}",
+        )
+        period_start, period_end = _period()
+
+        report = FinancialReportingService.generate_period_report(
+            company=company, period_start=period_start, period_end=period_end,
+        )
+
+        fake_entries = [
+            e for e in report.payment_summary.by_gateway_type
+            if e.gateway_type == "fake"
+        ]
+        self.assertEqual(len(fake_entries), 1)
+        self.assertEqual(fake_entries[0].count, 1)
+        self.assertEqual(fake_entries[0].paid_count, 0)
+        self.assertEqual(fake_entries[0].paid_amount, Decimal("0"))
