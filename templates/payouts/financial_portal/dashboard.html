@@ -1,0 +1,102 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+
+{% block title %}پرتال مالی — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>پرتال مالی</h1>
+    <p class="page-header-subtitle">نمای کلی وضعیت مالی شرکت</p>
+  </div>
+</div>
+
+{% include "payouts/financial_portal/_nav.html" %}
+{% include "payouts/financial_portal/_period_filter.html" %}
+
+<div class="stat-grid stat-grid-3" dir="rtl">
+  <div class="stat-card">
+    <div class="stat-card-icon blue">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+    </div>
+    <span class="stat-card-value">{{ report.invoice_summary.gross_invoice_amount|smart_number }}</span>
+    <div class="stat-card-label">مبلغ کل فاکتورها (ریال)</div>
+    <div class="stat-card-hint">{{ report.invoice_summary.total_invoices }} فاکتور</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon green">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value stat-value-success">{{ report.invoice_summary.paid_amount|smart_number }}</span>
+    <div class="stat-card-label">مبلغ پرداخت‌شده (ریال)</div>
+    <div class="stat-card-hint">{{ report.invoice_summary.paid_invoices }} فاکتور</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon amber">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="stat-card-value stat-value-warning">{{ report.invoice_summary.unpaid_amount|smart_number }}</span>
+    <div class="stat-card-label">مبلغ پرداخت‌نشده (ریال)</div>
+    <div class="stat-card-hint">{{ report.invoice_summary.unpaid_invoices }} فاکتور</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon purple">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+    </div>
+    <span class="stat-card-value">{{ report.escrow_summary.total_held_amount|smart_number }}</span>
+    <div class="stat-card-label">امانات نگهداری‌شده (ریال)</div>
+    <div class="stat-card-hint">{{ report.escrow_summary.total_escrows }} رکورد</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon red">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+    </div>
+    <span class="stat-card-value">{{ report.settlement_summary.pending_settlement_amount|smart_number }}</span>
+    <div class="stat-card-label">تسویه در انتظار (ریال)</div>
+    <div class="stat-card-hint">{{ report.settlement_summary.calculating_batches|add:report.settlement_summary.ready_batches|add:report.settlement_summary.executing_batches }} دسته</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon {% if report.closing_readiness.status == 'can_close' %}green{% elif report.closing_readiness.status == 'blocked' %}red{% else %}amber{% endif %}">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+    </div>
+    <span class="stat-card-value">
+      {% if report.closing_readiness.status == 'can_close' %}آماده بستن{% elif report.closing_readiness.status == 'blocked' %}مسدود{% else %}{{ report.closing_readiness.status }}{% endif %}
+    </span>
+    <div class="stat-card-label">وضعیت بستن دوره</div>
+    <div class="stat-card-hint">{{ report.closing_readiness.blocking_issues_count }} مانع</div>
+  </div>
+</div>
+
+{# Reconciliation status card #}
+<div class="card" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">وضعیت مغایرت‌گیری</span>
+    {% if report.reconciliation_summary.is_clean %}
+    <span class="badge badge-success">سالم</span>
+    {% else %}
+    <span class="badge badge-danger">{{ report.reconciliation_summary.total_issues }} مورد</span>
+    {% endif %}
+  </div>
+  <div class="stat-grid stat-grid-3">
+    <div class="stat-card"><span class="stat-card-value stat-value-danger">{{ report.reconciliation_summary.errors }}</span><div class="stat-card-label">خطا</div></div>
+    <div class="stat-card"><span class="stat-card-value stat-value-warning">{{ report.reconciliation_summary.warnings }}</span><div class="stat-card-label">هشدار</div></div>
+    <div class="stat-card"><span class="stat-card-value">{{ report.reconciliation_summary.blocked }}</span><div class="stat-card-label">مسدود</div></div>
+  </div>
+  <div class="btn-group-wrap">
+    <a href="/{{ company.code }}/admin/financial-portal/reconciliation/" class="btn btn-secondary btn-sm">مشاهده جزئیات مغایرت‌گیری</a>
+    <a href="/{{ company.code }}/admin/financial-portal/closing/" class="btn btn-secondary btn-sm">بررسی آمادگی بستن دوره</a>
+    <a href="/{{ company.code }}/admin/financial-portal/reports/" class="btn btn-secondary btn-sm">گزارش کامل دوره</a>
+  </div>
+</div>
+
+</div>
+{% endblock %}

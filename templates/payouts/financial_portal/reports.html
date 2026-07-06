@@ -1,0 +1,165 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}گزارش دوره مالی — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+<div class="page-header" dir="rtl">
+  <h1>گزارش کامل دوره مالی</h1>
+  <p class="page-header-subtitle">خلاصه ساختاریافته</p>
+</div>
+
+{% include "payouts/financial_portal/_nav.html" %}
+{% include "payouts/financial_portal/_period_filter.html" %}
+
+
+{# Invoice Summary #}
+<div class="card" dir="rtl">
+  <div class="card-header"><span class="card-header-title">خلاصه فاکتورها</span></div>
+  <div class="stat-grid stat-grid-3">
+    <div class="stat-card"><span class="stat-card-value">{{ report.invoice_summary.total_invoices }}</span><div class="stat-card-label">کل فاکتورها</div></div>
+    <div class="stat-card"><span class="stat-card-value stat-value-success">{{ report.invoice_summary.paid_invoices }}</span><div class="stat-card-label">پرداخت‌شده</div></div>
+    <div class="stat-card"><span class="stat-card-value stat-value-warning">{{ report.invoice_summary.unpaid_invoices }}</span><div class="stat-card-label">پرداخت‌نشده</div></div>
+  </div>
+  <ul class="audit-meta">
+    <li>مبلغ کل: {{ report.invoice_summary.gross_invoice_amount|smart_number }} ریال</li>
+    <li>پرداخت‌شده: {{ report.invoice_summary.paid_amount|smart_number }} ریال</li>
+    <li>پرداخت‌نشده: {{ report.invoice_summary.unpaid_amount|smart_number }} ریال</li>
+    <li>لغو شده: {{ report.invoice_summary.cancelled_invoices }}</li>
+  </ul>
+</div>
+
+{# Payment Summary #}
+<div class="card" dir="rtl">
+  <div class="card-header"><span class="card-header-title">خلاصه پرداخت‌ها</span></div>
+  <div class="stat-grid stat-grid-3">
+    <div class="stat-card"><span class="stat-card-value">{{ report.payment_summary.total_payments }}</span><div class="stat-card-label">کل</div></div>
+    <div class="stat-card"><span class="stat-card-value stat-value-success">{{ report.payment_summary.paid_payments }}</span><div class="stat-card-label">موفق</div></div>
+    <div class="stat-card"><span class="stat-card-value stat-value-danger">{{ report.payment_summary.failed_payments }}</span><div class="stat-card-label">ناموفق</div></div>
+  </div>
+  <ul class="audit-meta">
+    <li>مبلغ موفق: {{ report.payment_summary.total_paid_amount|smart_number }} ریال</li>
+    <li>در انتظار: {{ report.payment_summary.pending_payments }}</li>
+    <li>لغوشده: {{ report.payment_summary.cancelled_payments }}</li>
+    <li>نیاز به مغایرت‌گیری: {{ report.payment_summary.needs_reconciliation_payments }}</li>
+  </ul>
+  {% if report.payment_summary.by_gateway_type %}
+  <div class="card-header"><span class="card-header-title">تفکیک درگاه</span></div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>نوع درگاه</th><th>تعداد</th><th>موفق</th><th class="ltr-cell">مبلغ موفق (ریال)</th></tr></thead>
+      <tbody>
+        {% for gw in report.payment_summary.by_gateway_type %}
+        <tr><td>{{ gw.gateway_type }}</td><td>{{ gw.count }}</td><td>{{ gw.paid_count }}</td><td class="ltr-cell">{{ gw.paid_amount|smart_number }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+{# Escrow + Settlement + Adjustment + Recon + Closing #}
+<div class="stat-grid stat-grid-2" dir="rtl">
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">امانات</span></div>
+    <ul class="audit-meta">
+      <li>کل: {{ report.escrow_summary.total_escrows }}</li>
+      <li>نگهداری: {{ report.escrow_summary.total_held_amount|smart_number }} ریال</li>
+      <li>تسویه‌شده: {{ report.escrow_summary.total_settled_amount|smart_number }} ریال</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">تسویه‌ها</span></div>
+    <ul class="audit-meta">
+      <li>دسته‌ها: {{ report.settlement_summary.total_batches }}</li>
+      <li>تکمیل‌شده: {{ report.settlement_summary.completed_settlement_amount|smart_number }} ریال</li>
+      <li>در انتظار: {{ report.settlement_summary.pending_settlement_amount|smart_number }} ریال</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">تعدیلات</span></div>
+    <ul class="audit-meta">
+      <li>کل: {{ report.adjustment_summary.total_documents }}</li>
+      <li>در انتظار: {{ report.adjustment_summary.pending_amount|smart_number }} ریال</li>
+      <li>اعمال‌شده: {{ report.adjustment_summary.applied_amount|smart_number }} ریال</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">بستن دوره</span></div>
+    <ul class="audit-meta">
+      <li>وضعیت: {{ report.closing_readiness.status }}</li>
+      <li>موانع: {{ report.closing_readiness.blocking_issues_count }}</li>
+      <li>قفل دائمی: {{ report.closing_readiness.durable_lock_status }}</li>
+    </ul>
+  </div>
+</div>
+
+</div>
+{% endblock %}
+
+
+<div class="card" dir="rtl">
+  <div class="card-header"><span class="card-header-title">خلاصه فاکتورها</span></div>
+  <div class="stat-grid stat-grid-3">
+    <div class="stat-card"><span class="stat-card-value">{{ report.invoice_summary.total_invoices }}</span><div class="stat-card-label">کل</div></div>
+    <div class="stat-card"><span class="stat-card-value stat-value-success">{{ report.invoice_summary.paid_invoices }}</span><div class="stat-card-label">پرداخت‌شده</div></div>
+    <div class="stat-card"><span class="stat-card-value stat-value-warning">{{ report.invoice_summary.unpaid_invoices }}</span><div class="stat-card-label">معوق</div></div>
+  </div>
+  <ul class="audit-meta">
+    <li>مبلغ کل: {{ report.invoice_summary.gross_invoice_amount|smart_number }} ریال</li>
+    <li>پرداخت‌شده: {{ report.invoice_summary.paid_amount|smart_number }} ریال</li>
+    <li>پرداخت‌نشده: {{ report.invoice_summary.unpaid_amount|smart_number }} ریال</li>
+  </ul>
+</div>
+
+<div class="card" dir="rtl">
+  <div class="card-header"><span class="card-header-title">خلاصه پرداخت‌ها</span></div>
+  <ul class="audit-meta">
+    <li>کل: {{ report.payment_summary.total_payments }} | موفق: {{ report.payment_summary.paid_payments }} | ناموفق: {{ report.payment_summary.failed_payments }}</li>
+    <li>مبلغ موفق: {{ report.payment_summary.total_paid_amount|smart_number }} ریال</li>
+  </ul>
+  {% if report.payment_summary.by_gateway_type %}
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>درگاه</th><th>تعداد</th><th>موفق</th><th class="ltr-cell">مبلغ (ریال)</th></tr></thead>
+      <tbody>{% for gw in report.payment_summary.by_gateway_type %}<tr><td>{{ gw.gateway_type }}</td><td>{{ gw.count }}</td><td>{{ gw.paid_count }}</td><td class="ltr-cell">{{ gw.paid_amount|smart_number }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<div class="stat-grid stat-grid-2" dir="rtl">
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">امانات</span></div>
+    <ul class="audit-meta">
+      <li>کل: {{ report.escrow_summary.total_escrows }} | نگهداری: {{ report.escrow_summary.total_held_amount|smart_number }} ریال</li>
+      <li>تسویه: {{ report.escrow_summary.total_settled_amount|smart_number }} ریال</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">تسویه‌ها</span></div>
+    <ul class="audit-meta">
+      <li>دسته‌ها: {{ report.settlement_summary.total_batches }} | تکمیل: {{ report.settlement_summary.completed_settlement_amount|smart_number }} ریال</li>
+      <li>در انتظار: {{ report.settlement_summary.pending_settlement_amount|smart_number }} ریال</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">تعدیلات</span></div>
+    <ul class="audit-meta">
+      <li>کل: {{ report.adjustment_summary.total_documents }} | در انتظار: {{ report.adjustment_summary.pending_amount|smart_number }} ریال</li>
+      <li>اعمال‌شده: {{ report.adjustment_summary.applied_amount|smart_number }} ریال</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-header-title">بستن دوره</span></div>
+    <ul class="audit-meta">
+      <li>وضعیت: {% if report.closing_readiness.status == 'can_close' %}آماده{% elif report.closing_readiness.status == 'blocked' %}مسدود{% else %}{{ report.closing_readiness.status }}{% endif %}</li>
+      <li>موانع: {{ report.closing_readiness.blocking_issues_count }} | قفل دائمی: {{ report.closing_readiness.durable_lock_status }}</li>
+    </ul>
+  </div>
+</div>
+</div>
+{% endblock %}

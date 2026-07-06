@@ -180,6 +180,9 @@ urlpatterns = [
     path("admin/financial-reports/platform-fees/", financial_report_views.platform_fee_report, name="financial_platform_fees"),
     path("admin/financial-reports/audit/", financial_report_views.audit_report, name="financial_audit"),
 
+    # Admin: Financial Portal (Phase 1 — Sprint 1-8 engine UI)
+    path("admin/financial-portal/", include("apps.payouts.urls_financial_portal")),
+
     # Admin: Reports & Notifications
     path("admin/reports/", include("apps.reports.urls")),
     path("admin/notifications/", include("apps.notifications.urls")),

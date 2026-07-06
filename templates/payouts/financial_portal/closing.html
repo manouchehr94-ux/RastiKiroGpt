@@ -1,0 +1,158 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}بستن دوره — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+<div class="page-header" dir="rtl">
+  <h1>آمادگی بستن دوره مالی</h1>
+  <p class="page-header-subtitle">بررسی امکان بستن دوره</p>
+</div>
+
+{% include "payouts/financial_portal/_nav.html" %}
+{% include "payouts/financial_portal/_period_filter.html" %}
+
+
+{# Status card #}
+<div class="stat-grid stat-grid-2" dir="rtl">
+  <div class="balance-insight {% if result.status.value == 'can_close' %}positive{% elif result.status.value == 'blocked' %}negative{% else %}zero{% endif %}">
+    <div class="balance-insight-body">
+      <div class="balance-insight-title">وضعیت بستن دوره</div>
+      <div class="balance-insight-amount">
+        {% if result.status.value == 'can_close' %}آماده بستن
+        {% elif result.status.value == 'blocked' %}مسدود
+        {% elif result.status.value == 'warning' %}هشدار
+        {% else %}{{ result.status.value }}{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="balance-insight zero">
+    <div class="balance-insight-body">
+      <div class="balance-insight-title">قفل دائمی دوره</div>
+      <div class="balance-insight-amount">
+        {% if result.durable_period_lock_status.value == 'not_implemented' %}پیاده‌سازی نشده{% else %}{{ result.durable_period_lock_status.value }}{% endif %}
+      </div>
+      <div class="balance-insight-detail">مدل FinancialPeriod هنوز وجود ندارد</div>
+    </div>
+  </div>
+</div>
+
+{% if result.blocking_issues %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title" style="color:var(--color-danger);">موانع بستن دوره</span>
+    <span class="badge badge-danger">{{ result.blocking_issues|length }}</span>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>دلیل</th><th>مدل</th><th>شناسه</th><th>شرح</th></tr></thead>
+      <tbody>
+        {% for issue in result.blocking_issues %}
+        <tr>
+          <td><code>{{ issue.reason.value }}</code></td>
+          <td>{{ issue.model }}</td>
+          <td>{{ issue.object_id|default:"—" }}</td>
+          <td class="audit-meta">{{ issue.message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if result.warnings %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title" style="color:var(--color-warning);">هشدارها</span>
+    <span class="badge badge-warning">{{ result.warnings|length }}</span>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>دلیل</th><th>مدل</th><th>شناسه</th><th>شرح</th></tr></thead>
+      <tbody>
+        {% for w in result.warnings %}
+        <tr>
+          <td><code>{{ w.reason }}</code></td>
+          <td>{{ w.model }}</td>
+          <td>{{ w.object_id|default:"—" }}</td>
+          <td class="audit-meta">{{ w.message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if not result.blocking_issues and not result.warnings %}
+<div class="card empty-state" dir="rtl">
+  <div class="empty-state-icon">✅</div>
+  <p class="empty-state-title">دوره آماده بستن است</p>
+  <p class="empty-state-description">هیچ مانعی برای بستن دوره مالی وجود ندارد.</p>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}
+
+
+<div class="stat-grid stat-grid-2" dir="rtl">
+  <div class="balance-insight {% if result.status.value == 'can_close' %}positive{% elif result.status.value == 'blocked' %}negative{% else %}zero{% endif %}">
+    <div class="balance-insight-body">
+      <div class="balance-insight-title">وضعیت بستن دوره</div>
+      <div class="balance-insight-amount">
+        {% if result.status.value == 'can_close' %}آماده بستن
+        {% elif result.status.value == 'blocked' %}مسدود
+        {% elif result.status.value == 'warning' %}هشدار
+        {% else %}{{ result.status.value }}{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="balance-insight zero">
+    <div class="balance-insight-body">
+      <div class="balance-insight-title">قفل دائمی دوره</div>
+      <div class="balance-insight-amount">
+        {% if result.durable_period_lock_status.value == 'not_implemented' %}پیاده‌سازی نشده{% else %}{{ result.durable_period_lock_status.value }}{% endif %}
+      </div>
+      <div class="balance-insight-detail">مدل FinancialPeriod هنوز ایجاد نشده</div>
+    </div>
+  </div>
+</div>
+
+{% if result.blocking_issues %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header"><span class="card-header-title" style="color:var(--color-danger);">موانع بستن دوره</span><span class="badge badge-danger">{{ result.blocking_issues|length }}</span></div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>دلیل</th><th>مدل</th><th>شناسه</th><th>شرح</th></tr></thead>
+      <tbody>{% for issue in result.blocking_issues %}<tr><td><code>{{ issue.reason.value }}</code></td><td>{{ issue.model }}</td><td>{{ issue.object_id|default:"—" }}</td><td class="audit-meta">{{ issue.message }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if result.warnings %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header"><span class="card-header-title" style="color:var(--color-warning);">هشدارها</span><span class="badge badge-warning">{{ result.warnings|length }}</span></div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>دلیل</th><th>مدل</th><th>شناسه</th><th>شرح</th></tr></thead>
+      <tbody>{% for w in result.warnings %}<tr><td><code>{{ w.reason }}</code></td><td>{{ w.model }}</td><td>{{ w.object_id|default:"—" }}</td><td class="audit-meta">{{ w.message }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if not result.blocking_issues and not result.warnings %}
+<div class="card empty-state" dir="rtl">
+  <div class="empty-state-icon">✅</div>
+  <p class="empty-state-title">دوره آماده بستن است</p>
+  <p class="empty-state-description">هیچ مانعی وجود ندارد.</p>
+</div>
+{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}تسویه نیروهای خدماتی — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+<div class="page-header" dir="rtl">
+  <h1>تسویه نیروهای خدماتی</h1>
+  <p class="page-header-subtitle">وضعیت مالی هر نیروی خدماتی در دوره انتخاب‌شده</p>
+</div>
+
+{% include "payouts/financial_portal/_nav.html" %}
+{% include "payouts/financial_portal/_period_filter.html" %}
+
+{% if rows %}
+<div class="card card-flush" dir="rtl">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>نیرو</th>
+          <th class="ltr-cell">اجرت دوره (ریال)</th>
+          <th class="ltr-cell">بدهکاری دوره (ریال)</th>
+          <th class="ltr-cell">خالص دوره (ریال)</th>
+          <th class="ltr-cell">مانده کل (ریال)</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.technician.user.get_full_name|default:row.technician.user.username }}</td>
+          <td class="ltr-cell"><span class="amount-positive">{{ row.total_earned|smart_number }}</span></td>
+          <td class="ltr-cell"><span class="amount-negative">{{ row.total_debited|smart_number }}</span></td>
+          <td class="ltr-cell">
+            <span class="{% if row.period_net > 0 %}amount-positive{% elif row.period_net < 0 %}amount-negative{% endif %}">{{ row.period_net|smart_number }}</span>
+          </td>
+          <td class="ltr-cell">
+            <span class="{% if row.current_balance > 0 %}amount-positive{% elif row.current_balance < 0 %}amount-negative{% endif %}">{{ row.current_balance|smart_number }}</span>
+          </td>
+          <td>
+            <a href="/{{ company.code }}/admin/financial-portal/technicians/{{ row.technician.id }}/?from_date={{ filters.from_date }}&to_date={{ filters.to_date }}" class="btn btn-ghost btn-sm">جزئیات</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card empty-state" dir="rtl">
+  <p class="empty-state-title">هیچ نیروی خدماتی ثبت نشده</p>
+</div>
+{% endif %}
+</div>
+{% endblock %}

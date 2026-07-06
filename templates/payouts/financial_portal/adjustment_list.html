@@ -1,0 +1,58 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}تعدیلات مالی — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+<div class="page-header" dir="rtl">
+  <h1>تعدیلات و بازگشت‌ها</h1>
+  <p class="page-header-subtitle">اسناد تعدیل و بازپرداخت</p>
+</div>
+
+{% include "payouts/financial_portal/_nav.html" %}
+{% include "payouts/financial_portal/_period_filter.html" %}
+
+{% if documents %}
+<div class="card card-flush" dir="rtl">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>نوع</th>
+          <th>وضعیت</th>
+          <th>فاکتور اصلی</th>
+          <th class="ltr-cell">مبلغ (ریال)</th>
+          <th>دلیل</th>
+          <th>تاریخ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in documents %}
+        <tr>
+          <td>{{ doc.id }}</td>
+          <td>{{ doc.get_document_type_display }}</td>
+          <td>
+            {% if doc.status == 'applied' %}<span class="badge badge-success">{{ doc.get_status_display }}</span>
+            {% elif doc.status == 'rejected' or doc.status == 'cancelled' %}<span class="badge badge-neutral">{{ doc.get_status_display }}</span>
+            {% elif doc.status == 'draft' %}<span class="badge badge-warning">{{ doc.get_status_display }}</span>
+            {% else %}<span class="badge badge-info">{{ doc.get_status_display }}</span>{% endif %}
+          </td>
+          <td>{% if doc.original_invoice %}<a href="/{{ company.code }}/admin/invoices/{{ doc.original_invoice.id }}/">{{ doc.original_invoice.invoice_number }}</a>{% else %}—{% endif %}</td>
+          <td class="ltr-cell">{{ doc.amount_rial|smart_number }}</td>
+          <td class="audit-meta">{{ doc.reason|truncatechars:50 }}</td>
+          <td class="stat-card-hint">{{ doc.created_at|jalali_datetime }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card empty-state" dir="rtl"><p class="empty-state-title">هیچ سند تعدیلی در این دوره وجود ندارد</p></div>
+{% endif %}
+</div>
+{% endblock %}

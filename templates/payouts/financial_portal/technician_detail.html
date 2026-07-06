@@ -1,0 +1,64 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}صورتحساب {{ technician.user.get_full_name }} — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>صورتحساب: {{ technician.user.get_full_name|default:technician.user.username }}</h1>
+    <p class="page-header-subtitle">مانده فعلی: <strong>{{ balance|smart_number }}</strong> ریال</p>
+  </div>
+  <a href="/{{ company.code }}/admin/financial-portal/technicians/?from_date={{ filters.from_date }}&to_date={{ filters.to_date }}" class="btn btn-ghost btn-sm">← بازگشت</a>
+</div>
+
+{% include "payouts/financial_portal/_nav.html" %}
+{% include "payouts/financial_portal/_period_filter.html" %}
+
+{% if entries %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header">
+    <span class="card-header-title">رویدادهای مالی دوره</span>
+    <span class="badge badge-neutral">{{ entries|length }} رویداد</span>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>تاریخ</th>
+          <th>نوع</th>
+          <th>منشأ</th>
+          <th>فاکتور</th>
+          <th class="ltr-cell">بستانکار</th>
+          <th class="ltr-cell">بدهکار</th>
+          <th class="ltr-cell">مانده</th>
+          <th>شرح</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr>
+          <td class="stat-card-hint">{{ entry.created_at|jalali_datetime }}</td>
+          <td>{% if entry.entry_type == 'credit' %}<span class="badge badge-success">بستانکار</span>{% else %}<span class="badge badge-danger">بدهکار</span>{% endif %}</td>
+          <td><span class="source-pill">{{ entry.get_source_display }}</span></td>
+          <td>{% if entry.invoice %}<a href="/{{ company.code }}/admin/invoices/{{ entry.invoice.id }}/">{{ entry.invoice.invoice_number }}</a>{% else %}—{% endif %}</td>
+          <td class="ltr-cell">{% if entry.entry_type == 'credit' %}<span class="amount-positive">+{{ entry.amount_rial|smart_number }}</span>{% else %}—{% endif %}</td>
+          <td class="ltr-cell">{% if entry.entry_type == 'debit' %}<span class="amount-negative">-{{ entry.amount_rial|smart_number }}</span>{% else %}—{% endif %}</td>
+          <td class="ltr-cell">{{ entry.balance_after|smart_number }}</td>
+          <td class="audit-meta">{{ entry.description|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card empty-state" dir="rtl">
+  <p class="empty-state-title">هیچ رویداد مالی در این دوره ثبت نشده</p>
+</div>
+{% endif %}
+</div>
+{% endblock %}

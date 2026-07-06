@@ -1,0 +1,60 @@
+{% extends "layouts/dashboard.html" %}
+{% load smart_numbers jalali_tags %}
+{% block title %}دسته تسویه #{{ batch.id }} — {{ company.name }}{% endblock %}
+{% block sidebar_brand %}{{ company.name }}{% endblock %}
+{% block logout_url %}/{{ company.code }}/login/logout/{% endblock %}
+{% block sidebar_nav %}{% include "includes/nav_admin.html" %}{% endblock %}
+
+{% block content %}
+<div class="admin-compact">
+<div class="page-header" dir="rtl">
+  <div>
+    <h1>دسته تسویه #{{ batch.id }}</h1>
+    <p class="page-header-subtitle">{{ batch.get_level_display }} — {{ batch.get_status_display }}</p>
+  </div>
+  <a href="/{{ company.code }}/admin/financial-portal/settlements/" class="btn btn-ghost btn-sm">← بازگشت</a>
+</div>
+
+{% include "payouts/financial_portal/_nav.html" %}
+
+<div class="stat-grid stat-grid-3" dir="rtl">
+  <div class="stat-card"><span class="stat-card-value">{{ batch.net_amount_rial|smart_number }}</span><div class="stat-card-label">مبلغ خالص (ریال)</div></div>
+  <div class="stat-card"><span class="stat-card-value">{{ batch.items_count }}</span><div class="stat-card-label">تعداد آیتم</div></div>
+  <div class="stat-card"><span class="stat-card-value">{{ batch.get_status_display }}</span><div class="stat-card-label">وضعیت</div></div>
+</div>
+
+<div class="card" dir="rtl">
+  <div class="card-header"><span class="card-header-title">اطلاعات دسته</span></div>
+  <ul class="audit-meta">
+    <li>دوره: {{ batch.period_start|jalali_date }} — {{ batch.period_end|jalali_date }}</li>
+    <li>تاریخ ایجاد: {{ batch.created_at|jalali_datetime }}</li>
+    {% if batch.executed_at %}<li>تاریخ اجرا: {{ batch.executed_at|jalali_datetime }}</li>{% endif %}
+    {% if batch.bank_reference %}<li>شناسه بانکی: {{ batch.bank_reference }}</li>{% endif %}
+    {% if batch.failure_reason %}<li class="stat-value-danger">دلیل شکست: {{ batch.failure_reason }}</li>{% endif %}
+  </ul>
+</div>
+
+{% if items %}
+<div class="card card-flush" dir="rtl">
+  <div class="card-header"><span class="card-header-title">آیتم‌های تسویه</span><span class="badge badge-neutral">{{ items|length }}</span></div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>#</th><th>فاکتور</th><th class="ltr-cell">مبلغ (ریال)</th><th>شرح</th></tr></thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.id }}</td>
+          <td>{% if item.invoice %}<a href="/{{ company.code }}/admin/invoices/{{ item.invoice.id }}/">{{ item.invoice.invoice_number }}</a>{% else %}—{% endif %}</td>
+          <td class="ltr-cell">{{ item.amount_rial|smart_number }}</td>
+          <td class="audit-meta">{{ item.description|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card empty-state" dir="rtl"><p class="empty-state-title">هیچ آیتمی ثبت نشده</p></div>
+{% endif %}
+</div>
+{% endblock %}
