@@ -310,6 +310,10 @@ class FinancialBackfillTask(CompanyOwnedModel):
         PLATFORM_FEE = "platform_fee", "Platform Fee"
         PAYMENT_SPLIT_SNAPSHOT = "payment_split_snapshot", "Payment Split Snapshot"
         DIRECT_GATEWAY_SETTLEMENT = "direct_gateway_settlement", "Direct Gateway Settlement"
+        # "escrow_record" (Sprint 3) is used as a raw string at call sites,
+        # not added here, since makemigrations --check could not be run to
+        # confirm a migration is needed. See docs/13_Financial_Core for the
+        # full rationale; promote to a real choice once Django confirms it.
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
